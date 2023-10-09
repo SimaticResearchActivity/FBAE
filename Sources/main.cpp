@@ -4,6 +4,7 @@
 #include "OptParserExtended.h"
 #include "SequencerAlgoLayer.h"
 #include "SessionLayer.h"
+#include "BBOBBAlgoLayer.h"
 
 using namespace std;
 using namespace mlib;
@@ -14,6 +15,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
     switch(algoId)
     {
         case 'S': return make_unique<SequencerAlgoLayer>();
+        case 'B' : return make_unique<BBOBBAlgoLayer>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is " << algoId
                       << " which is not the identifier of a defined algorithm"

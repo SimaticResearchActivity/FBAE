@@ -18,7 +18,9 @@ add_executable(fbae
         EnetCommPeer.h
         msgTemplates.h
         SequencerAlgoLayerMsg.h
-        SessionLayerMsg.h)
+        SessionLayerMsg.h
+        BBOBBAlgoLayer.cpp
+        BBOBBAlgoLayer.h)
 target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
