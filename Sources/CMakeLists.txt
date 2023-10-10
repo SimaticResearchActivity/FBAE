@@ -20,7 +20,9 @@ add_executable(fbae
         SequencerAlgoLayerMsg.h
         SessionLayerMsg.h
         BBOBBAlgoLayer.cpp
-        BBOBBAlgoLayer.h)
+        BBOBBAlgoLayer.h
+        BBOBBAlgoLayerMsg.h
+        BBOBBAlgoLayerMsg.h)
 target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)

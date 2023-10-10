@@ -9,6 +9,8 @@
 #include "AlgoLayer.h"
 
 class BBOBBAlgoLayer : public AlgoLayer {
+private :
+    std::vector<HostTuple> broadcasters; //Every broadcaster needs the list of all broadcasters
 public :
     void callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
     void callbackHandleMessageAsNonHostPeer(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
