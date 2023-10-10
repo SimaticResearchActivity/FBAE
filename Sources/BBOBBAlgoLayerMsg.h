@@ -1,0 +1,8 @@
+//
+// Created by lardeur on 09/10/23.
+//
+
+#ifndef FBAE_BBOBBALGOLAYERMSG_H
+#define FBAE_BBOBBALGOLAYERMSG_H
+
+#endif //FBAE_BBOBBALGOLAYERMSG_H
