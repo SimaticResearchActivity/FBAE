@@ -8,15 +8,48 @@
 namespace fbae_BBOBBAlgoLayer {
 
 
-    enum class BBOBBMsgId : unsigned char {
-        Message,
+    enum class BroadcasterMsgId : unsigned char
+    {
+        RankInfo,
+        AllBroadcastersConnected,
+        AckDisconnectIntent,
     };
 
-    struct Message {
-        BBOBBMsgId msgId;
+    struct RankInfoMessage
+    {
+        BroadcasterMsgId msgId{};
+        unsigned char  senderRank{};
 
-
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive& archive)
+        {
+            archive(msgId, senderRank); // serialize things by passing them to the archive
+        }
     };
+
+    using BroadcasterRankInfo = RankInfoMessage;
+    using BroadcasterDisconnectIntent = RankInfoMessage;
+
+
+
+    struct GenericBroadcasterMsgWithoutData
+    {
+        BroadcasterMsgId msgId{};
+
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive& archive)
+        {
+            archive(msgId); // serialize things by passing them to the archive
+        }
+    };
+
+    using AllBroadcastersConnected = GenericBroadcasterMsgWithoutData;
+
+
+
+
 
 }
 

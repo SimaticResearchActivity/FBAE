@@ -20,28 +20,6 @@ public :
     std::string toString() override;
 };
 
-enum class BroadcasterMsgId : unsigned char
-{
-    DisconnectIntent = 97, // We start with a value which be displayed as a character in debugger + the enum values are different from values in enum SequencerMsgId
-    MessageToBroadcast,
-    RankInfo,
-};
-
-struct RankInfoMessage
-{
-    BroadcasterMsgId msgId{};
-    unsigned char  senderRank{};
-
-    // This method lets cereal know which data members to serialize
-    template<class Archive>
-    void serialize(Archive& archive)
-    {
-        archive(msgId, senderRank); // serialize things by passing them to the archive
-    }
-};
-
-using BroadcasterRankInfo = RankInfoMessage;
-
 
 
 #endif //FBAE_BBOBBALGOLAYER_H
