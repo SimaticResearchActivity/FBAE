@@ -100,7 +100,8 @@ int main(int argc, char* argv[])
     {
         size_t nbSites{param.getSites().size()};
         vector<unique_ptr<SessionLayer>> sessions;
-        vector<jthread> sessionThreads;
+        // thread instead of jthread to be compatible with Clang on MacOS
+        vector<thread> sessionThreads;
         for (int rank = 0 ; rank < nbSites ; ++rank)
         {
             sessions.emplace_back(make_unique<SessionLayer>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));

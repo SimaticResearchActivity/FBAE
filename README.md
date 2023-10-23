@@ -121,7 +121,7 @@ The interfaces between these layers are the following:
          - Then it call `CommLayer`'s `waitForMsg()` method. Note that we stay in `waitForMsg()` method until *Communication layer* detect a pre-specified number of disconnections (see parameter `maxDisconnections` of `waitForMsg()` method).
          - When *Algorithm layer* needs to send a message to another process, it can use:
 
-             - `CommPeer`'s `send()` lethod to send a message to a single process.
+             - `CommPeer`'s `send()` method to send a message to a single process.
              - `CommLayer`'s `broadcastMsg()` method to broadcast a message to all processes connected to this process.
 
          - *Algorithm layer* calls `CommPeer`'s `disconnect()` method when it wants to disconnect from a peer process.

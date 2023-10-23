@@ -8,7 +8,7 @@
 #include "msgTemplates.h"
 
 #include <tgmath.h>
-
+#include <unistd.h>
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
@@ -38,6 +38,21 @@ void BBOBBAlgoLayer::callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer,
         case BroadcasterMsgId::AckDisconnectIntent :
             peer->disconnect();
             break;
+        case BroadcasterMsgId::MessageToReceive :
+        {
+            auto bmtb{deserializeStruct<BroadcasterMessageToSend>(msgString)};
+            auto s {serializeStruct<BBOBBSendMessage>(BBOBBSendMessage{BroadcasterMsgId::ReceiveMessage,
+                                                                                         bmtb.senderRank,
+                                                                                         ++seqNum,
+                                                                                         bmtb.sessionMsg})};
+            peers[seqNum]->sendMsg(s);
+            break;
+        }
+        default:
+        {
+            cerr << "ERROR\tBBOBBAlgoLayer / BBOBB : Unexpected broadcasterMsgTyp (" << static_cast<int>(broadcasterMsgTyp) << ")\n";
+            exit(EXIT_FAILURE);
+        }
     }
 
 }
@@ -107,7 +122,10 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-
+    auto bmtb {serializeStruct<BroadcasterMessageToSend>(BroadcasterMessageToSend{BroadcasterMsgId::MessageToReceive,
+                                                                                            static_cast<unsigned char>(getSession()->getRank()),
+                                                                                            msg})};
+    peers[0]->sendMsg(bmtb);
 }
 
 void BBOBBAlgoLayer::terminate() {
