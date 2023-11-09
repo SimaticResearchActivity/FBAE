@@ -14,6 +14,7 @@ namespace fbae_BBOBBAlgoLayer {
         AckDisconnectIntent,
         MessageToReceive,
         ReceiveMessage,
+        DisconnectIntent,
     };
 
     struct RankInfoMessage
@@ -45,6 +46,8 @@ namespace fbae_BBOBBAlgoLayer {
     };
 
     using AllBroadcastersConnected = GenericBroadcasterMsgWithoutData;
+    using AckDisconnectIntent = GenericBroadcasterMsgWithoutData;
+
 
 
 

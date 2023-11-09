@@ -9,6 +9,7 @@
 
 #include <tgmath.h>
 #include <unistd.h>
+#include <thread>
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
@@ -48,6 +49,15 @@ void BBOBBAlgoLayer::callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer,
             peers[seqNum]->sendMsg(s);
             break;
         }
+        case BroadcasterMsgId::DisconnectIntent :
+        {
+            auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(msgString)};
+            auto s{serializeStruct<AckDisconnectIntent>(AckDisconnectIntent{BroadcasterMsgId::AckDisconnectIntent})};
+            peer->sendMsg(s);
+            if (getSession()->getParam().getVerbose())
+                cout << "Broadcaster #" << getSession()->getRank() << " announces it will disconnect \n";;
+            break;
+        }
         default:
         {
             cerr << "ERROR\tBBOBBAlgoLayer / BBOBB : Unexpected broadcasterMsgTyp (" << static_cast<int>(broadcasterMsgTyp) << ")\n";
@@ -61,6 +71,7 @@ void BBOBBAlgoLayer::callbackHandleMessageAsNonHostPeer(std::unique_ptr<CommPeer
 
 }
 
+
 bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
     bool verbose = getSession()->getParam().getVerbose();
@@ -68,57 +79,47 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     auto commLayer = getSession()->getCommLayer();
     auto sites = getSession()->getParam().getSites();
     int rank = getSession()->getRank();
+    vector<tuple<basic_string<char>, int>> broacaster = getBroadcasters();
 
-    //fork to handle connection while waiting for acknoledgment
-    pid_t pid = fork();
 
-    if (pid == -1) {
-        if (verbose)
-            cout << "Broadcaster" << rank << "didn't manage to fork";
-        exit(EXIT_FAILURE);
-
-    } else if (pid > 0) {
-        if (verbose)
-            cout << "Boradcaster#" << rank << " initHost\n";
-        commLayer->initHost(get<PORT>(sites[rank]), floor(log2(getBroadcasters().size())) + 2, this);
-        if (verbose)
-            cout << "Broadcaster#" << rank << " Wait for messages\n";
-        sleep(2);
-        commLayer->waitForMsg(false, (int)log2(sites.size()) + 1);
-        if (verbose)
-            cout << "Broadcaster#" << rank
-                 << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
-
-    } else {
+    std::thread t([rank, commLayer, verbose, sites, broacaster, this]() {
         // Send RankInfo
-        sleep(3);
-        for (int i = 0; i < (int)log2(sites.size()) + 1; i++) {
+        sleep(2);
+        for (int power_of_2 = 1;  power_of_2 < sites.size() ; power_of_2 *= 2) {
             if (verbose)
-                cout << "Broadcaster#" << rank << " : Send RankInfo to " << ((int)pow(2,i) + rank) % (int)getSession()->getParam().getSites().size()  << "\n";
+                cout << "Broadcaster#" << rank << " : Send RankInfo to " << (power_of_2 + rank) % (int)getSession()->getParam().getSites().size() << "\n";
             auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{BroadcasterMsgId::RankInfo,
                                                                             static_cast<unsigned char>(getSession()->getRank())})};
-            std::unique_ptr<CommPeer> cp =  getSession()->getCommLayer()->connectToHost(getSession()->getParam().getSites()[((int)pow(2,i) + rank) % (int)getSession()->getParam().getSites().size()], this);
+            std::unique_ptr<CommPeer> cp =  getSession()->getCommLayer()->connectToHost(getSession()->getParam().getSites()[(int)(power_of_2 + rank) % (int)getSession()->getParam().getSites().size()], this);
             peers.push_back(std::move(cp));
-            peers[i]->sendMsg(s);
+            peers.back()->sendMsg(s);
         }
         if (verbose)
             cout << "Broadcaster#" << rank << " : sent all messages\n";
 
 
-        //Temporary : disconnect just after connectiong
-        sleep(3);
-        for (int i = 0; i < (int)log2(sites.size()) + 1; i++) {
-            //auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(msgString)};
-            //auto s{serializeStruct<AckDisconnectIntent>(SequencerAckDisconnectIntent{SequencerMsgId::AckDisconnectIntent})};
-            //peer->sendMsg(s);
-            peers[i]->disconnect();
-            cout << "Broadcaster#" << rank
-                 << " : disconnect from " << (int)(pow(2, i) + rank) %  (int)getSession()->getParam().getSites().size() << "\n";
-        }
+    });
+
+    cout << "Broadcaster#" << rank << " initHost\n";
+    commLayer->initHost(get<PORT>(sites[rank]), floor(log2(broacaster.size())) + 1, this);
+    if (verbose)
+        cout << "Broadcaster#" << rank << " Wait for messages\n";
+    commLayer->waitForMsg(false, (int)log2(sites.size()) + 1);
+    if (verbose)
+        cout << "Broadcaster#" << rank << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
+
+    t.join();
+    cout << rank << " est arrivé la";
+
+    sleep(3);
+    for (int power_of_2 = 1;  power_of_2 < sites.size() ; power_of_2 *= 2) {
+        peers.back()->disconnect();
+        cout << "Broadcaster#" << rank << " : disconnect from" << (int)power_of_2 % (int)getSession()->getParam().getSites().size()  << "\n";
 
     }
 
-    return true;
+
+    return false;
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
@@ -129,6 +130,10 @@ void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
 }
 
 void BBOBBAlgoLayer::terminate() {
+    auto s {serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{BroadcasterMsgId::DisconnectIntent, static_cast<unsigned char>(getSession()->getRank())})};
+    for (int i = 0; i < (int)log2(getSession()->getParam().getSites().size()) + 1; i++) {
+        peers[i]->sendMsg(s);
+    }
 
 }
 
