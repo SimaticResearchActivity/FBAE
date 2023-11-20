@@ -94,7 +94,7 @@ std::unique_ptr<CommPeer> EnetCommLayer::connectToHost(HostTuple host, AlgoLayer
         cerr << "ERROR: No available peers for initiating an ENet connection.\n";
         exit(EXIT_FAILURE);
     }
-    if (ENetEvent event ; enet_host_service(enetHost, &event, 2000) > 0 && // To check that the server contacted us back. 2000 = Nb milliseconds we want to wait.
+    if (ENetEvent event ; enet_host_service(enetHost, &event, 10000) > 0 && // To check that the server contacted us back. 2000 = Nb milliseconds we want to wait.
                           event.type == ENET_EVENT_TYPE_CONNECT)
     {
         if (getAlgoLayer()->getSession()->getParam().getVerbose())

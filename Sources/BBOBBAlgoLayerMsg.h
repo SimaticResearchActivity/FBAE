@@ -12,7 +12,7 @@ namespace fbae_BBOBBAlgoLayer {
         RankInfo,
         AllBroadcastersConnected,
         AckDisconnectIntent,
-        MessageToReceive,
+        Step,
         ReceiveMessage,
         DisconnectIntent,
     };

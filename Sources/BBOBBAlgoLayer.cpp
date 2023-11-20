@@ -16,8 +16,8 @@ using namespace fbae_BBOBBAlgoLayer;
 
 
 void BBOBBAlgoLayer::callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
-    static atomic_int32_t seqNum{0};
-    static atomic_int32_t nbConnectedBroadcasters{0};
+    thread_local atomic_int32_t seqNum{0};
+    thread_local atomic_int32_t nbConnectedBroadcasters{0};
     switch (BroadcasterMsgId broadcasterMsgTyp{ static_cast<BroadcasterMsgId>(msgString[0]) }; broadcasterMsgTyp) {
 
         case BroadcasterMsgId::RankInfo :
@@ -26,20 +26,20 @@ void BBOBBAlgoLayer::callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer,
             if (getSession()->getParam().getVerbose())
                 cout << "Broadcaster #" << getSession()->getRank()
                      << " : received RankInfo from broadcaster#" <<  static_cast<unsigned int>(bri.senderRank) << "\n";
-            if (++nbConnectedBroadcasters == getBroadcasters().size()) {
+            if (++nbConnectedBroadcasters == 2) {
 
-                if (getSession()->getParam().getVerbose())
-                    cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";;
-                auto s{serializeStruct<AllBroadcastersConnected >(AllBroadcastersConnected{BroadcasterMsgId::AllBroadcastersConnected})};
-                getSession()->getCommLayer()->broadcastMsg(s);
-
+                //if (getSession()->getParam().getVerbose())
+                //    cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";;
+                //auto s{serializeStruct<AllBroadcastersConnected >(AllBroadcastersConnected{BroadcasterMsgId::AllBroadcastersConnected})};
+                //getSession()->getCommLayer()->broadcastMsg(s);
+                getSession()->callbackInitDone();
             }
             break;
         }
         case BroadcasterMsgId::AckDisconnectIntent :
             peer->disconnect();
             break;
-        case BroadcasterMsgId::MessageToReceive :
+        case BroadcasterMsgId::Step :
         {
             auto bmtb{deserializeStruct<BroadcasterMessageToSend>(msgString)};
             auto s {serializeStruct<BBOBBSendMessage>(BBOBBSendMessage{BroadcasterMsgId::ReceiveMessage,
@@ -79,12 +79,13 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     auto commLayer = getSession()->getCommLayer();
     auto sites = getSession()->getParam().getSites();
     int rank = getSession()->getRank();
-    vector<tuple<basic_string<char>, int>> broacaster = getBroadcasters();
+    vector<tuple<basic_string<char>, int>> broadcaster = getBroadcasters();
 
+    cout << "Broadcaster#" << rank << " initHost\n";
+    commLayer->initHost(get<PORT>(sites[rank]), floor(log2(broadcaster.size())) + 1, this);
 
-    std::thread t([rank, commLayer, verbose, sites, broacaster, this]() {
+    std::thread t([rank, commLayer, verbose, sites, broadcaster, this]() {
         // Send RankInfo
-        sleep(2);
         for (int power_of_2 = 1;  power_of_2 < sites.size() ; power_of_2 *= 2) {
             if (verbose)
                 cout << "Broadcaster#" << rank << " : Send RankInfo to " << (power_of_2 + rank) % (int)getSession()->getParam().getSites().size() << "\n";
@@ -96,12 +97,9 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
         }
         if (verbose)
             cout << "Broadcaster#" << rank << " : sent all messages\n";
-
-
     });
 
-    cout << "Broadcaster#" << rank << " initHost\n";
-    commLayer->initHost(get<PORT>(sites[rank]), floor(log2(broacaster.size())) + 1, this);
+
     if (verbose)
         cout << "Broadcaster#" << rank << " Wait for messages\n";
     commLayer->waitForMsg(false, (int)log2(sites.size()) + 1);
@@ -123,7 +121,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    auto bmtb {serializeStruct<BroadcasterMessageToSend>(BroadcasterMessageToSend{BroadcasterMsgId::MessageToReceive,
+    auto bmtb {serializeStruct<BroadcasterMessageToSend>(BroadcasterMessageToSend{BroadcasterMsgId::Step,
                                                                                             static_cast<unsigned char>(getSession()->getRank()),
                                                                                             msg})};
     peers[0]->sendMsg(bmtb);
