@@ -37,16 +37,17 @@ void SessionLayer::callbackDeliver(int senderRank, int seqNum, const std::string
     thread_local unsigned int msgNum = 0;
     switch (SessionMsgId sessionMsgTyp{ static_cast<SessionMsgId>(msg[0]) }; sessionMsgTyp)
     {
-        case SessionMsgId::FinishedPerfMeasures :
+        using enum SessionMsgId;
+        case FinishedPerfMeasures :
             processFinishedPerfMeasuresMsg(senderRank, seqNum);
             break;
-        case SessionMsgId::FirstBroadcast :
+        case FirstBroadcast :
             msgNum = processFirstBroadcastMsg(senderRank, seqNum, msgNum);
             break;
-        case SessionMsgId::PerfMeasure :
+        case PerfMeasure :
             processPerfMeasureMsg(senderRank, seqNum, msg);
             break;
-        case SessionMsgId::PerfResponse :
+        case PerfResponse :
             msgNum = processPerfResponseMsg(senderRank, seqNum, msgNum, msg);
             break;
         default:

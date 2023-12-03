@@ -4,6 +4,7 @@
 #include "OptParserExtended.h"
 #include "SequencerAlgoLayer.h"
 #include "SessionLayer.h"
+#include "TcpCommLayer.h"
 
 using namespace std;
 using namespace mlib;
@@ -29,6 +30,7 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
     switch(commId)
     {
         case 'e': return make_unique<EnetCommLayer>();
+        case 't': return make_unique<TcpCommLayer>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is \"" << commId << "\""
                       << " which is not the identifier of a defined communication layer"
@@ -45,7 +47,7 @@ int main(int argc, char* argv[])
     //
     OptParserExtended parser{
             "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tS = Sequencer based",
-            "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\te = Enet (reliable)",
+            "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\te = Enet (reliable)\n\t\t\t\t\t\tt = TCP",
             "h|help \t Show help message",
             "n:nbMsg number \t Number of messages to be sent",
             "r:rank rank_number \t Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)",
