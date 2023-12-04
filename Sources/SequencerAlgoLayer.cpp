@@ -1,9 +1,9 @@
 #include <iostream>
 #include <thread>
-#include "../../SessionLayer.h"
+#include "SessionLayer.h"
 #include "SequencerAlgoLayer.h"
 #include "SequencerAlgoLayerMsg.h"
-#include "../../msgTemplates.h"
+#include "msgTemplates.h"
 
 using namespace std;
 using namespace fbae_SequencerAlgoLayer;

@@ -2,10 +2,10 @@
 // Created by lardeur on 09/10/23.
 //
 
-#include "../../SessionLayer.h"
+#include "SessionLayer.h"
 #include "BBOBBAlgoLayer.h"
 #include "BBOBBAlgoLayerMsg.h"
-#include "../../msgTemplates.h"
+#include "msgTemplates.h"
 
 #include <tgmath.h>
 #include <unistd.h>

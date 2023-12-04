@@ -6,7 +6,7 @@
 #define FBAE_BBOBBALGOLAYER_H
 
 
-#include "../AlgoLayer.h"
+#include "AlgoLayer.h"
 
 class BBOBBAlgoLayer : public AlgoLayer {
 private :
