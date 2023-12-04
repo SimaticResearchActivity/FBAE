@@ -17,12 +17,12 @@ private:
      * @algoLayer->@handleMessageAsHost() otherwise.
      * @return true if the received event is a disconnection and false otherwise.
      */
-    bool analyzeEvent(ENetEvent const& event, bool nonHostPeer);
+    bool analyzeEvent(ENetEvent const& event);
 public:
     EnetCommLayer();
     void broadcastMsg(std::string_view msg) override;
     std::unique_ptr<CommPeer> connectToHost(HostTuple host, AlgoLayer *algoLayer) override;
     void initHost(int port, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
     std::string toString() override;
-    void waitForMsg(bool nonHostPeer, size_t maxDisconnections) override;
+    void waitForMsg(size_t maxDisconnections) override;
 };

@@ -62,5 +62,5 @@ public:
      * @algoLayer->@handleMessageAsHost() otherwise.
      * @param maxDisconnections Maximum number of disconnections before returning.
      */
-    virtual void waitForMsg(bool nonHostPeer, size_t maxDisconnections) = 0;
+    virtual void waitForMsg(size_t maxDisconnections) = 0;
 };

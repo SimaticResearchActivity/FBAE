@@ -1,9 +1,9 @@
 #pragma once
 
 #include <memory>
-#include "CommLayer.h"
-#include "CommPeer.h"
-#include "Param.h"
+#include "../CommLayer.h"
+#include "../CommPeer.h"
+#include "../Param.h"
 class SessionLayer;
 
 class AlgoLayer {
@@ -22,16 +22,9 @@ public:
      * that is is has called @initHost() on @CommLayer.
      * @param peer Peer from which packet was received.
      * @param msgString String containing message.
+     * @return true if AckDisconnectIntent message was received and false otherwise
      */
-    virtual void callbackHandleMessageAsHost(std::unique_ptr<CommPeer> peer, const std::string &msgString) = 0;
-
-    /**
-     * @brief Handles packet (stored in @packetString) received from @peer. Should be called when process is just a
-     * peer and not a host, that is has /never/ called @initHost() on @CommLayer.
-     * @param peer Peer from which packet was received.
-     * @param msgString String containing message.
-     */
-    virtual void callbackHandleMessageAsNonHostPeer(std::unique_ptr<CommPeer> peer, const std::string &msgString) = 0;
+    virtual bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) = 0;
 
     /**
      * @brief Executes concrete totalOrderBroadcast algorithm. Returns when algorithm is done.

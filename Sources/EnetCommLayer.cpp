@@ -22,7 +22,7 @@ EnetCommLayer::EnetCommLayer() {
     }
 }
 
-bool EnetCommLayer::analyzeEvent(ENetEvent const& event, bool nonHostPeer)
+bool EnetCommLayer::analyzeEvent(ENetEvent const& event)
 {
     switch (event.type)
     {
@@ -41,14 +41,9 @@ bool EnetCommLayer::analyzeEvent(ENetEvent const& event, bool nonHostPeer)
             event.peer->data = nullptr;
             return true;
         case ENET_EVENT_TYPE_RECEIVE:
-            if (nonHostPeer)
-                getAlgoLayer()->callbackHandleMessageAsNonHostPeer(
-                        make_unique<EnetCommPeer>(event.peer),
-                        string{bit_cast<char *>(event.packet->data), event.packet->dataLength});
-            else
-                getAlgoLayer()->callbackHandleMessageAsHost(
-                        make_unique<EnetCommPeer>(event.peer),
-                        string{bit_cast<char *>(event.packet->data), event.packet->dataLength});
+            getAlgoLayer()->callbackHandleMessage(
+                    make_unique<EnetCommPeer>(event.peer),
+                    string{bit_cast<char *>(event.packet->data), event.packet->dataLength});
             /* Clean up the packet now that we're done using it. */
             enet_packet_destroy(event.packet);
             break;
@@ -127,12 +122,12 @@ std::string EnetCommLayer::toString() {
     return "ENet";
 }
 
-void EnetCommLayer::waitForMsg(bool nonHostPeer, size_t maxDisconnections) {
+void EnetCommLayer::waitForMsg(size_t maxDisconnections) {
     size_t remainingDisconnections = maxDisconnections;
     do {
         ENetEvent event;
         while (enet_host_service(enetHost, &event, timeoutFor_enet_host_service) > 0)
-            if (analyzeEvent(event, nonHostPeer))
+            if (analyzeEvent(event))
                 --remainingDisconnections;
 
     } while (remainingDisconnections);
