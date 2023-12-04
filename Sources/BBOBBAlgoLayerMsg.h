@@ -7,7 +7,7 @@
 
 namespace fbae_BBOBBAlgoLayer {
 
-    enum class BroadcasterMsgId : unsigned char
+    enum class MsgId : unsigned char
     {
         RankInfo,
         AllBroadcastersConnected,
@@ -19,7 +19,7 @@ namespace fbae_BBOBBAlgoLayer {
 
     struct RankInfoMessage
     {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
         unsigned char  senderRank{};
 
         // This method lets cereal know which data members to serialize
@@ -33,9 +33,9 @@ namespace fbae_BBOBBAlgoLayer {
     using BroadcasterRankInfo = RankInfoMessage;
     using BroadcasterDisconnectIntent = RankInfoMessage;
 
-    struct GenericBroadcasterMsgWithoutData
+    struct StructGenericMsgWithoutData
     {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -45,17 +45,12 @@ namespace fbae_BBOBBAlgoLayer {
         }
     };
 
-    using AllBroadcastersConnected = GenericBroadcasterMsgWithoutData;
-    using AckDisconnectIntent = GenericBroadcasterMsgWithoutData;
-
-
-
-
-
+    using StructAckDisconnectIntent = StructGenericMsgWithoutData;
+    using StructAllBroadcastersConnected = StructGenericMsgWithoutData;
 
     struct BroadcasterMessageToSend
     {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
         unsigned char senderRank{};
         std::string sessionMsg;
 
@@ -69,7 +64,7 @@ namespace fbae_BBOBBAlgoLayer {
 
     struct BBOBBSendMessage
     {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
         unsigned char senderRank{};
         int seqNum{};
         std::string sessionMsg;

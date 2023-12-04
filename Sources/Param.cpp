@@ -50,7 +50,7 @@ Param::Param(mlib::OptParserExtended const& parser)
 
 [[nodiscard]] std::string Param::asCsv(std::string const& algoStr, std::string const& commLayerStr) const
 {
-    return std::string { algoStr + commLayerStr + "," + std::to_string(nbMsg) + "," + std::to_string(rank)  + "," + std::to_string(sizeMsg) + "," + siteFile};
+    return std::string { algoStr + "," + commLayerStr + "," + std::to_string(nbMsg) + "," + std::to_string(rank)  + "," + std::to_string(sizeMsg) + "," + siteFile};
 }
 
 std::string Param::csvHeadline()

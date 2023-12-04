@@ -1,23 +1,31 @@
 #pragma once
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/string.hpp>
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
 
 namespace fbae_SequencerAlgoLayer
 {
     //---------------------------------------------------
-    // Messages sent by the sequencer to broadcaster(s)
+    // Id of messages exchanged between sequencer and broadcaster(s)
     //---------------------------------------------------
-    enum class SequencerMsgId : unsigned char
+    enum class MsgId : unsigned char
     {
+        // Messages sent by the sequencer to broadcaster(s)
         AckDisconnectIntent = 65, // We start with a value which be displayed as a character in debugger
         AllBroadcastersConnected,
-        BroadcastMessage
+        BroadcastMessage,
+        // Messages sent by a broadcaster to the sequencer
+        DisconnectIntent,
+        MessageToBroadcast,
+        RankInfo,
     };
 
-    struct GenericSequencerMsgWithoutData
+    //---------------------------------------------------
+    // Structure of messages sent by a broadcaster to the sequencer
+    //---------------------------------------------------
+    struct StructGenericMsgWithoutData
     {
-        SequencerMsgId msgId{};
+        MsgId msgId{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -27,12 +35,12 @@ namespace fbae_SequencerAlgoLayer
         }
     };
 
-    using SequencerAckDisconnectIntent = GenericSequencerMsgWithoutData;
-    using SequencerAllBroadcastersConnected = GenericSequencerMsgWithoutData;
+    using StructAckDisconnectIntent = StructGenericMsgWithoutData;
+    using StructAllBroadcastersConnected = StructGenericMsgWithoutData;
 
-    struct SequencerBroadcastMessage
+    struct StructBroadcastMessage
     {
-        SequencerMsgId msgId{};
+        MsgId msgId{};
         unsigned char senderRank{};
         int seqNum{};
         std::string sessionMsg;
@@ -46,18 +54,11 @@ namespace fbae_SequencerAlgoLayer
     };
 
     //---------------------------------------------------
-    // Messages sent by a broadcaster to the sequencer
+    // Structure of messages sent by a broadcaster to the sequencer
     //---------------------------------------------------
-    enum class BroadcasterMsgId : unsigned char
+    struct StructGenericMsgWithRank
     {
-        DisconnectIntent = 97, // We start with a value which be displayed as a character in debugger + the enum values are different from values in enum SequencerMsgId
-        MessageToBroadcast,
-        RankInfo,
-    };
-
-    struct GenericBroadcasterMsgWithRank
-    {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
         unsigned char  senderRank{};
 
         // This method lets cereal know which data members to serialize
@@ -68,12 +69,12 @@ namespace fbae_SequencerAlgoLayer
         }
     };
 
-    using BroadcasterDisconnectIntent = GenericBroadcasterMsgWithRank;
-    using BroadcasterRankInfo = GenericBroadcasterMsgWithRank;
+    using StructDisconnectIntent = StructGenericMsgWithRank;
+    using StructRankInfo = StructGenericMsgWithRank;
 
-    struct BroadcasterMessageToBroadcast
+    struct StructMessageToBroadcast
     {
-        BroadcasterMsgId msgId{};
+        MsgId msgId{};
         unsigned char senderRank{};
         std::string sessionMsg;
 
