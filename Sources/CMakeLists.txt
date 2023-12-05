@@ -22,7 +22,7 @@ add_executable(fbae
         BBOBBAlgoLayer.cpp
         BBOBBAlgoLayer.h
         BBOBBAlgoLayerMsg.h
-        BBOBBAlgoLayerMsg.h)
+        BBOBBAlgoLayerMsg.h
         SessionLayerMsg.h
         TcpCommLayer.cpp
         TcpCommLayer.h

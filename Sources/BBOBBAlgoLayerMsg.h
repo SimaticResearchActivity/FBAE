@@ -7,25 +7,22 @@
 
 namespace fbae_BBOBBAlgoLayer {
 
-    enum class MsgId : unsigned char
-    {
+    enum class MsgId : unsigned char {
         RankInfo,
-        AllBroadcastersConnected,
         AckDisconnectIntent,
         Step,
         ReceiveMessage,
         DisconnectIntent,
+        MessageToBroadcast
     };
 
-    struct RankInfoMessage
-    {
+    struct RankInfoMessage {
         MsgId msgId{};
-        unsigned char  senderRank{};
+        unsigned char senderRank{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
-        void serialize(Archive& archive)
-        {
+        void serialize(Archive &archive) {
             archive(msgId, senderRank); // serialize things by passing them to the archive
         }
     };
@@ -33,22 +30,19 @@ namespace fbae_BBOBBAlgoLayer {
     using BroadcasterRankInfo = RankInfoMessage;
     using BroadcasterDisconnectIntent = RankInfoMessage;
 
-    struct StructGenericMsgWithoutData
-    {
+    struct StructGenericMsgWithoutData {
         MsgId msgId{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
-        void serialize(Archive& archive)
-        {
+        void serialize(Archive &archive) {
             archive(msgId); // serialize things by passing them to the archive
         }
     };
 
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
-    using StructAllBroadcastersConnected = StructGenericMsgWithoutData;
 
-    struct BroadcasterMessageToSend
+    struct StructMessageToBroadcast
     {
         MsgId msgId{};
         unsigned char senderRank{};
@@ -62,7 +56,20 @@ namespace fbae_BBOBBAlgoLayer {
         }
     };
 
-    struct BBOBBSendMessage
+    struct StepMessage {
+        MsgId msgId{};
+        unsigned char senderRank{};
+        int stepNumber;
+        std::vector<std::string> msgBroadcasted;
+
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive &archive) {
+            archive(msgId); // serialize things by passing them to the archive
+        }
+    };
+
+    struct StructBroadcastMessage
     {
         MsgId msgId{};
         unsigned char senderRank{};

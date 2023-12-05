@@ -14,9 +14,11 @@
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
+
+
 bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
-    thread_local atomic_int32_t seqNum{0};
-    thread_local atomic_int32_t nbConnectedBroadcasters{0};
+    static atomic_int32_t seqNum{0};
+    static atomic_int32_t nbConnectedBroadcasters{0};
     MsgId msgId{static_cast<MsgId>(msgString[0])};
     switch (msgId) {
         using
@@ -27,43 +29,120 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             if (getSession()->getParam().getVerbose())
                 cout << "Broadcaster #" << getSession()->getRank()
                      << " : received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
-            if (++nbConnectedBroadcasters == 2) {
 
-                //if (getSession()->getParam().getVerbose())
-                //    cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";;
-                //auto s{serializeStruct<AllBroadcastersConnected >(AllBroadcastersConnected{BroadcasterMsgId::AllBroadcastersConnected})};
-                //getSession()->getCommLayer()->broadcastMsg(s);
+            cout << "Size of peers : " << peers.size() << " nb connected b : " << nbConnectedBroadcasters << "\n";
+            nbConnectedBroadcasters++;
+
+            if (nbConnectedBroadcasters == /* //TODO CHANGE THIS */ 2) {
+
+                if (getSession()->getParam().getVerbose())
+                    cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";;
+
                 getSession()->callbackInitDone();
+
+                //Send Step 0 Message of wave 0
+                if (getSession()->getParam().getVerbose())
+                    cout << "Broadcaster #" << getSession()->getRank()
+                         << " send step 0 of wave 0 to the first member of peers " << peers[0] <<"\n";;
+                auto s{serializeStruct(StepMessage{
+                        Step,
+                        static_cast<unsigned char>(getSession()->getRank()),
+                        0,
+                        msgWaitingToBeBroadcasted
+                })};
+                peers[0]->sendMsg(s);
             }
             break;
         }
+
         case AckDisconnectIntent :
             peer->disconnect();
             break;
+
         case Step : {
-            auto bmtb{deserializeStruct<BroadcasterMessageToSend>(msgString)};
-            auto s{serializeStruct<BBOBBSendMessage>(BBOBBSendMessage{ReceiveMessage,
-                                                                      bmtb.senderRank,
-                                                                      ++seqNum,
-                                                                      bmtb.sessionMsg})};
-            peers[seqNum]->sendMsg(s);
+            auto bmtb{deserializeStruct<StepMessage>(msgString)};
+
+            if (getSession()->getParam().getVerbose())
+                cout << "Broadcaster #" << getSession()->getRank()
+                     << " announces has received a step message of step number" << bmtb.stepNumber << " from broadcater"
+                     << static_cast<unsigned int>(bmtb.senderRank) << "\n";;
+
+
+            //Receive the right step
+            if (bmtb.stepNumber == currentStep) {
+
+                //C'est une step intermédiaire
+                if (currentStep != peers.size()) {
+
+                    currentStep++;
+
+                    auto mes{serializeStruct(StepMessage{
+                            Step,
+                            static_cast<unsigned char>(getSession()->getRank()),
+                            1,
+                            msgWaitingToBeBroadcasted
+                    })};
+
+                    /*
+                    if (getSession()->getParam().getVerbose())
+                        cout << "Broadcaster #" << getSession()->getRank() << " sends message of step number"
+                             << currentStep << " to broadcater" << currentStep << "\n";;
+                    //peers[currentStep]->sendMsg(mes);
+                    */
+
+                } else {
+                    //C'était le dernier message de la vague
+                    for (const std::string &message: bmtb.msgBroadcasted) {
+                        auto sbm{deserializeStruct<StructBroadcastMessage>(message)};
+                        if (nextDeliver != sbm.seqNum) {
+                            cerr << "ERROR\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank()
+                                 << " : Received a totalOrderBroadcast message with seqNum=" << sbm.seqNum
+                                 << " while nextDeliver=" << nextDeliver << "\n";
+                            exit(EXIT_FAILURE);
+                        }
+                        getSession()->callbackDeliver(sbm.senderRank, sbm.seqNum, sbm.sessionMsg);
+                        ++nextDeliver;
+                        break;
+                    }
+                }
+
+            } else if (bmtb.stepNumber == currentStep + 1) {
+                // Receive one message ahead
+
+                // Boucle while pour attendre que le message d'avant a bien a été reçu
+            } else {
+
+                printf("b : %d MY CURRENT STEP %d\n", getSession()->getRank(), currentStep);
+                printf("b : %d MY MSGSTEP %d\n", getSession()->getRank(), bmtb.stepNumber);
+                cout << "Message mauvais reçi de la part de " << static_cast<unsigned int>(bmtb.senderRank);
+
+                cerr << "ERROR\tBBOBBAlgoLayer: Unexpected Step (" << bmtb.stepNumber << ")\n";
+                exit(EXIT_FAILURE);
+            }
+
             break;
         }
+
         case DisconnectIntent : {
             auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(msgString)};
-            auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{MsgId::AckDisconnectIntent})};
+            auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{
+                    MsgId::AckDisconnectIntent
+            })};
 
             peer->sendMsg(s);
             if (getSession()->getParam().getVerbose())
                 cout << "Broadcaster #" << getSession()->getRank() << " announces it will disconnect \n";;
             break;
         }
+
         default: {
             cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
             exit(EXIT_FAILURE);
         }
     }
+
     return msgId == MsgId::AckDisconnectIntent;
+
 }
 
 
@@ -74,25 +153,30 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     auto commLayer = getSession()->getCommLayer();
     auto sites = getSession()->getParam().getSites();
     int rank = getSession()->getRank();
-    vector<tuple<basic_string<char>, int>> broadcaster = getBroadcasters();
+
 
     cout << "Broadcaster#" << rank << " initHost\n";
-    commLayer->initHost(get<PORT>(sites[rank]), floor(log2(broadcaster.size())) + 1, this);
+    commLayer->initHost(get<PORT>(sites[rank]), /* //TODO Change to floor etc... */2, this);
 
-    std::thread t([rank, commLayer, verbose, sites, broadcaster, this]() {
+
+    std::thread t([rank, verbose, sites, this]() {
         // Send RankInfo
         for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
             std::unique_ptr<CommPeer> cp = getSession()->getCommLayer()->connectToHost(
-                    getSession()->getParam().getSites()[(int) (power_of_2 + rank) %
-                                                        (int) getSession()->getParam().getSites().size()], this);
+                    getSession()->getParam().getSites()[(power_of_2 + rank) %
+                                                        getSession()->getParam().getSites().size()],
+                    this);
             peers.push_back(std::move(cp));
         }
-        this_thread::sleep_for(5000ms);
-        for (int i = 0; i < peers.size(); i++) {
+
+        for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, i++) {
             if (verbose)
-                cout << "Broadcaster#" << rank << " : Send RankInfo to " << i << "\n";
-            auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{MsgId::RankInfo,
-                                                                            static_cast<unsigned char>(getSession()->getRank())})};
+                cout << "Broadcaster#" << rank << " : Send RankInfo to broadcaster "
+                     << (power_of_2 + rank) % getSession()->getParam().getSites().size() << "\n";
+            auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{
+                    MsgId::RankInfo,
+                    static_cast<unsigned char>(getSession()->getRank())
+            })};
             peers[i]->sendMsg(s);
         }
         if (verbose)
@@ -102,16 +186,19 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
     if (verbose)
         cout << "Broadcaster#" << rank << " Wait for messages\n";
-    commLayer->waitForMsg((int) log2(sites.size()) + 1);
-    if (verbose)
-        cout << "Broadcaster#" << rank << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
+    commLayer->waitForMsg(/* //TODO Change with good value (floor (...)) */ 2);
 
-    t.join();
+
+    if (verbose)
+        cout << "Broadcaster#" << rank
+             << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
+
     cout << rank << " est arrivé là\n";
 
-    sleep(3);
-    for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
-        peers.back()->disconnect();
+    sleep(2);
+
+    for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, i++) {
+        peers[i]->disconnect();
         cout << "Broadcaster#" << rank << " : disconnect from"
              << (int) power_of_2 % (int) getSession()->getParam().getSites().size() << "\n";
 
@@ -122,10 +209,12 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    auto bmtb{serializeStruct<BroadcasterMessageToSend>(BroadcasterMessageToSend{MsgId::Step,
-                                                                                 static_cast<unsigned char>(getSession()->getRank()),
-                                                                                 msg})};
-    peers[0]->sendMsg(bmtb);
+    auto bmtb{serializeStruct<StructMessageToBroadcast>(StructMessageToBroadcast{
+            MsgId::MessageToBroadcast,
+            static_cast<unsigned char>(getSession()->getRank()),
+            msg
+    })};
+    msgWaitingToBeBroadcasted.push_back(bmtb);
 }
 
 void BBOBBAlgoLayer::terminate() {
