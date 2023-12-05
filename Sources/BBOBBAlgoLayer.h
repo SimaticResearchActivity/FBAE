@@ -11,6 +11,9 @@
 class BBOBBAlgoLayer : public AlgoLayer {
 private :
     std::vector<std::unique_ptr<CommPeer>> peers; //peers that the entity will communicate with
+    std::vector<std::string> msgWaitingToBeBroadcasted;
+    int currentStep = 0;
+    int nextDeliver{1};
 public :
     bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
     bool executeAndProducedStatistics() override;
