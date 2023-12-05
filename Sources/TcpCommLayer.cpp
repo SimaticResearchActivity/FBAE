@@ -26,7 +26,6 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
     std::vector<std::thread> threadsHandleConn(nbAwaitedConnections);
     try
     {
-        boost::asio::io_service ioService;
         tcp::acceptor a(ioService, tcp::endpoint(tcp::v4(), static_cast<unsigned short>(port)));
 
         for (auto &t : threadsHandleConn)
@@ -61,14 +60,12 @@ void TcpCommLayer::broadcastMsg(std::string_view msg)
         ptrPeer->sendMsg(msg);
     }
 }
-static unique_ptr<tcp::socket>  tryConnectToHost(HostTuple host)
+unique_ptr<tcp::socket>  TcpCommLayer::tryConnectToHost(HostTuple host)
 {
     unique_ptr<tcp::socket> ptrSock{nullptr};
     try
     {
         // EndPoint creation
-        boost::asio::io_service ioService;
-
         tcp::resolver resolver(ioService);
 
         auto portAsString = to_string(get<PORT>(host));
