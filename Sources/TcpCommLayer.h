@@ -15,6 +15,13 @@
 class TcpCommLayer : public CommLayer{
 private:
     /**
+     * @brief As Boost tutorial explains, all programs that use asio need to have at least one boost::asio::io_service
+     * object. In fact, ioService must exist outside scope of the try catch in @acceptConn and @tryConnectToHost so that
+     * its data can be referenced by ptrSock outside of these functions. We choose to define this object as an instance
+     * variable.
+     */
+    boost::asio::io_service ioService;
+    /**
      * @brief Peers created by threadAcceptConn
      */
     std::vector<TcpCommPeer*> incomingPeers;
@@ -53,6 +60,12 @@ private:
      * @return String containing received packet
      */
     static std::string receiveEvent(boost::asio::ip::tcp::socket *ptrSock);
+    /**
+     * @brief Tries to connect to host @host
+     * @param host
+     * @return unique_ptr containing socket if connection succeeds and nullptr if connection fails.
+     */
+    std::unique_ptr<boost::asio::ip::tcp::socket>  tryConnectToHost(HostTuple host);
 public:
     TcpCommLayer() = default;
     void broadcastMsg(std::string_view msg) override;

@@ -82,6 +82,7 @@ and
 #include <cstring>
 #include <cassert>
 #include <filesystem>
+#include <algorithm>
 
 using namespace std;
 

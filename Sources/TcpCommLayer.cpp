@@ -26,7 +26,6 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
     std::vector<std::thread> threadsHandleConn(nbAwaitedConnections);
     try
     {
-        boost::asio::io_service ioService;
         tcp::acceptor a(ioService, tcp::endpoint(tcp::v4(), static_cast<unsigned short>(port)));
 
         for (auto &t : threadsHandleConn)
@@ -45,7 +44,7 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
         if (e.code() == boost::asio::error::address_in_use)
             cerr << "ERROR: Server cannot bind to port " << port << " (probably because there is an other server running and already bound to this port)\n";
         else
-            cerr << "ERROR: Unexpected Boost Exception in function server(): " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in thread acceptConn: " << e.what() << "\n";
         exit(1);
     }
     for (auto &t : threadsHandleConn) {
@@ -61,14 +60,12 @@ void TcpCommLayer::broadcastMsg(std::string_view msg)
         ptrPeer->sendMsg(msg);
     }
 }
-static unique_ptr<tcp::socket>  tryConnectToHost(HostTuple host)
+unique_ptr<tcp::socket>  TcpCommLayer::tryConnectToHost(HostTuple host)
 {
     unique_ptr<tcp::socket> ptrSock{nullptr};
     try
     {
         // EndPoint creation
-        boost::asio::io_service ioService;
-
         tcp::resolver resolver(ioService);
 
         auto portAsString = to_string(get<PORT>(host));
@@ -87,7 +84,7 @@ static unique_ptr<tcp::socket>  tryConnectToHost(HostTuple host)
             return nullptr;
         else
         {
-            cerr << "ERROR: Unexpected Boost Exception in thread client: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in method tryConnectToHost: " << e.what() << "\n";
             exit(1);
         }
     }
@@ -147,7 +144,7 @@ void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::sock
         }
         else
         {
-            cerr << "ERROR: Unexpected Boost Exception in thread session: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in thread handleIncomingConn: " << e.what() << "\n";
             exit(1);
         }
     }
@@ -172,7 +169,7 @@ void TcpCommLayer::handleOutgoingConn(std::unique_ptr<boost::asio::ip::tcp::sock
             //  - boost::asio::error::connection_reset for Windows
             cerr << "ERROR: Server has disconnected (probably because it crashed)\n";
         else
-            cerr << "ERROR: Unexpected Boost Exception in thread msgReceive: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in thread handleOutgoingConn: " << e.what() << "\n";
         exit(1);
     }
 }
