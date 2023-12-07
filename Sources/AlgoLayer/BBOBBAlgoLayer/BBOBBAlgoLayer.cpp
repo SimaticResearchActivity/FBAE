@@ -2,10 +2,10 @@
 // Created by lardeur on 09/10/23.
 //
 
-#include "SessionLayer.h"
+#include "../../SessionLayer/SessionLayer.h"
 #include "BBOBBAlgoLayer.h"
 #include "BBOBBAlgoLayerMsg.h"
-#include "msgTemplates.h"
+#include "../../msgTemplates.h"
 
 #include <tgmath.h>
 #include <unistd.h>
@@ -13,7 +13,6 @@
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
-
 
 
 bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
@@ -30,27 +29,34 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
                 cout << "Broadcaster #" << getSession()->getRank()
                      << " : received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
 
-            cout << "Size of peers : " << peers.size() << " nb connected b : " << nbConnectedBroadcasters << "\n";
-            nbConnectedBroadcasters++;
 
-            if (nbConnectedBroadcasters == /* //TODO CHANGE THIS */ 2) {
+            if (++nbConnectedBroadcasters == /* //TODO CHANGE THIS */ 2) {
 
                 if (getSession()->getParam().getVerbose())
                     cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";;
 
+                sleep(2);
+                messagesOfOneWave.resize(peers.size() + 1);
+                for (int i = 0; i < peers.size(); i++) {
+                    alreadySent.push_back(false);
+                }
                 getSession()->callbackInitDone();
+
+
 
                 //Send Step 0 Message of wave 0
                 if (getSession()->getParam().getVerbose())
                     cout << "Broadcaster #" << getSession()->getRank()
-                         << " send step 0 of wave 0 to the first member of peers " << peers[0] <<"\n";;
+                         << " send step 0 of wave 0 to the first member of peers " << peers[0] << "\n";;
                 auto s{serializeStruct(StepMessage{
                         Step,
                         static_cast<unsigned char>(getSession()->getRank()),
                         0,
+                        0,
                         msgWaitingToBeBroadcasted
                 })};
                 peers[0]->sendMsg(s);
+                msgWaitingToBeBroadcasted.clear();
             }
             break;
         }
@@ -64,60 +70,85 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
 
             if (getSession()->getParam().getVerbose())
                 cout << "Broadcaster #" << getSession()->getRank()
-                     << " announces has received a step message of step number" << bmtb.stepNumber << " from broadcater"
-                     << static_cast<unsigned int>(bmtb.senderRank) << "\n";;
+                     << " received a step message from broadcater " << static_cast<unsigned int>(bmtb.senderRank)
+                     << " of step " << bmtb.stepNumber << " and wave " << currentWave << "\n";
 
+            messagesOfOneWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
 
-            //Receive the right step
-            if (bmtb.stepNumber == currentStep) {
+            bool empty = false;
 
-                //C'est une step intermédiaire
-                if (currentStep != peers.size()) {
-
-                    currentStep++;
-
-                    auto mes{serializeStruct(StepMessage{
-                            Step,
-                            static_cast<unsigned char>(getSession()->getRank()),
-                            1,
-                            msgWaitingToBeBroadcasted
-                    })};
-
-                    /*
-                    if (getSession()->getParam().getVerbose())
-                        cout << "Broadcaster #" << getSession()->getRank() << " sends message of step number"
-                             << currentStep << " to broadcater" << currentStep << "\n";;
-                    //peers[currentStep]->sendMsg(mes);
-                    */
-
-                } else {
-                    //C'était le dernier message de la vague
-                    for (const std::string &message: bmtb.msgBroadcasted) {
-                        auto sbm{deserializeStruct<StructBroadcastMessage>(message)};
-                        if (nextDeliver != sbm.seqNum) {
-                            cerr << "ERROR\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank()
-                                 << " : Received a totalOrderBroadcast message with seqNum=" << sbm.seqNum
-                                 << " while nextDeliver=" << nextDeliver << "\n";
-                            exit(EXIT_FAILURE);
+            for (int i = 1; i < messagesOfOneWave.size() - 1; i++) {
+                if (!messagesOfOneWave[i].empty()) {
+                    if (!alreadySent[i]) {
+                        std::vector<std::string> messageToSend;
+                        for (int j = 0; j < i + 1; j++) {
+                            messageToSend.insert(messageToSend.end(), messagesOfOneWave[j].begin(),
+                                                messagesOfOneWave[j].end());
                         }
-                        getSession()->callbackDeliver(sbm.senderRank, sbm.seqNum, sbm.sessionMsg);
-                        ++nextDeliver;
-                        break;
+                        auto mes{serializeStruct(StepMessage{
+                                Step,
+                                static_cast<unsigned char>(getSession()->getRank()),
+                                i,
+                                currentWave,
+                                messageToSend
+                        })};
+
+                        if (getSession()->getParam().getVerbose())
+                            cout << "Broadcaster #" << getSession()->getRank() << " sends message of step number"
+                                 << i << " from wave " << currentWave << " to broadcater" << /* //TODO Not right it is pow2... */ i << "\n";;
+                        peers[i + 1]->sendMsg(mes);
+                        alreadySent[i] = true;
+                    }
+                } else {
+                    empty = true;
+                    break;
+                }
+            }
+
+            //After all the messages of one wave have been sent we deliver the messages
+            if (!empty && !messagesOfOneWave.back().empty()) {
+                //The n-1 messages have to be delivered
+                for (int i = 0; i < messagesOfOneWave.size() - 1; i++) {
+                    for (std::string &message: messagesOfOneWave[i]) {
+                        auto s{deserializeStruct<Message>(message)};
+                        getSession()->callbackDeliver(s.senderRank, s.seqNum, s.sessionMsg);
                     }
                 }
 
-            } else if (bmtb.stepNumber == currentStep + 1) {
-                // Receive one message ahead
+                //The nth message might have duplicates
+                //Function to get the number of messages we have to deliver
+                int numberOfDelivers;
+                int n = getSession()->getParam().getSites().size();
+                if (n % 2 == 0) {
+                    numberOfDelivers = floor(log2(n));
+                } else {
+                    numberOfDelivers = n - pow(2,floor(log2(n)));
+                }
+                for (int i = 0; i < numberOfDelivers; i++) {
+                    auto s{deserializeStruct<Message>(messagesOfOneWave.back()[i])};
+                    getSession()->callbackDeliver(s.senderRank, s.seqNum, s.sessionMsg);
+                }
 
-                // Boucle while pour attendre que le message d'avant a bien a été reçu
-            } else {
+                //Clear the vectirs we used and
+                messagesOfOneWave.clear();
+                alreadySent.clear();
+                messagesOfOneWave.resize(peers.size() + 1);
+                for (int i = 0; i < peers.size(); i++) {
+                    alreadySent.push_back(false);
+                }
 
-                printf("b : %d MY CURRENT STEP %d\n", getSession()->getRank(), currentStep);
-                printf("b : %d MY MSGSTEP %d\n", getSession()->getRank(), bmtb.stepNumber);
-                cout << "Message mauvais reçi de la part de " << static_cast<unsigned int>(bmtb.senderRank);
-
-                cerr << "ERROR\tBBOBBAlgoLayer: Unexpected Step (" << bmtb.stepNumber << ")\n";
-                exit(EXIT_FAILURE);
+                //All messages were delivered so we can launch another wave
+                auto s{serializeStruct(StepMessage{
+                        Step,
+                        static_cast<unsigned char>(getSession()->getRank()),
+                        0,
+                        currentWave++,
+                        msgWaitingToBeBroadcasted
+                })};
+                cout << "Broadcaster #" << getSession()->getRank()
+                     << " send step 0 of wave " << currentWave <<" to the first member of peers " << peers[0] << "\n";;
+                peers[0]->sendMsg(s);
+                msgWaitingToBeBroadcasted.clear();
             }
 
             break;
@@ -154,6 +185,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     auto sites = getSession()->getParam().getSites();
     int rank = getSession()->getRank();
 
+    setBroadcasters(sites);
 
     cout << "Broadcaster#" << rank << " initHost\n";
     commLayer->initHost(get<PORT>(sites[rank]), /* //TODO Change to floor etc... */2, this);
@@ -209,12 +241,18 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    auto bmtb{serializeStruct<StructMessageToBroadcast>(StructMessageToBroadcast{
-            MsgId::MessageToBroadcast,
+    auto bmtb{serializeStruct<Message>(Message{
+            MsgId::MessageToReceive,
             static_cast<unsigned char>(getSession()->getRank()),
+            seqNum++,
             msg
     })};
     msgWaitingToBeBroadcasted.push_back(bmtb);
+    if (messagesOfOneWave[0].empty()) {
+        std::vector<std::string> myMessages;
+        messagesOfOneWave[0] = myMessages;
+    }
+    messagesOfOneWave[0].push_back(bmtb);
 }
 
 void BBOBBAlgoLayer::terminate() {

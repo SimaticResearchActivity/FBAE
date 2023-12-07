@@ -1,9 +1,9 @@
-//
-// Created by lardeur on 09/10/23.
-//
-
 #ifndef FBAE_BBOBBALGOLAYERMSG_H
 #define FBAE_BBOBBALGOLAYERMSG_H
+
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/vector.hpp"
 
 namespace fbae_BBOBBAlgoLayer {
 
@@ -11,9 +11,9 @@ namespace fbae_BBOBBAlgoLayer {
         RankInfo,
         AckDisconnectIntent,
         Step,
-        ReceiveMessage,
+        MessageToReceive,
         DisconnectIntent,
-        MessageToBroadcast
+
     };
 
     struct RankInfoMessage {
@@ -42,35 +42,22 @@ namespace fbae_BBOBBAlgoLayer {
 
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
 
-    struct StructMessageToBroadcast
-    {
-        MsgId msgId{};
-        unsigned char senderRank{};
-        std::string sessionMsg;
-
-        // This method lets cereal know which data members to serialize
-        template<class Archive>
-        void serialize(Archive& archive)
-        {
-            archive(msgId, senderRank, sessionMsg); // serialize things by passing them to the archive
-        }
-    };
 
     struct StepMessage {
         MsgId msgId{};
         unsigned char senderRank{};
         int stepNumber;
+        int wave;
         std::vector<std::string> msgBroadcasted;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId); // serialize things by passing them to the archive
+            archive(msgId, senderRank, stepNumber, msgBroadcasted); // serialize things by passing them to the archive
         }
     };
 
-    struct StructBroadcastMessage
-    {
+    struct Message {
         MsgId msgId{};
         unsigned char senderRank{};
         int seqNum{};
@@ -78,8 +65,7 @@ namespace fbae_BBOBBAlgoLayer {
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
-        void serialize(Archive& archive)
-        {
+        void serialize(Archive &archive) {
             archive(msgId, senderRank, seqNum, sessionMsg); // serialize things by passing them to the archive
         }
     };
