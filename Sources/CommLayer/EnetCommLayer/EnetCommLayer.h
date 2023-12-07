@@ -1,8 +1,8 @@
 #pragma once
 
 #include <enet/enet.h>
-#include "CommLayer.h"
-#include "Param.h"
+#include "../CommLayer.h"
+#include "../../Param.h"
 
 class EnetCommLayer : public CommLayer{
 private:

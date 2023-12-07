@@ -3,8 +3,8 @@
 //
 
 #include "TcpCommPeer.h"
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/string.hpp>
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
 
 TcpCommPeer::TcpCommPeer(boost::asio::ip::tcp::socket *psock)
         : psock{psock}

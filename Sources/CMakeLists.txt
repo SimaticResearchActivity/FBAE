@@ -3,31 +3,31 @@ add_executable(fbae
   options.cpp options.h OptParserExtended.cpp OptParserExtended.h
         Measures.cpp Measures.h
         Param.cpp Param.h
-        CommLayer.cpp
-        CommLayer.h
-        EnetCommLayer.cpp
-        EnetCommLayer.h
-        AlgoLayer.cpp
-        AlgoLayer.h
-        SequencerAlgoLayer.cpp
-        SequencerAlgoLayer.h
-        SessionLayer.cpp
-        SessionLayer.h
-        CommPeer.h
-        EnetCommPeer.cpp
-        EnetCommPeer.h
+        CommLayer/CommLayer.cpp
+        CommLayer/CommLayer.h
+        CommLayer/EnetCommLayer/EnetCommLayer.cpp
+        CommLayer/EnetCommLayer/EnetCommLayer.h
+        AlgoLayer/AlgoLayer.cpp
+        AlgoLayer/AlgoLayer.h
+        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.cpp
+        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h
+        SessionLayer/SessionLayer.cpp
+        SessionLayer/SessionLayer.h
+        CommLayer/CommPeer.h
+        CommLayer/EnetCommLayer/EnetCommPeer.cpp
+        CommLayer/EnetCommLayer/EnetCommPeer.h
         msgTemplates.h
-        SequencerAlgoLayerMsg.h
-        SessionLayerMsg.h
-        BBOBBAlgoLayer.cpp
-        BBOBBAlgoLayer.h
-        BBOBBAlgoLayerMsg.h
-        BBOBBAlgoLayerMsg.h
-        SessionLayerMsg.h
-        TcpCommLayer.cpp
-        TcpCommLayer.h
-        TcpCommPeer.cpp
-        TcpCommPeer.h)
+        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayerMsg.h
+        SessionLayer/SessionLayerMsg.h
+        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.cpp
+        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.h
+        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
+        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
+        SessionLayer/SessionLayerMsg.h
+        CommLayer/TcpCommeLayer/TcpCommLayer.cpp
+        CommLayer/TcpCommeLayer/TcpCommLayer.h
+        CommLayer/TcpCommeLayer/TcpCommPeer.cpp
+        CommLayer/TcpCommeLayer/TcpCommPeer.h)
 target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)

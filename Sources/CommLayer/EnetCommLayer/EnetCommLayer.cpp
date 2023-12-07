@@ -1,8 +1,8 @@
 #include <iostream>
-#include "AlgoLayer.h"
+#include "../../AlgoLayer/AlgoLayer.h"
 #include "EnetCommLayer.h"
 #include "EnetCommPeer.h"
-#include "SessionLayer.h"
+#include "../../SessionLayer/SessionLayer.h"
 
 constexpr enet_uint32 timeoutFor_enet_host_service{20}; /**< Timeout when calling enet_host_service (this value, defined in milliseconds, was determined by doing experiments with different values) */
 

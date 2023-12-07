@@ -4,10 +4,10 @@
 
 #include <chrono>
 #include <iostream>
-#include "AlgoLayer.h"
+#include "../../AlgoLayer/AlgoLayer.h"
 #include "TcpCommLayer.h"
 #include "TcpCommPeer.h"
-#include "SessionLayer.h"
+#include "../../SessionLayer/SessionLayer.h"
 
 using boost::asio::ip::tcp;
 using namespace std;

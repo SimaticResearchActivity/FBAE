@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include "CommPeer.h"
-#include <boost/asio.hpp>
+#include "../CommPeer.h"
+#include "boost/asio.hpp"
 
 
 class TcpCommPeer : public CommPeer{
