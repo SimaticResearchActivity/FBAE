@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CommPeer.h"
-#include <enet/enet.h>
+#include "../CommPeer.h"
+#include "enet/enet.h"
 
 class EnetCommPeer : public CommPeer{
 private:

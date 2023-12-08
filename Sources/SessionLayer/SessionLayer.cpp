@@ -2,7 +2,7 @@
 #include <mutex>
 #include "SessionLayer.h"
 #include "SessionLayerMsg.h"
-#include "msgTemplates.h"
+#include "../msgTemplates.h"
 
 using namespace std;
 using namespace fbae_SessionLayer;

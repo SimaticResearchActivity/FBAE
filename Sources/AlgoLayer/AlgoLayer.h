@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
-#include "CommLayer.h"
-#include "CommPeer.h"
-#include "Param.h"
+#include "memory"
+#include "../CommLayer/CommLayer.h"
+#include "../CommLayer/CommPeer.h"
+#include "../Param.h"
 class SessionLayer;
 
 class AlgoLayer {

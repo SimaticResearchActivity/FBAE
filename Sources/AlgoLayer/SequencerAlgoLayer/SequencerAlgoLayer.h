@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AlgoLayer.h"
+#include "../AlgoLayer.h"
 
 class SequencerAlgoLayer : public AlgoLayer {
 private:

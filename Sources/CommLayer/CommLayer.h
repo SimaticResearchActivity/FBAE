@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory>
+#include "memory"
 #include "CommPeer.h"
-#include "Param.h"
+#include "../Param.h"
 
 class AlgoLayer;
 

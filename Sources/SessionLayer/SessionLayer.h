@@ -1,9 +1,9 @@
 #pragma once
 
 #include <memory>
-#include "AlgoLayer.h"
-#include "Measures.h"
-#include "Param.h"
+#include "../AlgoLayer/AlgoLayer.h"
+#include "../Measures.h"
+#include "../Param.h"
 
 class SessionLayer {
 private:

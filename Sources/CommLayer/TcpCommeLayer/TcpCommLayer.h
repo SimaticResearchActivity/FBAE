@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
+#include "boost/asio.hpp"
 #include <mutex>
 #include <shared_mutex>
 #include <thread>
-#include "CommLayer.h"
-#include "Param.h"
+#include "../CommLayer.h"
+#include "../../Param.h"
 #include "TcpCommPeer.h"
 
 class TcpCommLayer : public CommLayer{

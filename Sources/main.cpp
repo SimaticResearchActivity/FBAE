@@ -1,11 +1,11 @@
 #include <iostream>
 #include <thread>
-#include "EnetCommLayer.h"
+#include "CommLayer/EnetCommLayer/EnetCommLayer.h"
 #include "OptParserExtended.h"
-#include "SequencerAlgoLayer.h"
-#include "SessionLayer.h"
-#include "TcpCommLayer.h"
-#include "BBOBBAlgoLayer.h"
+#include "AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h"
+#include "SessionLayer/SessionLayer.h"
+#include "CommLayer/TcpCommeLayer/TcpCommLayer.h"
+#include "AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.h"
 
 using namespace std;
 using namespace mlib;
