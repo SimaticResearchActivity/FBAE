@@ -53,7 +53,7 @@ namespace fbae_BBOBBAlgoLayer {
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId, senderRank, stepNumber, msgBroadcasted); // serialize things by passing them to the archive
+            archive(msgId, senderRank, stepNumber, wave, msgBroadcasted); // serialize things by passing them to the archive
         }
     };
 

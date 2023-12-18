@@ -17,6 +17,7 @@ private :
     std::vector<std::string> msgWaitingToBeBroadcasted;
     std::vector<std::vector<std::string>> messagesOfOneWave;
     std::vector<bool> alreadySent;
+    std::vector<bool> received;
     int currentWave = 0;
     int seqNum{0};
 public :
