@@ -16,8 +16,11 @@ private :
     std::vector<std::unique_ptr<CommPeer>> peers; //peers that the entity will communicate with
     std::vector<std::string> msgWaitingToBeBroadcasted;
     std::vector<std::vector<std::string>> messagesOfOneWave;
+    std::vector<std::vector<std::string>> messagesOfNextWave;
     std::vector<bool> alreadySent;
+    std::vector<bool> alreadySentNextWave;
     std::vector<bool> received;
+    std::vector<bool> receivedNextWave;
     int currentWave = 0;
     int seqNum{0};
 public :
