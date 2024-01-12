@@ -104,6 +104,8 @@ void SessionLayer::processFinishedPerfMeasuresMsg(int senderRank, int seqNum)
     thread_local size_t nbFinishedPerfMeasures = algoLayer->getBroadcasters().size();
     if (param.getVerbose())
         cout << "SessionLayer #" << rank << " : Deliver FinishedPerfMeasures from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
+    cout << "NB Finished PErf Measure : " << nbFinishedPerfMeasures << "\n";
+
     if (nbFinishedPerfMeasures <= 0)
     {
         cerr << "ERROR : Delivering a FinishedPerfMeasures message while we already have received all FinishedPerfMeasures messages we were waiting for.\n";
@@ -161,9 +163,11 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
         cout << "SessionLayer #" << rank << " : Deliver PerfResponse from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
     auto spr{deserializeStruct<SessionPerfResponse>(msg)};
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
+    cout << (int)spr.perfMeasureSenderRank << " INFO " << rank << "\n";
     if (spr.perfMeasureSenderRank == rank)
     {
         measures.add(elapsed);
+        cout << "PerfResponse :  " << spr.perfMeasureMsgNum  << " / " << param.getNbMsg() << "\n";
         if (spr.perfMeasureMsgNum < param.getNbMsg())
         {
             // We send another PerfMessage
@@ -173,7 +177,7 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
         {
             // Process is done with Perf measures. It tells it to all broadcasters
             if (param.getVerbose())
-                cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n";
+                cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n\n\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};
             algoLayer->totalOrderBroadcast(s);
         }
