@@ -18,11 +18,10 @@ private :
     std::vector<std::vector<std::string>> messagesOfOneWave;
     std::vector<std::vector<std::string>> messagesOfNextWave;
     std::vector<bool> alreadySent;
-    std::vector<bool> alreadySentNextWave;
     std::vector<bool> received;
     std::vector<bool> receivedNextWave;
     int currentWave = 0;
-    int seqNum{0};
+    int sendWave = 1;
 public :
     bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
     bool executeAndProducedStatistics() override;

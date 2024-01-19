@@ -163,7 +163,6 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
         cout << "SessionLayer #" << rank << " : Deliver PerfResponse from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
     auto spr{deserializeStruct<SessionPerfResponse>(msg)};
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
-    cout << (int)spr.perfMeasureSenderRank << " INFO " << rank << "\n";
     if (spr.perfMeasureSenderRank == rank)
     {
         measures.add(elapsed);
