@@ -7,7 +7,7 @@
 #include "BBOBBAlgoLayerMsg.h"
 #include "../../msgTemplates.h"
 
-#include <tgmath.h>
+#include <ctgmath>
 #include <unistd.h>
 #include <thread>
 
@@ -26,8 +26,8 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
         case RankInfo : {
             auto bri{deserializeStruct<BroadcasterRankInfo>(msgString)};
             if (getSession()->getParam().getVerbose())
-                cout << "Broadcaster #" << getSession()->getRank()
-                     << " : received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                     << " : Received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
 
             atomic_int32_t nbConnectedBroadcastersWanted;
             int n = getSession()->getParam().getSites().size();
@@ -39,214 +39,112 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             if (++nbConnectedBroadcasters == nbConnectedBroadcastersWanted) {
 
                 if (getSession()->getParam().getVerbose())
-                    cout << "Broadcaster #" << getSession()->getRank() << " all broadcasters are connected \n";
+                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                         << " : All broadcasters are connected \n";
 
                 //Necessary so that every participant received all of their rank info before the others messages
                 sleep(2);
 
                 //Initialize all vectors that will be used
-                messagesOfOneWave.resize(peers.size() + 1);
-                messagesOfNextWave.resize(peers.size() + 1);
-                for (int i = 0; i < peers.size() + 1; i++) {
-                    std::vector<std::string> vectorToAcceptMessagesOneWave;
-                    std::vector<std::string> vectorToAcceptMessagesNextWave;
-                    messagesOfOneWave[i] = vectorToAcceptMessagesOneWave;
-                    messagesOfNextWave[i] = vectorToAcceptMessagesNextWave;
-                }
-                alreadySent.resize(peers.size());
-                for (int i = 0; i < peers.size(); i++) {
-                    alreadySent[i] = false;
-                }
-                received.resize(peers.size() + 1);
-                receivedNextWave.resize(peers.size() + 1);
-                for (int i = 0; i < peers.size() + 1; i++) {
-                    received[i] = false;
-                    receivedNextWave[i] = false;
-                }
+                messagesOfOneWave.resize(peers.size() + 1, std::vector<std::string>());
+                messagesOfNextWave.resize(peers.size() + 1, std::vector<std::string>());
+                received.resize(peers.size() + 1, false);
+                receivedNextWave.resize(peers.size() + 1, false);
+
+                alreadySent.resize(peers.size(), false);
+
                 getSession()->callbackInitDone();
 
                 //Send Step 0 Message of wave 0
-                if (getSession()->getParam().getVerbose())
-                    cout << "Broadcaster #" << getSession()->getRank()
-                         << " send step 0 of wave 0 to the first member of peers " << peers[0] << "\n";
-
-                auto s{serializeStruct(StepMessage{
-                        Step,
-                        static_cast<unsigned char>(getSession()->getRank()),
-                        0,
-                        0,
-                        msgWaitingToBeBroadcasted
-                })};
-                messagesOfOneWave[0] = msgWaitingToBeBroadcasted;
-                msgWaitingToBeBroadcasted.clear();
-                received[0] = true;
-                peers[0]->sendMsg(s);
+                beginWave(0);
             }
             break;
         }
 
         case AckDisconnectIntent : {
-            auto mes{deserializeStruct<StructAckDisconnectIntent>(msgString)};
-            cout << "RECEIVED ACK NTENT with rankInPeersVector " << mes.rankInPeersVector << "from "
-                 << static_cast<unsigned int>(mes.senderRank) << "\n";
-            peers[mes.rankInPeersVector]->disconnect();
+            peer->disconnect();
             break;
         }
 
-
         case Step : {
 
-            auto bmtb{deserializeStruct<StepMessage>(msgString)};
+            if (sendWave) {
 
-            if (getSession()->getParam().getVerbose())
-                cout << "Broadcaster #" << getSession()->getRank() << " received a step message from broadcater "
-                     << static_cast<unsigned int>(bmtb.senderRank) << " of step " << bmtb.stepNumber << " and wave "
-                     << bmtb.wave << "\n";
+                auto bmtb{deserializeStruct<StepMessage>(msgString)};
 
-            if (currentWave == bmtb.wave) {
+                if (getSession()->getParam().getVerbose())
+                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                         << " : Receive a Step Message (step : " << bmtb.stepNumber << " / wave : "
+                         << bmtb.wave << ") from Broadcater#" << static_cast<unsigned int>(bmtb.senderRank) << "\n";
 
-                messagesOfOneWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
-                received[bmtb.stepNumber + 1] = true;
+                if (currentWave == bmtb.wave) {
 
-                bool empty = false;
+                    messagesOfOneWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
+                    received[bmtb.stepNumber + 1] = true;
 
-                for (int i = 1; i < messagesOfOneWave.size() - 1; i++) {
-                    if (received[i] && received[0]) {
-                        if (!alreadySent[i]) {
-                            std::vector<std::string> messageToSend;
-                            for (int j = 0; j < i + 1; j++) {
-                                messageToSend.insert(messageToSend.end(), messagesOfOneWave[j].begin(),
-                                                     messagesOfOneWave[j].end());
-                            }
-                            if (getSession()->getParam().getVerbose())
-                                cout << "Broadcaster #" << getSession()->getRank()
-                                     << " sends message of step number"
-                                     << i << " from wave " << currentWave << " to broadcater"
-                                     << /* //TODO Not right it is pow2... */ i << "\n";
-                            auto mes{serializeStruct(StepMessage{
-                                    Step,
-                                    static_cast<unsigned char>(getSession()->getRank()),
-                                    i,
-                                    currentWave,
-                                    messageToSend
-                            })};
-                            peers[i + 1]->sendMsg(mes);
-                            alreadySent[i] = true;
+                    bool empty = sendStepMessages();
+
+                    //After all the messages of one wave have been sent we deliver the messages
+                    if (!empty && received.back()) {
+
+                        std::vector<std::vector<std::string>> messagesToDeliver;
+                        messagesToDeliver.resize(getSession()->getParam().getSites().size());
+                        for (int i = 0; i < peers.size() + 1; i++) {
+                            std::vector<std::string> vector;
+                            messagesToDeliver[i] = vector;
                         }
-                    } else {
-                        //We received a step in advance so we quit the loop
-                        empty = true;
-                        break;
-                    }
-                }
 
-                //After all the messages of one wave have been sent we deliver the messages
-                if (!empty && received.back()) {
-
-                    std::vector<std::vector<std::string>> messagesToDeliver;
-                    messagesToDeliver.resize(getSession()->getParam().getSites().size());
-                    for (int i = 0; i < peers.size() + 1; i++) {
-                        std::vector<std::string> vector;
-                        messagesToDeliver[i] = vector;
-                    }
-
-                    //The messageOfOneWave.size() -1 messages can be sorted by broadcasters
-                    for (int i = 0; i < messagesOfOneWave.size() - 1; i++) {
-                        for (std::string &message: messagesOfOneWave[i]) {
-                            auto s{deserializeStruct<Message>(message)};
-                            messagesToDeliver[s.senderRank].push_back(s.sessionMsg);
-                        }
-                    }
-
-                    //The messageOfOneWave.size() message might have duplicates
-                    if (!messagesOfOneWave.back().empty()) {
-                        int sender = -1;
-                        for (int i = 0; i < messagesOfOneWave.back().size(); i++) {
-                            auto s{deserializeStruct<Message>(messagesOfOneWave.back()[i])};
-                            if (messagesToDeliver[s.senderRank].empty() || sender == s.senderRank) {
+                        //The messageOfOneWave.size() -1 messages can be sorted by broadcasters
+                        for (int i = 0; i < messagesOfOneWave.size() - 1; i++) {
+                            for (std::string &message: messagesOfOneWave[i]) {
+                                auto s{deserializeStruct<Message>(message)};
                                 messagesToDeliver[s.senderRank].push_back(s.sessionMsg);
-                                sender = s.senderRank;
                             }
                         }
-                    }
 
-                    //Clear the vectors we used
-                    messagesOfOneWave.clear();
-                    messagesOfOneWave.resize(peers.size() + 1);
-                    for (int i = 0; i < peers.size(); i++) {
-                        if (!messagesOfNextWave[i].empty()) {
-                            messagesOfOneWave[i] = messagesOfNextWave[i];
-                        }
-                    }
-                    messagesOfNextWave.clear();
-                    messagesOfNextWave.resize(peers.size() + 1);
-                    for (int i = 0; i < peers.size(); i++) {
-                        alreadySent[i] = false;
-                    }
-                    for (int i = 0; i < peers.size() + 1; i++) {
-                        received[i] = false;
-                        received[i] = receivedNextWave[i];
-                        receivedNextWave[i] = false;
-                    }
-
-                    //Delivering the message in the order
-                    for (int i = 0; i < messagesToDeliver.size(); i++) {
-                        for (std::string message: messagesToDeliver[i]) {
-                            getSession()->callbackDeliver(i, seqNum++, message);
-                        }
-                    }
-
-                    currentWave++;
-                    //All messages were delivered so we can launch another wave
-                    cout << "Broadcaster #" << getSession()->getRank()
-                         << " send step 0 of wave " << currentWave << " to the first member of peers "
-                         << peers[0]
-                         << "\n";;
-                    auto s{serializeStruct(StepMessage{
-                            Step,
-                            static_cast<unsigned char>(getSession()->getRank()),
-                            0,
-                            currentWave,
-                            msgWaitingToBeBroadcasted
-                    })};
-                    messagesOfOneWave[0] = msgWaitingToBeBroadcasted;
-                    msgWaitingToBeBroadcasted.clear();
-                    received[0] = true;
-                    if (sendWave)
-                        peers[0]->sendMsg(s);
-
-                    //We send the messages from the wave we received in advance
-                    for (int i = 1; i < messagesOfOneWave.size() - 1; i++) {
-                        if (received[i] && received[0]) {
-                            if (!alreadySent[i]) {
-                                std::vector<std::string> messageToSend;
-                                for (int j = 0; j < i + 1; j++) {
-                                    messageToSend.insert(messageToSend.end(), messagesOfOneWave[j].begin(),
-                                                         messagesOfOneWave[j].end());
+                        //The messageOfOneWave.size() message might have duplicates
+                        if (!messagesOfOneWave.back().empty()) {
+                            int sender = -1;
+                            for (int i = 0; i < messagesOfOneWave.back().size(); i++) {
+                                auto s{deserializeStruct<Message>(messagesOfOneWave.back()[i])};
+                                if (messagesToDeliver[s.senderRank].empty() || sender == s.senderRank) {
+                                    messagesToDeliver[s.senderRank].push_back(s.sessionMsg);
+                                    sender = s.senderRank;
                                 }
-                                if (getSession()->getParam().getVerbose())
-                                    cout << "Broadcaster #" << getSession()->getRank()
-                                         << " sends message of step number"
-                                         << i << " from wave " << currentWave << " to broadcater"
-                                         << /* //TODO Not right it is pow2... */ i << "\n";
-                                auto mes{serializeStruct(StepMessage{
-                                        Step,
-                                        static_cast<unsigned char>(getSession()->getRank()),
-                                        i,
-                                        currentWave,
-                                        messageToSend
-                                })};
-                                peers[i + 1]->sendMsg(mes);
-                                alreadySent[i] = true;
                             }
                         }
+
+                        //Clear the vectors we used
+                        messagesOfOneWave = messagesOfNextWave;
+                        messagesOfOneWave.resize(peers.size() + 1);
+                        messagesOfNextWave.clear();
+                        messagesOfNextWave.resize(peers.size() + 1);
+                        std::fill(alreadySent.begin(), alreadySent.end(), false);
+                        std::fill(received.begin(), received.end(), false);
+                        std::swap(received, receivedNextWave);
+                        std::fill(receivedNextWave.begin(), receivedNextWave.end(), false);
+
+                        //Delivering the message in the order
+                        for (int i = 0; i < messagesToDeliver.size(); i++) {
+                            for (std::string message: messagesToDeliver[i]) {
+                                getSession()->callbackDeliver(i, seqNum++, message);
+                            }
+                        }
+
+                        //All messages were delivered so we can launch another wave
+                        beginWave(++currentWave);
+
+                        //We send the messages from the wave we received in advance
+                        sendStepMessages();
                     }
+                } else if (bmtb.wave == currentWave + 1) {
+                    //Message is early and needs to be treated in the next wave
+                    messagesOfNextWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
+                    receivedNextWave[bmtb.stepNumber + 1] = true;
+                } else {
+                    cerr << "ERROR\tBBOBBAlgoLayer: Unexpected wave (" << bmtb.wave << ")\n";
+                    exit(EXIT_FAILURE);
                 }
-            } else {
-                cout << "wave in advance \n";
-                //Message is early and needs to be treated in the next wave
-                messagesOfNextWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
-                receivedNextWave[bmtb.stepNumber + 1] = true;
             }
 
             break;
@@ -256,16 +154,11 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(msgString)};
             auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{
                     MsgId::AckDisconnectIntent,
-                    static_cast<unsigned char>(getSession()->getRank()),
-                    bdi.rankInPeersVector
             })};
-            cout << "RECEIVED DICONNECTINTENT FROM " << static_cast<int>(bdi.senderRank)
-                 << " and send ACKDISONNECTINTENT TO (i) " << bdi.rankInPeersVector << "\n";
-            //TODO ERROR
-            peers[bdi.senderRank]->sendMsg(s);
+            peer->sendMsg(s);
             if (getSession()->getParam().getVerbose())
-                cout << "Broadcaster #" << static_cast<unsigned int>(bdi.senderRank)
-                     << " announces it will disconnect \n";
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Broadcaster#"
+                     << static_cast<unsigned int>(bdi.senderRank) << " announces it will disconnect\n";
             break;
         }
 
@@ -276,7 +169,55 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
     }
 
     return msgId == MsgId::AckDisconnectIntent;
+}
 
+void BBOBBAlgoLayer::beginWave(int wave) {
+    //Send first Step Message of a new Wave
+    if (getSession()->getParam().getVerbose())
+        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+             << " : Send Step Message (step : 0 / wave : " << wave << ") to Broadcaster#" << peersRank[0]
+             << "\n";
+    auto s{serializeStruct(StepMessage{
+            MsgId::Step,
+            static_cast<unsigned char>(getSession()->getRank()),
+            0,
+            wave,
+            msgWaitingToBeBroadcasted
+    })};
+    messagesOfOneWave[0] = msgWaitingToBeBroadcasted;
+    msgWaitingToBeBroadcasted.clear();
+    received[0] = true;
+    peers[0]->sendMsg(s);
+}
+
+bool BBOBBAlgoLayer::sendStepMessages() {
+    for (int i = 1; i < messagesOfOneWave.size() - 1; i++) {
+        if (received[i] && received[0]) {
+            if (!alreadySent[i]) {
+                std::vector<std::string> messageToSend;
+                for (int j = 0; j < i + 1; j++) {
+                    messageToSend.insert(messageToSend.end(), messagesOfOneWave[j].begin(),
+                                         messagesOfOneWave[j].end());
+                }
+                if (getSession()->getParam().getVerbose())
+                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                         << " : Send Step Message (step : " << i << " / wave : " << currentWave
+                         << ") to Broadcaster#" << peersRank[i] << "\n";
+                auto mes{serializeStruct(StepMessage{
+                        MsgId::Step,
+                        static_cast<unsigned char>(getSession()->getRank()),
+                        i,
+                        currentWave,
+                        messageToSend
+                })};
+                peers[i]->sendMsg(mes);
+                alreadySent[i] = true;
+            }
+        } else {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -297,9 +238,9 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     } else {
         numberOfPeers = floor(log2(n)) + 1;
     }
-    cout << "Broadcaster#" << rank << " initHost\n";
+    cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << ": Wait for connections on port " << get<PORT>(sites.back())
+         << "\n";
     commLayer->initHost(get<PORT>(sites[rank]), numberOfPeers, this);
-
 
     std::thread t([rank, verbose, sites, this]() {
         // Send RankInfo
@@ -309,11 +250,14 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
                                                         getSession()->getParam().getSites().size()],
                     this);
             peers.push_back(std::move(cp));
+            //Data for verbose messages
+            if (verbose)
+                peersRank.push_back((power_of_2 + rank) % getSession()->getParam().getSites().size());
         }
 
         for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, i++) {
             if (verbose)
-                cout << "Broadcaster#" << rank << " : Send RankInfo to broadcaster "
+                cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Send RankInfo to Broadcaster#"
                      << (power_of_2 + rank) % getSession()->getParam().getSites().size() << "\n";
             auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{
                     MsgId::RankInfo,
@@ -322,19 +266,21 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
             peers[i]->sendMsg(s);
         }
         if (verbose)
-            cout << "Broadcaster#" << rank << " : sent all messages\n";
+            cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Sent all RankInfo messages\n";
     });
 
 
     if (verbose)
-        cout << "Broadcaster#" << rank << " Wait for messages\n";
+        cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Wait for messages\n";
     commLayer->waitForMsg(numberOfPeers);
+
+    t.join();
+
 
     if (verbose)
         cout << "Broadcaster#" << rank
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
 
-    t.join();
 
     return true;
 }
@@ -349,28 +295,16 @@ void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
     msgWaitingToBeBroadcasted.push_back(bmtb);
 }
 
+
 void BBOBBAlgoLayer::terminate() {
-
-    //Empecher un broadcaster de se deconnecter pour avoir les infos
-    if (getSession()->getRank() != 0) {
-        sendWave = 1;
-        for (int i = 0; i < peers.size(); i++) {
-            cout << "peer number " << i << " disconnect\n";
-            peers[i]->disconnect();
-        }
-    }
-
-
-    /*
+    sendWave = 0;
     for (int i = 0; i < peers.size(); i++) {
-        cout << "SEND DISCONNECTINTENT" << i << "\n";
         auto s{serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{
-            MsgId::DisconnectIntent,
-            static_cast<unsigned char>(getSession()->getRank()),
-            i})};
+                MsgId::DisconnectIntent,
+                static_cast<unsigned char>(getSession()->getRank()),
+        })};
         peers[i]->sendMsg(s);
     }
-     */
 
 }
 

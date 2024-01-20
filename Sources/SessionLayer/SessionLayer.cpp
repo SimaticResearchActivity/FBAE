@@ -101,7 +101,7 @@ int SessionLayer::getRank() const {
 
 void SessionLayer::processFinishedPerfMeasuresMsg(int senderRank, int seqNum)
 {
-    thread_local size_t nbFinishedPerfMeasures = algoLayer->getBroadcasters().size();
+    static size_t nbFinishedPerfMeasures = algoLayer->getBroadcasters().size();
     if (param.getVerbose())
         cout << "SessionLayer #" << rank << " : Deliver FinishedPerfMeasures from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
     cout << "NB Finished PErf Measure : " << nbFinishedPerfMeasures << "\n";
@@ -166,7 +166,6 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
     if (spr.perfMeasureSenderRank == rank)
     {
         measures.add(elapsed);
-        cout << "PerfResponse :  " << spr.perfMeasureMsgNum  << " / " << param.getNbMsg() << "\n";
         if (spr.perfMeasureMsgNum < param.getNbMsg())
         {
             // We send another PerfMessage
@@ -176,7 +175,7 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
         {
             // Process is done with Perf measures. It tells it to all broadcasters
             if (param.getVerbose())
-                cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n\n\n";
+                cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};
             algoLayer->totalOrderBroadcast(s);
         }

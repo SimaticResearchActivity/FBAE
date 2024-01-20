@@ -27,23 +27,19 @@ namespace fbae_BBOBBAlgoLayer {
     };
 
     using BroadcasterRankInfo = RankInfoMessage;
+    using BroadcasterDisconnectIntent = RankInfoMessage;
 
     struct StructGenericMsgWithoutData {
         MsgId msgId{};
-        int senderRank;
-        int rankInPeersVector;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId, senderRank, rankInPeersVector); // serialize things by passing them to the archive
+            archive(msgId); // serialize things by passing them to the archive
         }
     };
 
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
-    using BroadcasterDisconnectIntent = StructGenericMsgWithoutData;
-
-
 
     struct StepMessage {
         MsgId msgId{};

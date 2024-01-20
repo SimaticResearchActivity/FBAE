@@ -14,20 +14,26 @@
 class BBOBBAlgoLayer : public AlgoLayer {
 private :
     std::vector<std::unique_ptr<CommPeer>> peers; //peers that the entity will communicate with
-    std::vector<std::string> msgWaitingToBeBroadcasted;
-    std::vector<std::vector<std::string>> messagesOfOneWave;
-    std::vector<std::vector<std::string>> messagesOfNextWave;
-    std::vector<bool> alreadySent;
-    std::vector<bool> received;
-    std::vector<bool> receivedNextWave;
+    std::vector<int> peersRank;
     int currentWave = 0;
     int sendWave = 1;
+
+    std::vector<std::string> msgWaitingToBeBroadcasted;
+    std::vector<std::vector<std::string>> messagesOfOneWave;
+    std::vector<bool> alreadySent;
+    std::vector<bool> received;
+
+    std::vector<std::vector<std::string>> messagesOfNextWave;
+    std::vector<bool> receivedNextWave;
+
 public :
     bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
     bool executeAndProducedStatistics() override;
     void totalOrderBroadcast(const std::string &msg) override;
     void terminate() override;
     std::string toString() override;
+    void beginWave(int wave);
+    bool sendStepMessages();
 };
 
 
