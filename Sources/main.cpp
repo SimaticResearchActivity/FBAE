@@ -4,7 +4,7 @@
 #include "OptParserExtended.h"
 #include "AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h"
 #include "SessionLayer/SessionLayer.h"
-#include "CommLayer/TcpCommeLayer/TcpCommLayer.h"
+#include "CommLayer/TcpCommLayer/TcpCommLayer.h"
 #include "AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.h"
 
 using namespace std;

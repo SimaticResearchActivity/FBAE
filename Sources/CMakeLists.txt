@@ -24,10 +24,10 @@ add_executable(fbae
         AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
         AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
         SessionLayer/SessionLayerMsg.h
-        CommLayer/TcpCommeLayer/TcpCommLayer.cpp
-        CommLayer/TcpCommeLayer/TcpCommLayer.h
-        CommLayer/TcpCommeLayer/TcpCommPeer.cpp
-        CommLayer/TcpCommeLayer/TcpCommPeer.h)
+        CommLayer/TcpCommLayer/TcpCommLayer.cpp
+        CommLayer/TcpCommLayer/TcpCommLayer.h
+        CommLayer/TcpCommLayer/TcpCommPeer.cpp
+        CommLayer/TcpCommLayer/TcpCommPeer.h)
 target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
