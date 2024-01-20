@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="fbae (BBOBB8)" type="CompoundRunConfigurationType">
+    <toRun name="fbae (BBOBB0-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB1-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB2-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB3-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB4-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB5-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB6-8)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB7-8)" type="CMakeRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>

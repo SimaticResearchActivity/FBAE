@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="fbae (BBOBB3)" type="CompoundRunConfigurationType">
+    <toRun name="fbae  (BBOBB0-3)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB1-3)" type="CMakeRunConfiguration" />
+    <toRun name="fbae (BBOBB2-3)" type="CMakeRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
