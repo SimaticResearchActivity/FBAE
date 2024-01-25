@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <numeric>
 #include "Measures.h"
 
@@ -10,6 +11,7 @@ Measures::Measures(size_t nb_rtts_max)
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed)
 {
     size_t index{nbRtts++};
+    assert( index < rtts.size());
     rtts[index] = elapsed;
 }
 

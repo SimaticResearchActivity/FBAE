@@ -6,18 +6,30 @@
 #include "BBOBBAlgoLayer.h"
 #include "BBOBBAlgoLayerMsg.h"
 #include "../../msgTemplates.h"
+#include "../../CommLayer/TcpCommLayer/TcpCommLayer.h"
 
+#include <algorithm>
 #include <ctgmath>
-#include <unistd.h>
 #include <thread>
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
+/**
+ * @brief Functionality similar to Java's instanceof (found at https://www.tutorialspoint.com/cplusplus-equivalent-of-instanceof)
+ * @tparam Base Are we an instance of this Base type?
+ * @tparam T The type we want to test
+ * @param ptr A pointer on an instance of T
+ * @return true if @ptr (of type @T) is an instance of type @Base.
+ */
+template<typename Base, typename T>
+inline bool instanceof(const T *ptr) {
+    return dynamic_cast<const Base*>(ptr) != nullptr;
+}
+
 
 bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
-    static atomic_int32_t seqNum{0};
-    static atomic_int32_t nbConnectedBroadcasters{0};
+    peers_peersRank_ready.wait();
     MsgId msgId{static_cast<MsgId>(msgString[0])};
     switch (msgId) {
         using
@@ -28,35 +40,19 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             if (getSession()->getParam().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
                      << " : Received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
-
-            atomic_int32_t nbConnectedBroadcastersWanted;
-            int n = getSession()->getParam().getSites().size();
-            if (n % 2 == 0) {
-                nbConnectedBroadcastersWanted = log2(n);
-            } else {
-                nbConnectedBroadcastersWanted = floor(log2(n)) + 1;
-            }
-            if (++nbConnectedBroadcasters == nbConnectedBroadcastersWanted) {
+            if (++nbConnectedBroadcasters == nbStepsInWave) {
 
                 if (getSession()->getParam().getVerbose())
                     cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
                          << " : All broadcasters are connected \n";
 
-                //Necessary so that every participant received all of their rank info before the others messages
-                sleep(2);
-
-                //Initialize all vectors that will be used
-                messagesOfOneWave.resize(peers.size() + 1, std::vector<std::string>());
-                messagesOfNextWave.resize(peers.size() + 1, std::vector<std::string>());
-                received.resize(peers.size() + 1, false);
-                receivedNextWave.resize(peers.size() + 1, false);
-
-                alreadySent.resize(peers.size(), false);
-
                 getSession()->callbackInitDone();
 
                 //Send Step 0 Message of wave 0
-                beginWave(0);
+                lastSentStepMsg.msgId = MsgId::Step;
+                lastSentStepMsg.wave = -1;
+                beginWave();
+                CatchUpIfLateInMessageSending();
             }
             break;
         }
@@ -70,83 +66,25 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
 
             if (sendWave) {
 
-                auto bmtb{deserializeStruct<StepMessage>(msgString)};
+                auto stepMsg{deserializeStruct<StepMsg>(msgString)};
 
                 if (getSession()->getParam().getVerbose())
                     cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
-                         << " : Receive a Step Message (step : " << bmtb.stepNumber << " / wave : "
-                         << bmtb.wave << ") from Broadcater#" << static_cast<unsigned int>(bmtb.senderRank) << "\n";
+                         << " : Receive a Step Message (step : " << stepMsg.step << " / wave : "
+                         << stepMsg.wave << ") from Broadcaster#" << static_cast<unsigned int>(stepMsg.senderRank) << "\n";
 
-                if (currentWave == bmtb.wave) {
-
-                    messagesOfOneWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
-                    received[bmtb.stepNumber + 1] = true;
-
-                    bool empty = sendStepMessages();
-
-                    //After all the messages of one wave have been sent we deliver the messages
-                    if (!empty && received.back()) {
-
-                        std::vector<std::vector<std::string>> messagesToDeliver;
-                        messagesToDeliver.resize(getSession()->getParam().getSites().size());
-                        for (int i = 0; i < peers.size() + 1; i++) {
-                            std::vector<std::string> vector;
-                            messagesToDeliver[i] = vector;
-                        }
-
-                        //The messageOfOneWave.size() -1 messages can be sorted by broadcasters
-                        for (int i = 0; i < messagesOfOneWave.size() - 1; i++) {
-                            for (std::string &message: messagesOfOneWave[i]) {
-                                auto s{deserializeStruct<Message>(message)};
-                                messagesToDeliver[s.senderRank].push_back(s.sessionMsg);
-                            }
-                        }
-
-                        //The messageOfOneWave.size() message might have duplicates
-                        if (!messagesOfOneWave.back().empty()) {
-                            int sender = -1;
-                            for (int i = 0; i < messagesOfOneWave.back().size(); i++) {
-                                auto s{deserializeStruct<Message>(messagesOfOneWave.back()[i])};
-                                if (messagesToDeliver[s.senderRank].empty() || sender == s.senderRank) {
-                                    messagesToDeliver[s.senderRank].push_back(s.sessionMsg);
-                                    sender = s.senderRank;
-                                }
-                            }
-                        }
-
-                        //Clear the vectors we used
-                        messagesOfOneWave = messagesOfNextWave;
-                        messagesOfOneWave.resize(peers.size() + 1);
-                        messagesOfNextWave.clear();
-                        messagesOfNextWave.resize(peers.size() + 1);
-                        std::fill(alreadySent.begin(), alreadySent.end(), false);
-                        std::fill(received.begin(), received.end(), false);
-                        std::swap(received, receivedNextWave);
-                        std::fill(receivedNextWave.begin(), receivedNextWave.end(), false);
-
-                        //Delivering the message in the order
-                        for (int i = 0; i < messagesToDeliver.size(); i++) {
-                            for (std::string message: messagesToDeliver[i]) {
-                                getSession()->callbackDeliver(i, seqNum++, message);
-                            }
-                        }
-
-                        //All messages were delivered so we can launch another wave
-                        beginWave(++currentWave);
-
-                        //We send the messages from the wave we received in advance
-                        sendStepMessages();
-                    }
-                } else if (bmtb.wave == currentWave + 1) {
-                    //Message is early and needs to be treated in the next wave
-                    messagesOfNextWave[bmtb.stepNumber + 1] = bmtb.msgBroadcasted;
-                    receivedNextWave[bmtb.stepNumber + 1] = true;
+                if (stepMsg.wave == lastSentStepMsg.wave) {
+                    currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
+                    CatchUpIfLateInMessageSending();
+                } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
+                    // Message is early and needs to be treated in the next wave
+                    nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
                 } else {
-                    cerr << "ERROR\tBBOBBAlgoLayer: Unexpected wave (" << bmtb.wave << ")\n";
+                    cerr << "ERROR\tBBOBBAlgoLayer/ Broadcaster #" << getSession()->getRank() << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
+                         << " from sender #" << static_cast<int>(stepMsg.senderRank) << " (with step = " << stepMsg.step << ")\n";
                     exit(EXIT_FAILURE);
                 }
             }
-
             break;
         }
 
@@ -157,8 +95,8 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             })};
             peer->sendMsg(s);
             if (getSession()->getParam().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Broadcaster#"
-                     << static_cast<unsigned int>(bdi.senderRank) << " announces it will disconnect\n";
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Broadcaster #"
+                     << static_cast<unsigned int>(bdi.senderRank) << " announced it will disconnect\n";
             break;
         }
 
@@ -171,53 +109,77 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
     return msgId == MsgId::AckDisconnectIntent;
 }
 
-void BBOBBAlgoLayer::beginWave(int wave) {
-    //Send first Step Message of a new Wave
+void BBOBBAlgoLayer::beginWave() {
+    //Build first Step Message of a new Wave
+    lastSentStepMsg.wave += 1;
+    lastSentStepMsg.step = 0;
+    const auto senderRank = static_cast<unsigned char>(getSession()->getRank());
+    lastSentStepMsg.senderRank = senderRank;
+    lastSentStepMsg.msgBroadcast.clear();
+    lastSentStepMsg.msgBroadcast.emplace_back(senderRank, msgWaitingToBeBroadcast);
+    msgWaitingToBeBroadcast.clear();
+
+    // Send it
     if (getSession()->getParam().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
-             << " : Send Step Message (step : 0 / wave : " << wave << ") to Broadcaster#" << peersRank[0]
+             << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << peersRank[lastSentStepMsg.step]
              << "\n";
-    auto s{serializeStruct(StepMessage{
-            MsgId::Step,
-            static_cast<unsigned char>(getSession()->getRank()),
-            0,
-            wave,
-            msgWaitingToBeBroadcasted
-    })};
-    messagesOfOneWave[0] = msgWaitingToBeBroadcasted;
-    msgWaitingToBeBroadcasted.clear();
-    received[0] = true;
-    peers[0]->sendMsg(s);
+    auto s{serializeStruct(lastSentStepMsg)};
+    msgWaitingToBeBroadcast.clear();
+    peers[lastSentStepMsg.step]->sendMsg(s);
 }
 
-bool BBOBBAlgoLayer::sendStepMessages() {
-    for (int i = 1; i < messagesOfOneWave.size() - 1; i++) {
-        if (received[i] && received[0]) {
-            if (!alreadySent[i]) {
-                std::vector<std::string> messageToSend;
-                for (int j = 0; j < i + 1; j++) {
-                    messageToSend.insert(messageToSend.end(), messagesOfOneWave[j].begin(),
-                                         messagesOfOneWave[j].end());
-                }
-                if (getSession()->getParam().getVerbose())
-                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
-                         << " : Send Step Message (step : " << i << " / wave : " << currentWave
-                         << ") to Broadcaster#" << peersRank[i] << "\n";
-                auto mes{serializeStruct(StepMessage{
-                        MsgId::Step,
-                        static_cast<unsigned char>(getSession()->getRank()),
-                        i,
-                        currentWave,
-                        messageToSend
-                })};
-                peers[i]->sendMsg(mes);
-                alreadySent[i] = true;
-            }
-        } else {
-            return true;
-        }
+void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
+    // Are we able to send new stepMsg knowing the messages received in currentWaveReceivedStepMsg?
+    auto step = lastSentStepMsg.step;
+    while (lastSentStepMsg.step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
+        // Build the new version of lastSentStepMsg
+        lastSentStepMsg.step += 1;
+        lastSentStepMsg.msgBroadcast.insert(lastSentStepMsg.msgBroadcast.end(),
+                                            currentWaveReceivedStepMsg[step].msgBroadcast.begin(), currentWaveReceivedStepMsg[step].msgBroadcast.end() );
+        // Send it
+        if (getSession()->getParam().getVerbose())
+            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                 << " : Send Step Message (step : " << lastSentStepMsg.step << " / wave : " << lastSentStepMsg.wave
+                 << ") to Broadcaster#" << peersRank[lastSentStepMsg.step] << "\n";
+        auto s{serializeStruct(lastSentStepMsg)};
+        peers[lastSentStepMsg.step]->sendMsg(s);
+        step = lastSentStepMsg.step;
     }
-    return false;
+    //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
+    if (currentWaveReceivedStepMsg.size() == nbStepsInWave) {
+        // Build vector of EncapsulationSessionMsg to deliver
+        vector<EncapsulationSessionMsg> encapsulations{lastSentStepMsg.msgBroadcast};
+        encapsulations.insert(encapsulations.end(),
+                                  currentWaveReceivedStepMsg[nbStepsInWave - 1].msgBroadcast.begin(), currentWaveReceivedStepMsg[nbStepsInWave - 1].msgBroadcast.end());
+
+        // Compute the position in encapsulations vector of participant rank 0, then participant rank 1, etc.
+        // For example, positions[0] represents position of EncapsulationSessionMsg of participant 0 in encapsulations vector.
+        // Note: If EncapsulationSessionMsg of a participant appears twice, we memorize only one position
+        //       (thus, afterwards, we will not deliver twice this EncapsulationSessionMsg).
+        constexpr int not_found = -1;
+        vector<int> positions(getSession()->getParam().getSites().size(), not_found);
+        for (int pos = 0 ; pos < encapsulations.size() ; ++pos) {
+            positions[encapsulations[pos].senderRank] = pos;
+        }
+
+        // Deliver the different EncapsulationSessionMsg
+        for (auto const& pos: positions) {
+            if (pos != not_found) {
+                auto senderRank = encapsulations[pos].senderRank;
+                for (auto const& msg : encapsulations[pos].sessionMsg) {
+                    getSession()->callbackDeliver(senderRank, seqNum, msg);
+                    ++seqNum;
+                }
+            }
+        }
+
+        // Prepare new wave
+        currentWaveReceivedStepMsg = nextWaveReceivedStepMsg;
+        nextWaveReceivedStepMsg.clear();
+        beginWave();
+        CatchUpIfLateInMessageSending();
+    }
 }
 
 
@@ -231,16 +193,13 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
     setBroadcasters(sites);
 
-    int numberOfPeers;
-    int n = getSession()->getParam().getSites().size();
-    if (n % 2 == 0) {
-        numberOfPeers = log2(n);
-    } else {
-        numberOfPeers = floor(log2(n)) + 1;
-    }
-    cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << ": Wait for connections on port " << get<PORT>(sites.back())
-         << "\n";
-    commLayer->initHost(get<PORT>(sites[rank]), numberOfPeers, this);
+    const auto n = static_cast<int>(getSession()->getParam().getSites().size());
+    nbStepsInWave = static_cast<int>(n % 2 == 0 ? log2(n) : ceil(log2(n)));
+
+    if (getSession()->getParam().getVerbose())
+        cout << "\tBBOBBAlgoLayer / Broadcaster#" << rank << ": Wait for connections on port " << get<PORT>(sites[rank])
+             << "\n";
+    commLayer->initHost(get<PORT>(sites[rank]), nbStepsInWave, this);
 
     std::thread t([rank, verbose, sites, this]() {
         // Send RankInfo
@@ -255,7 +214,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
                 peersRank.push_back((power_of_2 + rank) % getSession()->getParam().getSites().size());
         }
 
-        for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, i++) {
+        for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, ++i) {
             if (verbose)
                 cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Send RankInfo to Broadcaster#"
                      << (power_of_2 + rank) % getSession()->getParam().getSites().size() << "\n";
@@ -265,49 +224,54 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
             })};
             peers[i]->sendMsg(s);
         }
+        peers_peersRank_ready.count_down();
         if (verbose)
             cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Sent all RankInfo messages\n";
     });
 
+    // We wait for all connectToHost to be done (and RankInfo messages sent) before we call waitForMsg
+    // Note: This way of doing is only compatible with Tcp layer not Enet layer! This is because Enet layer
+    //       requires to call waitForMsg in order to receive connection confirmation . Thus, we may receive
+    //       connection confirmations and, at the same time, protocol messages. As this is hard to reason, we
+    //       only authorize Tcp layer.
+    if (!instanceof<TcpCommLayer>(getSession()->getCommLayer())) {
+        cerr << "ERROR : " << toString() << " is only compatible with Tcp communication layer, but you specified "
+             << getSession()->getCommLayer()->toString() << " communication layer in program arguments "
+             << "==> Specify Tcp communication layer in program arguments.\n";
+        exit (EXIT_FAILURE);
+    }
+    t.join();
 
     if (verbose)
         cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Wait for messages\n";
-    commLayer->waitForMsg(numberOfPeers);
-
-    t.join();
-
+    commLayer->waitForMsg(nbStepsInWave);
 
     if (verbose)
-        cout << "Broadcaster#" << rank
+        cout << "Broadcaster #" << rank
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
-
 
     return true;
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    //Message is received by the broadcaster and will be sent in the next wave at step 0
-    auto bmtb{serializeStruct<Message>(Message{
-            MsgId::MessageToReceive,
-            static_cast<unsigned char>(getSession()->getRank()),
-            msg
-    })};
-    msgWaitingToBeBroadcasted.push_back(bmtb);
+    msgWaitingToBeBroadcast.push_back(msg);
 }
 
 
 void BBOBBAlgoLayer::terminate() {
-    sendWave = 0;
-    for (int i = 0; i < peers.size(); i++) {
-        auto s{serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{
-                MsgId::DisconnectIntent,
-                static_cast<unsigned char>(getSession()->getRank()),
-        })};
+    sendWave = false;
+    auto s{serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{
+            MsgId::DisconnectIntent,
+            static_cast<unsigned char>(getSession()->getRank()),
+    })};
+    for (auto i = 0; i < peers.size(); ++i) {
+        if (getSession()->getParam().getVerbose())
+            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " announces to broadcaster #" << peersRank[i] << " it will disconnect\n";
         peers[i]->sendMsg(s);
     }
 
 }
 
 std::string BBOBBAlgoLayer::toString() {
-    return std::string();
+    return "BBOBB";
 }

@@ -11,11 +11,10 @@ namespace fbae_BBOBBAlgoLayer {
         RankInfo,
         AckDisconnectIntent,
         Step,
-        MessageToReceive,
-        DisconnectIntent,
+        DisconnectIntent
     };
 
-    struct RankInfoMessage {
+    struct StructGenericMsgWithRank {
         MsgId msgId{};
         unsigned char senderRank{};
 
@@ -26,8 +25,8 @@ namespace fbae_BBOBBAlgoLayer {
         }
     };
 
-    using BroadcasterRankInfo = RankInfoMessage;
-    using BroadcasterDisconnectIntent = RankInfoMessage;
+    using BroadcasterRankInfo = StructGenericMsgWithRank;
+    using BroadcasterDisconnectIntent = StructGenericMsgWithRank;
 
     struct StructGenericMsgWithoutData {
         MsgId msgId{};
@@ -41,32 +40,30 @@ namespace fbae_BBOBBAlgoLayer {
 
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
 
-    struct StepMessage {
+    struct EncapsulationSessionMsg {
+        unsigned char senderRank{};
+        std::vector<std::string> sessionMsg;
+
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive &archive) {
+            archive(senderRank, sessionMsg); // serialize things by passing them to the archive
+        }
+    };
+
+    struct StepMsg {
         MsgId msgId{};
         unsigned char senderRank{};
-        int stepNumber;
         int wave;
-        std::vector<std::string> msgBroadcasted;
+        int step;
+        std::vector<EncapsulationSessionMsg> msgBroadcast;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId, senderRank, stepNumber, wave, msgBroadcasted); // serialize things by passing them to the archive
+            archive(msgId, senderRank, wave, step, msgBroadcast); // serialize things by passing them to the archive
         }
     };
-
-    struct Message {
-        MsgId msgId{};
-        unsigned char senderRank{};
-        std::string sessionMsg;
-
-        // This method lets cereal know which data members to serialize
-        template<class Archive>
-        void serialize(Archive &archive) {
-            archive(msgId, senderRank, sessionMsg); // serialize things by passing them to the archive
-        }
-    };
-
 
 
 }
