@@ -116,7 +116,10 @@ void BBOBBAlgoLayer::beginWave() {
     const auto senderRank = static_cast<unsigned char>(getSession()->getRank());
     lastSentStepMsg.senderRank = senderRank;
     lastSentStepMsg.msgBroadcast.clear();
-    lastSentStepMsg.msgBroadcast.emplace_back(senderRank, msgWaitingToBeBroadcast);
+    EncapsulationSessionMsg newMessage;
+    newMessage.senderRank = senderRank;
+    newMessage.sessionMsg = msgWaitingToBeBroadcast;
+    lastSentStepMsg.msgBroadcast.emplace_back(std::move(newMessage));
     msgWaitingToBeBroadcast.clear();
 
     // Send it
