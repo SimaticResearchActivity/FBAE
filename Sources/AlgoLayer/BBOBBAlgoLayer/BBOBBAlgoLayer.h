@@ -36,7 +36,7 @@ private :
      */
     int nbStepsInWave;
 
-    std::vector<std::string> msgWaitingToBeBroadcast;
+    std::vector<std::string> msgsWaitingToBeBroadcast;
     fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;

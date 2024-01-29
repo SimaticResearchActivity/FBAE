@@ -115,12 +115,12 @@ void BBOBBAlgoLayer::beginWave() {
     lastSentStepMsg.step = 0;
     const auto senderRank = static_cast<unsigned char>(getSession()->getRank());
     lastSentStepMsg.senderRank = senderRank;
-    lastSentStepMsg.msgBroadcast.clear();
-    EncapsulationSessionMsg newMessage;
+    lastSentStepMsg.batchesBroadcast.clear();
+    BatchSessionMsg newMessage;
     newMessage.senderRank = senderRank;
-    newMessage.sessionMsg = msgWaitingToBeBroadcast;
-    lastSentStepMsg.msgBroadcast.emplace_back(std::move(newMessage));
-    msgWaitingToBeBroadcast.clear();
+    newMessage.batchSessionMsg = std::move(msgsWaitingToBeBroadcast);
+    lastSentStepMsg.batchesBroadcast.emplace_back(std::move(newMessage));
+    msgsWaitingToBeBroadcast.clear();
 
     // Send it
     if (getSession()->getParam().getVerbose())
@@ -128,7 +128,7 @@ void BBOBBAlgoLayer::beginWave() {
              << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << peersRank[lastSentStepMsg.step]
              << "\n";
     auto s{serializeStruct(lastSentStepMsg)};
-    msgWaitingToBeBroadcast.clear();
+    msgsWaitingToBeBroadcast.clear();
     peers[lastSentStepMsg.step]->sendMsg(s);
 }
 
@@ -138,8 +138,8 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
     while (lastSentStepMsg.step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
         // Build the new version of lastSentStepMsg
         lastSentStepMsg.step += 1;
-        lastSentStepMsg.msgBroadcast.insert(lastSentStepMsg.msgBroadcast.end(),
-                                            currentWaveReceivedStepMsg[step].msgBroadcast.begin(), currentWaveReceivedStepMsg[step].msgBroadcast.end() );
+        lastSentStepMsg.batchesBroadcast.insert(lastSentStepMsg.batchesBroadcast.end(),
+                                                currentWaveReceivedStepMsg[step].batchesBroadcast.begin(), currentWaveReceivedStepMsg[step].batchesBroadcast.end() );
         // Send it
         if (getSession()->getParam().getVerbose())
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
@@ -151,26 +151,28 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
     if (currentWaveReceivedStepMsg.size() == nbStepsInWave) {
-        // Build vector of EncapsulationSessionMsg to deliver
-        vector<EncapsulationSessionMsg> encapsulations{lastSentStepMsg.msgBroadcast};
-        encapsulations.insert(encapsulations.end(),
-                                  currentWaveReceivedStepMsg[nbStepsInWave - 1].msgBroadcast.begin(), currentWaveReceivedStepMsg[nbStepsInWave - 1].msgBroadcast.end());
+        // Build vector of BatchSessionMsg to deliver
+        // Note that to append currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast to batches, we
+        // do not use batches.insert() but a for loop in order to be able to use std::move()
+        vector<BatchSessionMsg> batches{std::move(lastSentStepMsg.batchesBroadcast)};
+        for (auto & batch : currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast)
+            batches.push_back(std::move(batch));
 
-        // Compute the position in encapsulations vector of participant rank 0, then participant rank 1, etc.
-        // For example, positions[0] represents position of EncapsulationSessionMsg of participant 0 in encapsulations vector.
-        // Note: If EncapsulationSessionMsg of a participant appears twice, we memorize only one position
-        //       (thus, afterwards, we will not deliver twice this EncapsulationSessionMsg).
+        // Compute the position in batches vector of participant rank 0, then participant rank 1, etc.
+        // For example, positions[0] represents position of BatchSessionMsg of participant 0 in batches vector.
+        // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
+        //       (thus, afterwards, we will not deliver twice this BatchSessionMsg).
         constexpr int not_found = -1;
         vector<int> positions(getSession()->getParam().getSites().size(), not_found);
-        for (int pos = 0 ; pos < encapsulations.size() ; ++pos) {
-            positions[encapsulations[pos].senderRank] = pos;
+        for (int pos = 0 ; pos < batches.size() ; ++pos) {
+            positions[batches[pos].senderRank] = pos;
         }
 
-        // Deliver the different EncapsulationSessionMsg
+        // Deliver the different BatchSessionMsg
         for (auto const& pos: positions) {
             if (pos != not_found) {
-                auto senderRank = encapsulations[pos].senderRank;
-                for (auto const& msg : encapsulations[pos].sessionMsg) {
+                auto senderRank = batches[pos].senderRank;
+                for (auto const& msg : batches[pos].batchSessionMsg) {
                     getSession()->callbackDeliver(senderRank, seqNum, msg);
                     ++seqNum;
                 }
@@ -257,7 +259,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 }
 
 void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    msgWaitingToBeBroadcast.push_back(msg);
+    msgsWaitingToBeBroadcast.push_back(msg);
 }
 
 

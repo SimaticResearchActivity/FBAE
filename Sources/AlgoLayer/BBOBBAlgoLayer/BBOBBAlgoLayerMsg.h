@@ -40,14 +40,14 @@ namespace fbae_BBOBBAlgoLayer {
 
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
 
-    struct EncapsulationSessionMsg {
+    struct BatchSessionMsg {
         unsigned char senderRank{};
-        std::vector<std::string> sessionMsg;
+        std::vector<std::string> batchSessionMsg;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(senderRank, sessionMsg); // serialize things by passing them to the archive
+            archive(senderRank, batchSessionMsg); // serialize things by passing them to the archive
         }
     };
 
@@ -56,12 +56,12 @@ namespace fbae_BBOBBAlgoLayer {
         unsigned char senderRank{};
         int wave;
         int step;
-        std::vector<EncapsulationSessionMsg> msgBroadcast;
+        std::vector<BatchSessionMsg> batchesBroadcast;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId, senderRank, wave, step, msgBroadcast); // serialize things by passing them to the archive
+            archive(msgId, senderRank, wave, step, batchesBroadcast); // serialize things by passing them to the archive
         }
     };
 
