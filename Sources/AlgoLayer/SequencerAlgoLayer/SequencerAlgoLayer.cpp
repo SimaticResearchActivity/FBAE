@@ -10,7 +10,7 @@ using namespace fbae_SequencerAlgoLayer;
 
 bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString)
 {
-    MsgId msgId{static_cast<MsgId>(msgString[0]) };
+    auto msgId{ static_cast<MsgId>(msgString[0]) };
     switch (msgId)
     {
         using enum MsgId;
@@ -21,33 +21,32 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
         {
             auto bdi{deserializeStruct<StructDisconnectIntent>(msgString)};
             auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{MsgId::AckDisconnectIntent})};
-            peer->sendMsg(s);
+            peer->sendMsg(std::move(s));
             if (getSession()->getParam().getVerbose())
-                cout << "\tSequencerAlgoLayer / Sequencer : Broadcaster #" << static_cast<unsigned int>(bdi.senderRank) << " announces it will disconnect.\n";
+                cout << "\tSequencerAlgoLayer / Sequencer : Broadcaster #" << static_cast<uint32_t>(bdi.senderRank) << " announces it will disconnect.\n";
             break;
         }
         case RankInfo :
         {
             auto bri{deserializeStruct<StructRankInfo>(msgString)};
             if (getSession()->getParam().getVerbose())
-                cout << "\tSequencerAlgoLayer / Sequencer : Broadcaster #" << static_cast<unsigned int>(bri.senderRank) << " is connected to sequencer.\n";
+                cout << "\tSequencerAlgoLayer / Sequencer : Broadcaster #" << static_cast<uint32_t>(bri.senderRank) << " is connected to sequencer.\n";
             if (++nbConnectedBroadcasters == getBroadcasters().size())
             {
                 if (getSession()->getParam().getVerbose())
                     cout << "\tSequencerAlgoLayer / Sequencer : All broadcasters are connected: Broadcast AllBroadcastersConnected\n";
                 auto s{serializeStruct<StructAllBroadcastersConnected >(StructAllBroadcastersConnected{MsgId::AllBroadcastersConnected})};
-                getSession()->getCommLayer()->broadcastMsg(s);
+                getSession()->getCommLayer()->broadcastMsg(std::move(s));
             }
             break;
         }
         case MessageToBroadcast :
         {
-            auto bmtb{deserializeStruct<StructMessageToBroadcast>(msgString)};
+            auto msgToBroadcast{deserializeStruct<StructMessageToBroadcast>(msgString)};
             auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastMessage,
-                                                                                   bmtb.senderRank,
-                                                                                   ++seqNum,
-                                                                                   bmtb.sessionMsg})};
-            getSession()->getCommLayer()->broadcastMsg(s);
+                                                                                   msgToBroadcast.senderRank,
+                                                                                   msgToBroadcast.sessionMsg})};
+            getSession()->getCommLayer()->broadcastMsg(std::move(s));
             break;
         }
         //
@@ -62,13 +61,7 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
         case BroadcastMessage :
         {
             auto sbm {deserializeStruct<StructBroadcastMessage>(msgString)};
-            if (nextDeliver != sbm.seqNum)
-            {
-                cerr << "ERROR\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Received a totalOrderBroadcast message with seqNum=" << sbm.seqNum << " while nextDeliver=" << nextDeliver << "\n";
-                exit(EXIT_FAILURE);
-            }
-            getSession()->callbackDeliver(sbm.senderRank, sbm.seqNum, sbm.sessionMsg);
-            ++nextDeliver;
+            getSession()->callbackDeliver(sbm.senderRank,sbm.sessionMsg);
             break;
         }
         default:
@@ -106,39 +99,39 @@ bool SequencerAlgoLayer::executeAndProducedStatistics()
     {
         // Process is a broadcaster
         if (getSession()->getParam().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Connect to sequencer at " << get<HOSTNAME>(getSession()->getParam().getSites().back()) << ":" << get<PORT>(getSession()->getParam().getSites().back()) << "\n";
+            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Connect to sequencer at " << get<HOSTNAME>(getSession()->getParam().getSites().back()) << ":" << get<PORT>(getSession()->getParam().getSites().back()) << "\n";
         sequencerPeer = getSession()->getCommLayer()->connectToHost(getSession()->getParam().getSites().back(), this);
 
         // Send RankInfo to sequencer
         if (getSession()->getParam().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Send RankInfo to sequencer\n";
-        auto s {serializeStruct<StructRankInfo>(StructRankInfo{MsgId::RankInfo, static_cast<unsigned char>(getSession()->getRank())})};
-        sequencerPeer->sendMsg(s );
+            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Send RankInfo to sequencer\n";
+        auto s {serializeStruct<StructRankInfo>(StructRankInfo{MsgId::RankInfo, getSession()->getRank()})};
+        sequencerPeer->sendMsg(std::move(s));
 
         if (getSession()->getParam().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Wait for messages\n";
+            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Wait for messages\n";
         commLayer->waitForMsg(1); // maxDisconnections is 1, because we have only a connection with sequencer.
         if (getSession()->getParam().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
+            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
         return true;
     }
 }
 
-void SequencerAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    // Send MessageToBroadcast to sequencer
-    auto bmtb {serializeStruct<StructMessageToBroadcast>(StructMessageToBroadcast{MsgId::MessageToBroadcast,
-                                                                                  static_cast<unsigned char>(getSession()->getRank()),
-                                                                                  msg})};
-    sequencerPeer->sendMsg(bmtb );
-}
-
 void SequencerAlgoLayer::terminate() {
     // Send DisconnectIntent to sequencer
-    auto s {serializeStruct<StructDisconnectIntent>(StructDisconnectIntent{MsgId::DisconnectIntent, static_cast<unsigned char>(getSession()->getRank())})};
-    sequencerPeer->sendMsg(s );
+    auto s {serializeStruct<StructDisconnectIntent>(StructDisconnectIntent{MsgId::DisconnectIntent, getSession()->getRank()})};
+    sequencerPeer->sendMsg(std::move(s));
 
 }
 
 std::string SequencerAlgoLayer::toString() {
     return "Sequencer";
+}
+
+void SequencerAlgoLayer::totalOrderBroadcast(std::string && msg) {
+    // Send MessageToBroadcast to sequencer
+    auto s {serializeStruct<StructMessageToBroadcast>(StructMessageToBroadcast{MsgId::MessageToBroadcast,
+                                                                               getSession()->getRank(),
+                                                                               std::move(msg)})};
+    sequencerPeer->sendMsg(std::move(s));
 }

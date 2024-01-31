@@ -2,13 +2,14 @@
 
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
+#include "../../basicTypes.h"
 
 namespace fbae_SequencerAlgoLayer
 {
     //---------------------------------------------------
     // Id of messages exchanged between sequencer and broadcaster(s)
     //---------------------------------------------------
-    enum class MsgId : unsigned char
+    enum class MsgId : MsgId_t
     {
         // Messages sent by the sequencer to broadcaster(s)
         AckDisconnectIntent = 65, // We start with a value which be displayed as a character in debugger
@@ -41,15 +42,14 @@ namespace fbae_SequencerAlgoLayer
     struct StructBroadcastMessage
     {
         MsgId msgId{};
-        unsigned char senderRank{};
-        int seqNum{};
+        rank_t senderRank{};
         std::string sessionMsg;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId, senderRank, seqNum, sessionMsg); // serialize things by passing them to the archive
+            archive(msgId, senderRank, sessionMsg); // serialize things by passing them to the archive
         }
     };
 
@@ -59,7 +59,7 @@ namespace fbae_SequencerAlgoLayer
     struct StructGenericMsgWithRank
     {
         MsgId msgId{};
-        unsigned char  senderRank{};
+        rank_t senderRank{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -75,7 +75,7 @@ namespace fbae_SequencerAlgoLayer
     struct StructMessageToBroadcast
     {
         MsgId msgId{};
-        unsigned char senderRank{};
+        rank_t senderRank{};
         std::string sessionMsg;
 
         // This method lets cereal know which data members to serialize

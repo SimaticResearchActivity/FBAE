@@ -3,12 +3,13 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/chrono.hpp"
 #include "cereal/types/string.hpp"
+#include "../basicTypes.h"
 
 namespace fbae_SessionLayer {
     //---------------------------------------------------
 // Messages totalOrderBroadcast by SessionLayer (to SessionLayer)
 //---------------------------------------------------
-    enum class SessionMsgId : unsigned char
+    enum class SessionMsgId : MsgId_t
     {
         FinishedPerfMeasures = 48, // We start with a value which be displayed as a character in debugger
         FirstBroadcast,
@@ -34,8 +35,8 @@ namespace fbae_SessionLayer {
     struct SessionPerfMeasure
     {
         SessionMsgId msgId{};
-        unsigned char senderRank{};
-        unsigned int msgNum{};
+        rank_t senderRank{};
+        int32_t msgNum{};
         std::chrono::time_point<std::chrono::system_clock> sendTime;
         std::string filler;
 
@@ -50,8 +51,8 @@ namespace fbae_SessionLayer {
     struct SessionPerfResponse
     {
         SessionMsgId msgId{};
-        unsigned char perfMeasureSenderRank{};
-        unsigned int perfMeasureMsgNum{};
+        rank_t perfMeasureSenderRank{};
+        int32_t perfMeasureMsgNum{};
         std::chrono::time_point<std::chrono::system_clock> perfMeasureSendTime;
         std::string perfMeasureFiller;
 

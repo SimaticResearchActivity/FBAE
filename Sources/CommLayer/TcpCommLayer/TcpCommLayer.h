@@ -68,7 +68,7 @@ private:
     std::unique_ptr<boost::asio::ip::tcp::socket>  tryConnectToHost(HostTuple host);
 public:
     TcpCommLayer() = default;
-    void broadcastMsg(std::string_view msg) override;
+    void broadcastMsg(std::string && msg) override;
     std::unique_ptr<CommPeer> connectToHost(HostTuple host, AlgoLayer *algoLayer) override;
     void initHost(int port, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
     std::string toString() override;

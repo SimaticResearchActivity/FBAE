@@ -9,5 +9,5 @@ private:
 public:
     explicit EnetCommPeer(ENetPeer* enetPeer);
     void disconnect() override;
-    void sendMsg(std::string_view msg) override;
+    void sendMsg(std::string && msg) override;
 };

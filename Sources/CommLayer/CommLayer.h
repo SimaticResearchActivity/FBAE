@@ -16,7 +16,7 @@ public:
      * @brief Broadcast message contained in @msg to all peer connected to the" process
      * @param msg Message to be totalOrderBroadcast
      */
-    virtual void broadcastMsg(std::string_view msg) = 0;
+    virtual void broadcastMsg(std::string && msg) = 0;
 
     /**
      * @brief Connect to host @host.

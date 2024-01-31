@@ -22,7 +22,7 @@ EnetCommLayer::EnetCommLayer() {
     }
 }
 
-bool EnetCommLayer::analyzeEvent(ENetEvent const& event)
+bool EnetCommLayer::analyzeEvent(ENetEvent const& event) const
 {
     switch (event.type)
     {
@@ -53,7 +53,7 @@ bool EnetCommLayer::analyzeEvent(ENetEvent const& event)
     return false;
 }
 
-void EnetCommLayer::broadcastMsg(std::string_view msg)
+void EnetCommLayer::broadcastMsg(std::string && msg)
 {
     ENetPacket* packet = enet_packet_create(msg.data(), msg.size(), ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(enetHost, 0, packet); // We send systematically on channelID 0

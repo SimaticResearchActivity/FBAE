@@ -13,5 +13,5 @@ public:
      * @brief Sends @msg to peer.
      * @param msg Message to send.
      */
-    virtual void sendMsg(std::string_view msg) = 0;
+    virtual void sendMsg(std::string && msg) = 0;
 };

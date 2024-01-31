@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mutex>
+#include <future>
 #include "SessionLayer.h"
 #include "SessionLayerMsg.h"
 #include "../msgTemplates.h"
@@ -7,7 +8,7 @@
 using namespace std;
 using namespace fbae_SessionLayer;
 
-SessionLayer::SessionLayer(const Param &param, int rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer)
+SessionLayer::SessionLayer(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer)
 : param{param}
 , rank{rank}
 , algoLayer{std::move(algoLayer)}
@@ -17,37 +18,36 @@ SessionLayer::SessionLayer(const Param &param, int rank, std::unique_ptr<AlgoLay
     this->algoLayer->setSession(this);
 }
 
-unsigned int SessionLayer::broadcastPerfMeasure(unsigned int msgNum) {
-    ++msgNum;
+void SessionLayer::broadcastPerfMeasure() {
     if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Broadcast PerfMeasure by sender #" << rank << " (numPerfMeasure = " << msgNum << ")\n";
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast PerfMeasure (senderRank = " << static_cast<uint32_t>(rank) << " ; msgNum = " << numPerfMeasure << ")\n";
     auto s {serializeStruct<SessionPerfMeasure>(SessionPerfMeasure{SessionMsgId::PerfMeasure,
-                                                                   static_cast<unsigned char>(rank),
-                                                                   msgNum,
+                                                                   rank,
+                                                                   numPerfMeasure,
                                                                    std::chrono::system_clock::now(),
                                                                    std::string(
                                                                            param.getSizeMsg() -
                                                                            minSizeClientMessageToBroadcast,
                                                                            0)})};
-    algoLayer->totalOrderBroadcast(s);
-    return msgNum;
+    algoLayer->totalOrderBroadcast(std::move(s));
+    ++numPerfMeasure;
 }
 
-void SessionLayer::callbackDeliver(int senderRank, int seqNum, const std::string &msg) {
-    switch (SessionMsgId sessionMsgTyp{ static_cast<SessionMsgId>(msg[0]) }; sessionMsgTyp)
+void SessionLayer::callbackDeliver(rank_t senderRank, const std::string &msg) {
+    switch (auto sessionMsgTyp{ static_cast<SessionMsgId>(msg[0]) }; sessionMsgTyp)
     {
         using enum SessionMsgId;
         case FinishedPerfMeasures :
-            processFinishedPerfMeasuresMsg(senderRank, seqNum);
+            processFinishedPerfMeasuresMsg(senderRank);
             break;
         case FirstBroadcast :
-            numPerfMeasure = processFirstBroadcastMsg(senderRank, seqNum, numPerfMeasure);
+            processFirstBroadcastMsg(senderRank);
             break;
         case PerfMeasure :
-            processPerfMeasureMsg(senderRank, seqNum, msg);
+            processPerfMeasureMsg(senderRank, msg);
             break;
         case PerfResponse :
-            numPerfMeasure = processPerfResponseMsg(senderRank, seqNum, numPerfMeasure, msg);
+            processPerfResponseMsg(senderRank, msg);
             break;
         default:
         {
@@ -61,25 +61,28 @@ void SessionLayer::callbackInitDone() const
 {
     // Broadcast FirstBroadcast
     if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Broadcast FirstBroadcast by sender #" << rank << "\n";
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(rank) << ")\n";
     auto s {serializeStruct<SessionFirstBroadcast>(SessionFirstBroadcast{SessionMsgId::FirstBroadcast})};
-    algoLayer->totalOrderBroadcast(s);
+    algoLayer->totalOrderBroadcast(std::move(s));
 }
 
 void SessionLayer::execute()
 {
+    future<void> taskSendPeriodicPerfMessage;
     if (param.getVerbose())
         cout << "SessionLayer #" << rank << " : Start execution\n";
+    if (param.getFrequency())
+        taskSendPeriodicPerfMessage = std::async(std::launch::async, &SessionLayer::sendPeriodicPerfMessage, this);
     if (algoLayer->executeAndProducedStatistics())
     {
         // Display statistics
         static std::mutex mtx;
-        {
-            scoped_lock lock{mtx};
-            cout << Param::csvHeadline() << "," << Measures::csvHeadline() << "\n";
-            cout << param.asCsv(algoLayer->toString(), commLayer->toString()) << "," << measures.asCsv(param.getNbMsg(), algoLayer->getBroadcasters().size()) << "\n";
-        }
+        scoped_lock lock{mtx};
+        cout << Param::csvHeadline() << "," << Measures::csvHeadline() << "\n";
+        cout << param.asCsv(algoLayer->toString(), commLayer->toString()) << "," << measures.asCsv(param.getNbMsg(), algoLayer->getBroadcasters().size()) << "\n";
     }
+    if (param.getFrequency())
+        taskSendPeriodicPerfMessage.get();
     if (param.getVerbose())
         cout << "SessionLayer #" << rank << " : End of execution\n";
 }
@@ -94,15 +97,15 @@ const Param &SessionLayer::getParam() const
     return param;
 }
 
-int SessionLayer::getRank() const {
+rank_t SessionLayer::getRank() const {
     return rank;
 }
 
-void SessionLayer::processFinishedPerfMeasuresMsg(int senderRank, int seqNum)
+void SessionLayer::processFinishedPerfMeasuresMsg(rank_t senderRank)
 {
     ++nbReceivedFinishedPerfMeasures;
     if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Deliver FinishedPerfMeasures from sender #" << senderRank << " (seqNum = " << seqNum << " ; nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver FinishedPerfMeasures from sender #" << static_cast<uint32_t>(senderRank) << " (nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
 
     if (nbReceivedFinishedPerfMeasures > algoLayer->getBroadcasters().size())
     {
@@ -116,10 +119,10 @@ void SessionLayer::processFinishedPerfMeasuresMsg(int senderRank, int seqNum)
     }
 }
 
-unsigned int SessionLayer::processFirstBroadcastMsg(int senderRank, int seqNum, unsigned int msgNum) {
+void SessionLayer::processFirstBroadcastMsg(rank_t senderRank) {
     ++nbReceivedFirstBroadcast;
     if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Deliver FirstBroadcast from sender #" << senderRank << " (seqNum = " << seqNum << " ; nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver FirstBroadcast from sender #" << static_cast<uint32_t>(senderRank) << " (nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
     if (nbReceivedFirstBroadcast > algoLayer->getBroadcasters().size())
     {
         cerr << "ERROR : Delivering a FirstBroadcast message while we already have received all FirstBroadcast messages we were waiting for.\n";
@@ -128,45 +131,55 @@ unsigned int SessionLayer::processFirstBroadcastMsg(int senderRank, int seqNum, 
     if (nbReceivedFirstBroadcast == algoLayer->getBroadcasters().size())
     {
         // As we have received all awaited FirstBroadcast messages, we know that @AlgoLayer is fully
-        // operational ==> We can start our performance measures ==> We broadcast a PerfMeasure message.
-        msgNum = broadcastPerfMeasure(msgNum);
+        // operational ==> We can start our performance measures.
+        if (param.getFrequency())
+            // We start periodic sending of PerfMessage
+            okToSendPeriodicPerfMessage.count_down();
+        else
+            // We send a single PerfMeasure
+            broadcastPerfMeasure();
     }
-    return msgNum;
 }
 
-void SessionLayer::processPerfMeasureMsg(int senderRank, int seqNum, const std::string &msg) {
-    if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Deliver PerfMeasure from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
+void SessionLayer::processPerfMeasureMsg(rank_t senderRank, const std::string &msg) {
     auto spm{deserializeStruct<SessionPerfMeasure>(msg)};
+    if (param.getVerbose())
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfMeasure from sender #" << static_cast<uint32_t>(senderRank) << " (senderRank = " << static_cast<uint32_t>(spm.senderRank) << " ; msgNum = " << spm.msgNum << ")\n";
     // We check which process must send the PerfResponse. The formula hereafter guarantees that first PerfMeasure is
-    // answered by successor of sender process, second PerfMeasure message is answered by successor of successor of
+    // answered by successor of sender process, second PerfMeasure message is answered by successor of the successor of
     // sender process, etc.
     if ((spm.senderRank + spm.msgNum) % algoLayer->getBroadcasters().size() == rank)
     {
         // Current process must broadcast PerfResponse message for this PerfMeasure message.
         if (param.getVerbose())
-            cout << "SessionLayer #" << rank << " : Broadcast PerfResponse by sender #" << rank << "\n";
+            cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast PerfResponse by sender #" << static_cast<uint32_t>(rank) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spm.senderRank) << " ; perfMeasureMsgNum = " << spm.msgNum << ")\n";
         auto s {serializeStruct<SessionPerfResponse>(SessionPerfResponse{SessionMsgId::PerfResponse,
                                                                          spm.senderRank,
                                                                          spm.msgNum,
                                                                          spm.sendTime,
                                                                          spm.filler})};
-        algoLayer->totalOrderBroadcast(s);
+        algoLayer->totalOrderBroadcast(std::move(s));
     }
 }
 
-unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsigned int msgNum, const string &msg) {
-    if (param.getVerbose())
-        cout << "SessionLayer #" << rank << " : Deliver PerfResponse from sender #" << senderRank << " (seqNum = " << seqNum << ")\n";
+void SessionLayer::processPerfResponseMsg(rank_t senderRank, const std::string &msg) {
     auto spr{deserializeStruct<SessionPerfResponse>(msg)};
+    if (param.getVerbose())
+        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfResponse from sender #" << static_cast<uint32_t>(senderRank) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spr.perfMeasureSenderRank) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
     if (spr.perfMeasureSenderRank == rank)
     {
+        if (nbReceivedPerfResponseForSelf >= param.getNbMsg()) {
+            cerr << "WARNING : SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver too many PerfResponse for self\n";
+            return;
+        }
+        ++nbReceivedPerfResponseForSelf;
         measures.add(elapsed);
         if (spr.perfMeasureMsgNum < param.getNbMsg() - 1)
         {
-            // We send another PerfMessage
-            msgNum = broadcastPerfMeasure(msgNum);
+            if (!param.getFrequency())
+                // As we do not send periodic PerfMessage, we send another PerfMessage
+                broadcastPerfMeasure();
         }
         else
         {
@@ -174,8 +187,24 @@ unsigned SessionLayer::processPerfResponseMsg(int senderRank, int seqNum, unsign
             if (param.getVerbose())
                 cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};
-            algoLayer->totalOrderBroadcast(s);
+            algoLayer->totalOrderBroadcast(std::move(s));
         }
     }
-    return msgNum;
+}
+
+void SessionLayer::sendPeriodicPerfMessage() {
+    okToSendPeriodicPerfMessage.wait();
+    constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
+    const auto freq{ param.getFrequency() };
+    auto startSending{ std::chrono::system_clock::now() };
+    while(true) {
+        auto elapsedPeriod{ std::chrono::system_clock::now() - startSending };
+        // Broadcast PerfMeasure messages until we reach the desired frequency
+        while (numPerfMeasure < freq * static_cast<double>(elapsedPeriod / 1000ms)) {
+            broadcastPerfMeasure();
+            if (numPerfMeasure >= param.getNbMsg())
+                return;
+        }
+        std::this_thread::sleep_for(sleepDuration);
+    }
 }

@@ -27,7 +27,7 @@ struct ForLength
     }
 };
 
-void TcpCommPeer::sendMsg(std::string_view msg) {
+void TcpCommPeer::sendMsg(std::string && msg) {
     ForLength forLength{msg.length()};
     std::stringstream oStream;
     {

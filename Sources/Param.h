@@ -21,8 +21,10 @@ constexpr int PORT{1};
 
 class Param {
 private:
+    int frequency{0};
+    int maxBatchSize{INT32_MAX};
     int nbMsg{0};
-    int rank{0};
+    uint8_t rank{0};
     int sizeMsg{0};
     std::string siteFile{};
     std::vector<HostTuple> sites;
@@ -32,8 +34,10 @@ public:
     explicit Param(mlib::OptParserExtended const& parser);
     [[nodiscard]] std::string asCsv(std::string const& algoStr, std::string const& commLayerStr) const;
     static std::string csvHeadline();
+    [[nodiscard]] int getFrequency() const;
+    [[nodiscard]] int getMaxBatchSize() const;
     [[nodiscard]] int getNbMsg() const;
-    [[nodiscard]] int getRank() const;
+    [[nodiscard]] uint8_t getRank() const;
     [[nodiscard]] std::vector<HostTuple> getSites() const;
     [[nodiscard]] int getSizeMsg() const;
     [[nodiscard]] bool getVerbose() const;

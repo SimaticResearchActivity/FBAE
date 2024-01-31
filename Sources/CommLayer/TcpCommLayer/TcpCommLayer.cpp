@@ -52,12 +52,13 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
     }
 }
 
-void TcpCommLayer::broadcastMsg(std::string_view msg)
+void TcpCommLayer::broadcastMsg(std::string && msg)
 {
     std::shared_lock readerLock(rwMtxIncomingPeers);
     for (auto & ptrPeer : incomingPeers)
     {
-        ptrPeer->sendMsg(msg);
+        auto tmp{msg};
+        ptrPeer->sendMsg(std::move(tmp));
     }
 }
 unique_ptr<tcp::socket>  TcpCommLayer::tryConnectToHost(HostTuple host)

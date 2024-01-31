@@ -27,23 +27,21 @@ inline bool instanceof(const T *ptr) {
     return dynamic_cast<const Base*>(ptr) != nullptr;
 }
 
-
 bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
     peers_peersRank_ready.wait();
-    MsgId msgId{static_cast<MsgId>(msgString[0])};
+    auto msgId{static_cast<MsgId>(msgString[0])};
     switch (msgId) {
-        using
-        enum MsgId;
+        using enum MsgId;
 
         case RankInfo : {
             auto bri{deserializeStruct<BroadcasterRankInfo>(msgString)};
             if (getSession()->getParam().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
-                     << " : Received RankInfo from broadcaster#" << static_cast<unsigned int>(bri.senderRank) << "\n";
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
+                     << " : Received RankInfo from broadcaster#" << static_cast<uint32_t>(bri.senderRank) << "\n";
             if (++nbConnectedBroadcasters == nbStepsInWave) {
 
                 if (getSession()->getParam().getVerbose())
-                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
                          << " : All broadcasters are connected \n";
 
                 getSession()->callbackInitDone();
@@ -69,9 +67,9 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
                 auto stepMsg{deserializeStruct<StepMsg>(msgString)};
 
                 if (getSession()->getParam().getVerbose())
-                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
                          << " : Receive a Step Message (step : " << stepMsg.step << " / wave : "
-                         << stepMsg.wave << ") from Broadcaster#" << static_cast<unsigned int>(stepMsg.senderRank) << "\n";
+                         << stepMsg.wave << ") from Broadcaster#" << static_cast<uint32_t>(stepMsg.senderRank) << "\n";
 
                 if (stepMsg.wave == lastSentStepMsg.wave) {
                     currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
@@ -93,10 +91,10 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
             auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{
                     MsgId::AckDisconnectIntent,
             })};
-            peer->sendMsg(s);
+            peer->sendMsg(std::move(s));
             if (getSession()->getParam().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " : Broadcaster #"
-                     << static_cast<unsigned int>(bdi.senderRank) << " announced it will disconnect\n";
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Broadcaster #"
+                     << static_cast<uint32_t>(bdi.senderRank) << " announced it will disconnect\n";
             break;
         }
 
@@ -113,23 +111,24 @@ void BBOBBAlgoLayer::beginWave() {
     //Build first Step Message of a new Wave
     lastSentStepMsg.wave += 1;
     lastSentStepMsg.step = 0;
-    const auto senderRank = static_cast<unsigned char>(getSession()->getRank());
+    const auto senderRank = getSession()->getRank();
     lastSentStepMsg.senderRank = senderRank;
     lastSentStepMsg.batchesBroadcast.clear();
-    BatchSessionMsg newMessage;
-    newMessage.senderRank = senderRank;
-    newMessage.batchSessionMsg = std::move(msgsWaitingToBeBroadcast);
-    lastSentStepMsg.batchesBroadcast.emplace_back(std::move(newMessage));
-    msgsWaitingToBeBroadcast.clear();
+    {
+        lock_guard lck(mtxBatchCtrl);
+        BatchSessionMsg newMessage{senderRank, std::move(msgsWaitingToBeBroadcast)};
+        msgsWaitingToBeBroadcast.clear();
+        lastSentStepMsg.batchesBroadcast.emplace_back(std::move(newMessage));
+    }
+    condVarBatchCtrl.notify_one();
 
     // Send it
     if (getSession()->getParam().getVerbose())
-        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
              << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << peersRank[lastSentStepMsg.step]
              << "\n";
     auto s{serializeStruct(lastSentStepMsg)};
-    msgsWaitingToBeBroadcast.clear();
-    peers[lastSentStepMsg.step]->sendMsg(s);
+    peers[lastSentStepMsg.step]->sendMsg(std::move(s));
 }
 
 void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
@@ -142,11 +141,11 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
                                                 currentWaveReceivedStepMsg[step].batchesBroadcast.begin(), currentWaveReceivedStepMsg[step].batchesBroadcast.end() );
         // Send it
         if (getSession()->getParam().getVerbose())
-            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank()
+            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
                  << " : Send Step Message (step : " << lastSentStepMsg.step << " / wave : " << lastSentStepMsg.wave
-                 << ") to Broadcaster#" << peersRank[lastSentStepMsg.step] << "\n";
+                 << ") to Broadcaster#" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step]) << "\n";
         auto s{serializeStruct(lastSentStepMsg)};
-        peers[lastSentStepMsg.step]->sendMsg(s);
+        peers[lastSentStepMsg.step]->sendMsg(std::move(s));
         step = lastSentStepMsg.step;
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
@@ -161,7 +160,7 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
         // Compute the position in batches vector of participant rank 0, then participant rank 1, etc.
         // For example, positions[0] represents position of BatchSessionMsg of participant 0 in batches vector.
         // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
-        //       (thus, afterwards, we will not deliver twice this BatchSessionMsg).
+        //       (thus, afterward, we will not deliver twice this BatchSessionMsg).
         constexpr int not_found = -1;
         vector<int> positions(getSession()->getParam().getSites().size(), not_found);
         for (int pos = 0 ; pos < batches.size() ; ++pos) {
@@ -173,8 +172,13 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
             if (pos != not_found) {
                 auto senderRank = batches[pos].senderRank;
                 for (auto const& msg : batches[pos].batchSessionMsg) {
-                    getSession()->callbackDeliver(senderRank, seqNum, msg);
-                    ++seqNum;
+                    // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
+                    // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
+                    // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
+                    // because thread @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
+                    shortcutBatchCtrl = true;
+                    getSession()->callbackDeliver(senderRank, msg);
+                    shortcutBatchCtrl = false;
                 }
             }
         }
@@ -186,7 +190,6 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
         CatchUpIfLateInMessageSending();
     }
 }
-
 
 bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
@@ -202,7 +205,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     nbStepsInWave = static_cast<int>(n % 2 == 0 ? log2(n) : ceil(log2(n)));
 
     if (getSession()->getParam().getVerbose())
-        cout << "\tBBOBBAlgoLayer / Broadcaster#" << rank << ": Wait for connections on port " << get<PORT>(sites[rank])
+        cout << "\tBBOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << ": Wait for connections on port " << get<PORT>(sites[rank])
              << "\n";
     commLayer->initHost(get<PORT>(sites[rank]), nbStepsInWave, this);
 
@@ -221,17 +224,17 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
         for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, ++i) {
             if (verbose)
-                cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Send RankInfo to Broadcaster#"
+                cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Send RankInfo to Broadcaster#"
                      << (power_of_2 + rank) % getSession()->getParam().getSites().size() << "\n";
             auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{
                     MsgId::RankInfo,
-                    static_cast<unsigned char>(getSession()->getRank())
+                    getSession()->getRank()
             })};
-            peers[i]->sendMsg(s);
+            peers[i]->sendMsg(std::move(s));
         }
         peers_peersRank_ready.count_down();
         if (verbose)
-            cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Sent all RankInfo messages\n";
+            cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Sent all RankInfo messages\n";
     });
 
     // We wait for all connectToHost to be done (and RankInfo messages sent) before we call waitForMsg
@@ -248,35 +251,39 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
     t.join();
 
     if (verbose)
-        cout << "\tBBOOBBAlgoLayer / Broadcaster#" << rank << " : Wait for messages\n";
+        cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Wait for messages\n";
     commLayer->waitForMsg(nbStepsInWave);
 
     if (verbose)
-        cout << "Broadcaster #" << rank
+        cout << "Broadcaster #" << static_cast<uint32_t>(rank)
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
 
     return true;
 }
 
-void BBOBBAlgoLayer::totalOrderBroadcast(const std::string &msg) {
-    msgsWaitingToBeBroadcast.push_back(msg);
-}
-
-
 void BBOBBAlgoLayer::terminate() {
     sendWave = false;
     auto s{serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{
             MsgId::DisconnectIntent,
-            static_cast<unsigned char>(getSession()->getRank()),
+            getSession()->getRank(),
     })};
     for (auto i = 0; i < peers.size(); ++i) {
         if (getSession()->getParam().getVerbose())
-            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << getSession()->getRank() << " announces to broadcaster #" << peersRank[i] << " it will disconnect\n";
-        peers[i]->sendMsg(s);
+            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " announces to broadcaster #" << static_cast<uint32_t>(peersRank[i]) << " it will disconnect\n";
+        peers[i]->sendMsg(std::move(s));
     }
 
 }
 
 std::string BBOBBAlgoLayer::toString() {
     return "BBOBB";
+}
+
+void BBOBBAlgoLayer::totalOrderBroadcast(std::string && msg) {
+    unique_lock lck(mtxBatchCtrl);
+    condVarBatchCtrl.wait(lck, [this] {
+        return (msgsWaitingToBeBroadcast.size() * getSession()->getParam().getSizeMsg() < getSession()->getParam().getMaxBatchSize())
+               || shortcutBatchCtrl;
+    });
+    msgsWaitingToBeBroadcast.emplace_back(std::move(msg));
 }

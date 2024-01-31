@@ -4,7 +4,7 @@
 #include "Measures.h"
 
 Measures::Measures(size_t nb_rtts_max)
-: rtts(nb_rtts_max)
+: rtts(nb_rtts_max+100)
 {
 }
 

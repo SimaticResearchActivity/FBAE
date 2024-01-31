@@ -1,29 +1,63 @@
 #pragma once
 
+#include <latch>
 #include <memory>
 #include "../AlgoLayer/AlgoLayer.h"
+#include "../basicTypes.h"
 #include "../Measures.h"
 #include "../Param.h"
 
 class SessionLayer {
 private:
     const Param &param;
-    const int rank;
+    const rank_t rank;
     std::unique_ptr<AlgoLayer> algoLayer;
     std::unique_ptr<CommLayer> commLayer;
     Measures measures;
-    unsigned int numPerfMeasure{0};
+    int32_t numPerfMeasure{0};
+    int32_t nbReceivedPerfResponseForSelf{0};
     size_t nbReceivedFirstBroadcast{0};
     size_t nbReceivedFinishedPerfMeasures{0};
-public:
-    SessionLayer(const Param &param, int rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+    std::latch okToSendPeriodicPerfMessage{1};
 
     /**
      * @brief Broadcasts a @PerfMeasure message with @msgNum incremented by 1.
-     * @param msgNum Value of numPerfMeasure to increment before storing in @PerfMeasure message
-     * @return Incremented value of @msgNum
      */
-    unsigned int broadcastPerfMeasure(unsigned int msgNum);
+    void broadcastPerfMeasure();
+
+    /**
+     * @brief Called by @callbackDeliver to process @FinishedPerfMeasures message
+     * @param senderRank Rank of message sender.
+     */
+    void processFinishedPerfMeasuresMsg(rank_t senderRank);
+
+    /**
+     * @brief Called by @callbackDeliver to process @FirstBroadcast message
+     * @param senderRank Rank of message sender.
+     */
+    void processFirstBroadcastMsg(rank_t senderRank);
+
+    /**
+     * @brief Called by @callbackDeliver to process @PerfMeasure message
+     * @param senderRank Rank of message sender.
+     * @param msg Message to process.
+     */
+    void processPerfMeasureMsg(rank_t senderRank, const std::string &msg);
+
+    /**
+     * @brief Called by @callbackDeliver to process @PerfMeasure message
+     * @param senderRank Rank of message sender.
+     * @param msg Message to process.
+     */
+    void processPerfResponseMsg(rank_t senderRank, const std::string &msg);
+
+    /**
+     * @brief Thread to send PerfMessage at @Param::frequency per second.
+     */
+    void sendPeriodicPerfMessage();
+
+public:
+    SessionLayer(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
@@ -31,7 +65,7 @@ public:
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    void callbackDeliver(int senderRank, int seqNum, const std::string &msg);
+    void callbackDeliver(rank_t senderRank, const std::string &msg);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
@@ -59,39 +93,5 @@ public:
      * @brief Getter for @rank.
      * @return @rank.
      */
-    [[nodiscard]] int getRank() const;
-
-    /**
-     * @brief Called by @callbackDeliver to process @FinishedPerfMeasures message
-     * @param senderRank Rank of message sender.
-     * @param seqNum Sequence number of message.
-     */
-    void processFinishedPerfMeasuresMsg(int senderRank, int seqNum);
-
-    /**
-     * @brief Called by @callbackDeliver to process @FirstBroadcast message
-     * @param senderRank Rank of message sender.
-     * @param seqNum Sequence number of message.
-     * @param msgNum Current message number
-     * @return New value of @msgNum
-     */
-    [[nodiscard]] unsigned int processFirstBroadcastMsg(int senderRank, int seqNum, unsigned int msgNum);
-
-    /**
-     * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
-     * @param seqNum Sequence number of message.
-     * @param msg Message to process.
-     */
-    void processPerfMeasureMsg(int senderRank, int seqNum, const std::string &msg);
-
-    /**
-     * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
-     * @param seqNum Sequence number of message.
-     * @param msgNum Current message number
-     * @param msg Message to process.
-     * @return New value of @msgNum
-     */
-    [[nodiscard]] unsigned int processPerfResponseMsg(int senderRank, int seqNum, unsigned int msgNum, const std::string &msg);
+    [[nodiscard]] rank_t getRank() const;
 };

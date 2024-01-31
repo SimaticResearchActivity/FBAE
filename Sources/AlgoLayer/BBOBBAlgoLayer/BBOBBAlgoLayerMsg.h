@@ -4,10 +4,11 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
+#include "../../basicTypes.h"
 
 namespace fbae_BBOBBAlgoLayer {
 
-    enum class MsgId : unsigned char {
+    enum class MsgId : MsgId_t {
         RankInfo,
         AckDisconnectIntent,
         Step,
@@ -16,7 +17,7 @@ namespace fbae_BBOBBAlgoLayer {
 
     struct StructGenericMsgWithRank {
         MsgId msgId{};
-        unsigned char senderRank{};
+        rank_t senderRank{};
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -41,7 +42,7 @@ namespace fbae_BBOBBAlgoLayer {
     using StructAckDisconnectIntent = StructGenericMsgWithoutData;
 
     struct BatchSessionMsg {
-        unsigned char senderRank{};
+        rank_t senderRank{};
         std::vector<std::string> batchSessionMsg;
 
         // This method lets cereal know which data members to serialize
@@ -64,7 +65,6 @@ namespace fbae_BBOBBAlgoLayer {
             archive(msgId, senderRank, wave, step, batchesBroadcast); // serialize things by passing them to the archive
         }
     };
-
 
 }
 

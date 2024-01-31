@@ -12,6 +12,6 @@ class TcpCommPeer : public CommPeer{
 public:
     explicit TcpCommPeer(boost::asio::ip::tcp::socket *psock);
     void disconnect() override;
-    void sendMsg(std::string_view msg) override;
+    void sendMsg(std::string && msg) override;
 };
 

@@ -61,7 +61,7 @@ public:
      * @brief Broadcasts @msg in a total-order manner.
      * @param msg Message to totally-order totalOrderBroadcast.
      */
-    virtual void totalOrderBroadcast(const std::string &msg) = 0;
+    virtual void totalOrderBroadcast(std::string && msg) = 0;
 
     /**
      * @brief Terminates execution of concrete totalOrderBroadcast algorithm. Eventually this call will lead to the

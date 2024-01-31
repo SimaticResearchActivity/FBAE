@@ -48,9 +48,11 @@ int main(int argc, char* argv[])
     // Take care of program arguments
     //
     OptParserExtended parser{
-            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tS = Sequencer based",
+            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer based",
             "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\te = Enet (reliable)\n\t\t\t\t\t\tt = TCP",
+            "f:frequency number \t [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
             "h|help \t Show help message",
+            "m:maxBatchSize size_in_bytes \t [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)",
             "n:nbMsg number \t Number of messages to be sent",
             "r:rank rank_number \t Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)",
             "s:size size_in_bytes \t Size of messages sent by a client (must be in interval [22,65515])",
@@ -102,9 +104,9 @@ int main(int argc, char* argv[])
     {
         size_t nbSites{param.getSites().size()};
         vector<unique_ptr<SessionLayer>> sessions;
-        // thread instead of jthread to be compatible with Clang on MacOS
+        // thread instead of jthread to be compatible with Clang on macOS
         vector<thread> sessionThreads;
-        for (int rank = 0 ; rank < nbSites ; ++rank)
+        for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
             sessions.emplace_back(make_unique<SessionLayer>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
             sessionThreads.emplace_back(&SessionLayer::execute, sessions.back().get());
