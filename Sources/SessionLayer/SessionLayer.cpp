@@ -21,6 +21,8 @@ SessionLayer::SessionLayer(const Param &param, rank_t rank, std::unique_ptr<Algo
 void SessionLayer::broadcastPerfMeasure() {
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast PerfMeasure (senderRank = " << static_cast<uint32_t>(rank) << " ; msgNum = " << numPerfMeasure << ")\n";
+    if (numPerfMeasure == 0)
+        measures.setStartTime();
     auto s {serializeStruct<SessionPerfMeasure>(SessionPerfMeasure{SessionMsgId::PerfMeasure,
                                                                    rank,
                                                                    numPerfMeasure,
@@ -79,7 +81,8 @@ void SessionLayer::execute()
         static std::mutex mtx;
         scoped_lock lock{mtx};
         cout << Param::csvHeadline() << "," << Measures::csvHeadline() << "\n";
-        cout << param.asCsv(algoLayer->toString(), commLayer->toString()) << "," << measures.asCsv(param.getNbMsg(), algoLayer->getBroadcasters().size()) << "\n";
+        cout << param.asCsv(algoLayer->toString(), commLayer->toString(), to_string(rank)) << "," << measures.asCsv(
+                param.getSizeMsg()) << "\n";
     }
     if (param.getFrequency())
         taskSendPeriodicPerfMessage.get();
@@ -183,7 +186,9 @@ void SessionLayer::processPerfResponseMsg(rank_t senderRank, const std::string &
         }
         else
         {
-            // Process is done with Perf measures. It tells it to all broadcasters
+            // Process is done with Perf measures.
+            measures.setStopTime();
+            // Process tells it is done to all broadcasters
             if (param.getVerbose())
                 cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};

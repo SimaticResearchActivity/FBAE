@@ -3,41 +3,61 @@
 #include <numeric>
 #include "Measures.h"
 
-Measures::Measures(size_t nb_rtts_max)
-: rtts(nb_rtts_max+100)
+Measures::Measures(size_t nbPingMax)
+: pings(nbPingMax)
 {
 }
 
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed)
 {
-    size_t index{nbRtts++};
-    assert( index < rtts.size());
-    rtts[index] = elapsed;
+    size_t index{nbPing++};
+    assert(index < pings.size());
+    pings[index] = elapsed;
 }
 
 std::string Measures::csvHeadline()
 {
-    return std::string { "nbReceivedMsg,nbSentMsg,ratio nbRcv/nbSent,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max"};
+    return std::string { "nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),Throughput (in Mbps)"};
 }
 
-std::string Measures::asCsv(int argNbMsg, size_t argNbClients)
+std::string Measures::asCsv(int argSizeMsg)
 {
-    rtts.resize(nbRtts);
-    std::ranges::sort(rtts);
+    pings.resize(nbPing);
+    std::ranges::sort(pings);
+
+    // Predefined units are nanoseconds, microseconds, milliseconds, seconds, minutes, hours.
+    // See https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+    using namespace std::chrono;
+    const auto duration = duration_cast<milliseconds>(stopTime - startTime);
+
+    constexpr int nbMsgPerPing{ 2 };
+    constexpr int nbBitsPerByte{ 8 };
+    constexpr int nbBitsPerMega{ 1000000 };
+    constexpr double nbMillisecondsPerSecond{ 1000.0};
+    auto mbps = nbMsgPerPing * static_cast<double>(pings.size()) * argSizeMsg * nbBitsPerByte
+                       / (static_cast<double>(duration.count()) / nbMillisecondsPerSecond)
+                       / nbBitsPerMega;
 
     return std::string {
-            std::to_string(rtts.size()) + ","
-            + std::to_string(argNbMsg * argNbClients) + ","
-            + std::to_string(static_cast<double>(nbRtts) / argNbMsg / static_cast<double>(argNbClients)) + ","
-            + std::to_string((std::reduce(rtts.begin(), rtts.end()) / rtts.size()).count()) + ","
-            + std::to_string(rtts[0].count()) + ","
-            + std::to_string(rtts[rtts.size()/4].count()) + ","
-            + std::to_string(rtts[rtts.size()/2].count()) + ","
-            + std::to_string(rtts[rtts.size()*3/4].count()) + ","
-            + std::to_string(rtts[rtts.size()*99/100].count()) + ","
-            + std::to_string(rtts[rtts.size()*999/1000].count()) + ","
-            + std::to_string(rtts[rtts.size()*9999/10000].count()) + ","
-            + std::to_string(rtts[rtts.size()-1].count())
+            std::to_string(pings.size()) + ","
+            + std::to_string((std::reduce(pings.begin(), pings.end()) / pings.size()).count()) + ","
+            + std::to_string(pings[0].count()) + ","
+            + std::to_string(pings[pings.size() / 4].count()) + ","
+            + std::to_string(pings[pings.size() / 2].count()) + ","
+            + std::to_string(pings[pings.size() * 3 / 4].count()) + ","
+            + std::to_string(pings[pings.size() * 99 / 100].count()) + ","
+            + std::to_string(pings[pings.size() * 999 / 1000].count()) + ","
+            + std::to_string(pings[pings.size() * 9999 / 10000].count()) + ","
+            + std::to_string(pings[pings.size() - 1].count()) + ","
+            + std::to_string(static_cast<double>(duration.count()) / nbMillisecondsPerSecond) + ","
+            + std::to_string(mbps)
     };
 }
 
+void Measures::setStartTime() {
+    startTime = std::chrono::system_clock::now();
+}
+
+void Measures::setStopTime() {
+    stopTime = std::chrono::system_clock::now();
+}

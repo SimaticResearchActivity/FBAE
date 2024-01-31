@@ -68,14 +68,15 @@ Param::Param(mlib::OptParserExtended const& parser)
     }
 }
 
-[[nodiscard]] std::string Param::asCsv(std::string const& algoStr, std::string const& commLayerStr) const
+[[nodiscard]] std::string
+Param::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
-    return std::string { algoStr + "," + commLayerStr + "," + std::to_string(frequency) + "," + std::to_string(maxBatchSize) + "," + std::to_string(nbMsg) + "," + std::to_string(rank)  + "," + std::to_string(sizeMsg) + "," + siteFile};
+    return std::string { algoStr + "," + commLayerStr + "," + std::to_string(frequency) + "," + std::to_string(maxBatchSize) + "," + std::to_string(nbMsg) + "," + rankStr  + "," + std::to_string(sizeMsg) + "," + siteFile};
 }
 
 std::string Param::csvHeadline()
 {
-    return std::string { "algo,commLayer,frequency,maxBatchSize,nbMsg,rank,sizeMsg,siteFile"};
+    return std::string { "algoLayer,commLayer,frequency,maxBatchSize,nbMsg,rank,sizeMsg,siteFile"};
 }
 
 int Param::getFrequency() const {
