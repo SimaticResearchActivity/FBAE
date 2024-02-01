@@ -17,7 +17,7 @@ void Measures::add(std::chrono::duration<double, std::milli> const& elapsed)
 
 std::string Measures::csvHeadline()
 {
-    return std::string { "nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),Throughput (in Mbps)"};
+    return std::string { "nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)"};
 }
 
 std::string Measures::asCsv(int argSizeMsg)
@@ -34,6 +34,8 @@ std::string Measures::asCsv(int argSizeMsg)
     constexpr int nbBitsPerByte{ 8 };
     constexpr int nbBitsPerMega{ 1000000 };
     constexpr double nbMillisecondsPerSecond{ 1000.0};
+    constexpr double nbMicrosecondsPerSecond{ 1000000.0};
+
     auto mbps = nbMsgPerPing * static_cast<double>(pings.size()) * argSizeMsg * nbBitsPerByte
                        / (static_cast<double>(duration.count()) / nbMillisecondsPerSecond)
                        / nbBitsPerMega;
@@ -50,14 +52,17 @@ std::string Measures::asCsv(int argSizeMsg)
             + std::to_string(pings[pings.size() * 9999 / 10000].count()) + ","
             + std::to_string(pings[pings.size() - 1].count()) + ","
             + std::to_string(static_cast<double>(duration.count()) / nbMillisecondsPerSecond) + ","
+            + std::to_string((stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond) + ","
             + std::to_string(mbps)
     };
 }
 
 void Measures::setStartTime() {
     startTime = std::chrono::system_clock::now();
+    startTimeCpu = get_cpu_time();
 }
 
 void Measures::setStopTime() {
     stopTime = std::chrono::system_clock::now();
+    stopTimeCpu = get_cpu_time();
 }

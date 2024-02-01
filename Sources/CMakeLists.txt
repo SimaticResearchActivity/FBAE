@@ -28,7 +28,9 @@ add_executable(fbae
         CommLayer/TcpCommLayer/TcpCommLayer.h
         CommLayer/TcpCommLayer/TcpCommPeer.cpp
         CommLayer/TcpCommLayer/TcpCommPeer.h
-        basicTypes.h)
+        basicTypes.h
+        get_cpu_time.cpp
+        get_cpu_time.h)
 target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)

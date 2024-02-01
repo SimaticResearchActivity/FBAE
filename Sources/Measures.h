@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include "get_cpu_time.h"
 
 class Measures {
 public:
@@ -17,4 +18,6 @@ private:
     std::atomic_size_t nbPing{0};
     std::chrono::time_point<std::chrono::system_clock> startTime;
     std::chrono::time_point<std::chrono::system_clock> stopTime;
+    unsigned long long startTimeCpu;
+    unsigned long long stopTimeCpu;
 };
