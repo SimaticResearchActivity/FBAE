@@ -57,7 +57,8 @@ int main(int argc, char* argv[])
             "r:rank rank_number \t Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)",
             "s:size size_in_bytes \t Size of messages sent by a client (must be in interval [22,65515])",
             "S:site siteFile_name \t Name (including path) of the sites file to be used",
-            "v|verbose \t [optional] Verbose display required"
+            "v|verbose \t [optional] Verbose display required",
+            "w:warmupCooldown number \t [optional] Number in [0,99] representing percentage of PerfMessage session messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)"
     };
 
     int nonopt;

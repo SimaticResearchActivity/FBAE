@@ -13,7 +13,7 @@ SessionLayer::SessionLayer(const Param &param, rank_t rank, std::unique_ptr<Algo
 , rank{rank}
 , algoLayer{std::move(algoLayer)}
 , commLayer{std::move(commLayer)}
-, measures{static_cast<size_t>(param.getNbMsg())}
+, measures{static_cast<size_t>(param.getNbMsg()*(100-param.getWarmupCooldown())/100)+1}//We add +1 to avoid not allocating enough size because of rounding by default
 {
     this->algoLayer->setSession(this);
 }
@@ -21,7 +21,7 @@ SessionLayer::SessionLayer(const Param &param, rank_t rank, std::unique_ptr<Algo
 void SessionLayer::broadcastPerfMeasure() {
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast PerfMeasure (senderRank = " << static_cast<uint32_t>(rank) << " ; msgNum = " << numPerfMeasure << ")\n";
-    if (numPerfMeasure == 0)
+    if (numPerfMeasure == param.getNbMsg()*param.getWarmupCooldown()/100/2)
         measures.setStartTime();
     auto s {serializeStruct<SessionPerfMeasure>(SessionPerfMeasure{SessionMsgId::PerfMeasure,
                                                                    rank,
@@ -177,7 +177,11 @@ void SessionLayer::processPerfResponseMsg(rank_t senderRank, std::string && msg)
             return;
         }
         ++nbReceivedPerfResponseForSelf;
-        measures.add(elapsed);
+        if (spr.perfMeasureMsgNum >= param.getNbMsg()*param.getWarmupCooldown()/100/2
+            && spr.perfMeasureMsgNum < param.getNbMsg() - param.getNbMsg()*param.getWarmupCooldown()/100/2)
+            measures.add(elapsed);
+        if (spr.perfMeasureMsgNum == param.getNbMsg() - param.getNbMsg()*param.getWarmupCooldown()/100/2 - 1)
+            measures.setStopTime();
         if (spr.perfMeasureMsgNum < param.getNbMsg() - 1)
         {
             if (!param.getFrequency())
@@ -186,9 +190,7 @@ void SessionLayer::processPerfResponseMsg(rank_t senderRank, std::string && msg)
         }
         else
         {
-            // Process is done with Perf measures.
-            measures.setStopTime();
-            // Process tells it is done to all broadcasters
+            // Process is done with sending PerfMeasure messages. It tells it is done to all broadcasters
             if (param.getVerbose())
                 cout << "SessionLayer #" << rank << " : Broadcast FinishedPerfMeasures by sender #" << rank << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};

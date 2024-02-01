@@ -32,6 +32,16 @@ Param::Param(mlib::OptParserExtended const& parser)
         }
     }
 
+    if (parser.hasopt('w')) {
+        warmupCooldown = parser.getoptIntRequired('w');
+        if (warmupCooldown > 99) {
+            std::cerr << "ERROR: Argument for warmupCooldown must be in [0,99]"
+                      << std::endl
+                      << parser.synopsis () << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
     if (sizeMsg < minSizeClientMessageToBroadcast || sizeMsg > maxLength)
     {
         std::cerr << "ERROR: Argument for size of messages is " << sizeMsg
@@ -71,12 +81,21 @@ Param::Param(mlib::OptParserExtended const& parser)
 [[nodiscard]] std::string
 Param::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
-    return std::string { algoStr + "," + commLayerStr + "," + std::to_string(frequency) + "," + std::to_string(maxBatchSize) + "," + std::to_string(nbMsg) + "," + rankStr  + "," + std::to_string(sizeMsg) + "," + siteFile};
+    return std::string {
+        algoStr + ","
+        + commLayerStr + ","
+        + std::to_string(frequency) + ","
+        + std::to_string(maxBatchSize) + ","
+        + std::to_string(nbMsg) + ","
+        + std::to_string(warmupCooldown) + "%,"
+        + rankStr  + ","
+        + std::to_string(sizeMsg) + ","
+        + siteFile};
 }
 
 std::string Param::csvHeadline()
 {
-    return std::string { "algoLayer,commLayer,frequency,maxBatchSize,nbMsg,rank,sizeMsg,siteFile"};
+    return std::string { "algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
 }
 
 int Param::getFrequency() const {
@@ -87,7 +106,7 @@ int Param::getMaxBatchSize() const {
     return maxBatchSize;
 }
 
-int Param::getNbMsg() const {
+int64_t Param::getNbMsg() const {
     return nbMsg;
 }
 
@@ -106,5 +125,9 @@ int Param::getSizeMsg() const {
 }
 bool Param::getVerbose() const {
     return verbose;
+}
+
+int Param::getWarmupCooldown() const {
+    return warmupCooldown;
 }
 
