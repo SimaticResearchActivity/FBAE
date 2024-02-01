@@ -14,7 +14,7 @@
 template <typename S>
 S deserializeStruct(std::string && msgString)
 {
-    std::istringstream msgStream{msgString};
+    std::istringstream msgStream{std::move(msgString)};
     cereal::BinaryInputArchive archive(msgStream); // Create an input archive
     S structure{};
     archive(structure); // Read the structure from the archive
