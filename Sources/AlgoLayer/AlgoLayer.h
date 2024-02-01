@@ -24,7 +24,7 @@ public:
      * @param msgString String containing message.
      * @return true if AckDisconnectIntent message was received and false otherwise
      */
-    virtual bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) = 0;
+    virtual bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) = 0;
 
     /**
      * @brief Executes concrete totalOrderBroadcast algorithm. Returns when algorithm is done.

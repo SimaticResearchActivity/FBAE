@@ -12,7 +12,7 @@
  * @return Structure deserialized from @msgString
  */
 template <typename S>
-S deserializeStruct(const std::string &msgString)
+S deserializeStruct(std::string && msgString)
 {
     std::istringstream msgStream{msgString};
     cereal::BinaryInputArchive archive(msgStream); // Create an input archive

@@ -125,7 +125,7 @@ void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::sock
             std::scoped_lock lock(mtxCallbackHandleMessage);
             getAlgoLayer()->callbackHandleMessage(
                     make_unique<TcpCommPeer>(ptrSock.get()),
-                    s);
+                    std::move(s));
         }
     }
     catch (boost::system::system_error& e)
@@ -158,7 +158,7 @@ void TcpCommLayer::handleOutgoingConn(std::unique_ptr<boost::asio::ip::tcp::sock
         {
             auto s{receiveEvent(ptrSock.get())};
             std::scoped_lock lock(mtxCallbackHandleMessage);
-            if (getAlgoLayer()->callbackHandleMessage(make_unique<TcpCommPeer>(ptrSock.get()), s))
+            if (getAlgoLayer()->callbackHandleMessage(make_unique<TcpCommPeer>(ptrSock.get()), std::move(s)))
                 break;
         }
     }

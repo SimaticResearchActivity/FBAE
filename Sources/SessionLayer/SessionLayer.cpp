@@ -35,7 +35,7 @@ void SessionLayer::broadcastPerfMeasure() {
     ++numPerfMeasure;
 }
 
-void SessionLayer::callbackDeliver(rank_t senderRank, const std::string &msg) {
+void SessionLayer::callbackDeliver(rank_t senderRank, std::string && msg) {
     switch (auto sessionMsgTyp{ static_cast<SessionMsgId>(msg[0]) }; sessionMsgTyp)
     {
         using enum SessionMsgId;
@@ -46,10 +46,10 @@ void SessionLayer::callbackDeliver(rank_t senderRank, const std::string &msg) {
             processFirstBroadcastMsg(senderRank);
             break;
         case PerfMeasure :
-            processPerfMeasureMsg(senderRank, msg);
+            processPerfMeasureMsg(senderRank, std::move(msg));
             break;
         case PerfResponse :
-            processPerfResponseMsg(senderRank, msg);
+            processPerfResponseMsg(senderRank, std::move(msg));
             break;
         default:
         {
@@ -144,8 +144,8 @@ void SessionLayer::processFirstBroadcastMsg(rank_t senderRank) {
     }
 }
 
-void SessionLayer::processPerfMeasureMsg(rank_t senderRank, const std::string &msg) {
-    auto spm{deserializeStruct<SessionPerfMeasure>(msg)};
+void SessionLayer::processPerfMeasureMsg(rank_t senderRank, std::string && msg) {
+    auto spm{deserializeStruct<SessionPerfMeasure>(std::move(msg))};
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfMeasure from sender #" << static_cast<uint32_t>(senderRank) << " (senderRank = " << static_cast<uint32_t>(spm.senderRank) << " ; msgNum = " << spm.msgNum << ")\n";
     // We check which process must send the PerfResponse. The formula hereafter guarantees that first PerfMeasure is
@@ -165,8 +165,8 @@ void SessionLayer::processPerfMeasureMsg(rank_t senderRank, const std::string &m
     }
 }
 
-void SessionLayer::processPerfResponseMsg(rank_t senderRank, const std::string &msg) {
-    auto spr{deserializeStruct<SessionPerfResponse>(msg)};
+void SessionLayer::processPerfResponseMsg(rank_t senderRank, std::string && msg) {
+    auto spr{deserializeStruct<SessionPerfResponse>(std::move(msg))};
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfResponse from sender #" << static_cast<uint32_t>(senderRank) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spr.perfMeasureSenderRank) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;

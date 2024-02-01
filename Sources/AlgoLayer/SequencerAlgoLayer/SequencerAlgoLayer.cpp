@@ -8,7 +8,7 @@
 using namespace std;
 using namespace fbae_SequencerAlgoLayer;
 
-bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString)
+bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString)
 {
     auto msgId{ static_cast<MsgId>(msgString[0]) };
     switch (msgId)
@@ -19,7 +19,7 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
         //
         case DisconnectIntent :
         {
-            auto bdi{deserializeStruct<StructDisconnectIntent>(msgString)};
+            auto bdi{deserializeStruct<StructDisconnectIntent>(std::move(msgString))};
             auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{MsgId::AckDisconnectIntent})};
             peer->sendMsg(std::move(s));
             if (getSession()->getParam().getVerbose())
@@ -28,7 +28,7 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
         }
         case RankInfo :
         {
-            auto bri{deserializeStruct<StructRankInfo>(msgString)};
+            auto bri{deserializeStruct<StructRankInfo>(std::move(msgString))};
             if (getSession()->getParam().getVerbose())
                 cout << "\tSequencerAlgoLayer / Sequencer : Broadcaster #" << static_cast<uint32_t>(bri.senderRank) << " is connected to sequencer.\n";
             if (++nbConnectedBroadcasters == getBroadcasters().size())
@@ -42,7 +42,7 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
         }
         case MessageToBroadcast :
         {
-            auto msgToBroadcast{deserializeStruct<StructMessageToBroadcast>(msgString)};
+            auto msgToBroadcast{deserializeStruct<StructMessageToBroadcast>(std::move(msgString))};
             auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastMessage,
                                                                                    msgToBroadcast.senderRank,
                                                                                    msgToBroadcast.sessionMsg})};
@@ -60,8 +60,8 @@ bool SequencerAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, c
             break;
         case BroadcastMessage :
         {
-            auto sbm {deserializeStruct<StructBroadcastMessage>(msgString)};
-            getSession()->callbackDeliver(sbm.senderRank,sbm.sessionMsg);
+            auto sbm {deserializeStruct<StructBroadcastMessage>(std::move(msgString))};
+            getSession()->callbackDeliver(sbm.senderRank,std::move(sbm.sessionMsg));
             break;
         }
         default:

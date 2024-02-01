@@ -42,14 +42,14 @@ private:
      * @param senderRank Rank of message sender.
      * @param msg Message to process.
      */
-    void processPerfMeasureMsg(rank_t senderRank, const std::string &msg);
+    void processPerfMeasureMsg(rank_t senderRank, std::string && msg);
 
     /**
      * @brief Called by @callbackDeliver to process @PerfMeasure message
      * @param senderRank Rank of message sender.
      * @param msg Message to process.
      */
-    void processPerfResponseMsg(rank_t senderRank, const std::string &msg);
+    void processPerfResponseMsg(rank_t senderRank, std::string && msg);
 
     /**
      * @brief Thread to send PerfMessage at @Param::frequency per second.
@@ -65,7 +65,7 @@ public:
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    void callbackDeliver(rank_t senderRank, const std::string &msg);
+    void callbackDeliver(rank_t senderRank, std::string && msg);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.

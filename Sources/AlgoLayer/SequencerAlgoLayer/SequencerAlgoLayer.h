@@ -15,7 +15,7 @@ private:
     std::unique_ptr<CommPeer> sequencerPeer;
 
 public:
-    bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) override;
+    bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) override;
     bool executeAndProducedStatistics() override;
     void totalOrderBroadcast(std::string && msg) override;
     void terminate() override;

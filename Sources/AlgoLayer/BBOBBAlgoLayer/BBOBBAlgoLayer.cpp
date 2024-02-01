@@ -27,14 +27,14 @@ inline bool instanceof(const T *ptr) {
     return dynamic_cast<const Base*>(ptr) != nullptr;
 }
 
-bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const std::string &msgString) {
+bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) {
     peers_peersRank_ready.wait();
     auto msgId{static_cast<MsgId>(msgString[0])};
     switch (msgId) {
         using enum MsgId;
 
         case RankInfo : {
-            auto bri{deserializeStruct<BroadcasterRankInfo>(msgString)};
+            auto bri{deserializeStruct<BroadcasterRankInfo>(std::move(msgString))};
             if (getSession()->getParam().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
                      << " : Received RankInfo from broadcaster#" << static_cast<uint32_t>(bri.senderRank) << "\n";
@@ -64,7 +64,7 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
 
             if (sendWave) {
 
-                auto stepMsg{deserializeStruct<StepMsg>(msgString)};
+                auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
 
                 if (getSession()->getParam().getVerbose())
                     cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
@@ -87,7 +87,7 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, const
         }
 
         case DisconnectIntent : {
-            auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(msgString)};
+            auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(std::move(msgString))};
             auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{
                     MsgId::AckDisconnectIntent,
             })};
@@ -171,13 +171,13 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
         for (auto const& pos: positions) {
             if (pos != not_found) {
                 auto senderRank = batches[pos].senderRank;
-                for (auto const& msg : batches[pos].batchSessionMsg) {
+                for (auto & msg : batches[pos].batchSessionMsg) {
                     // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
                     // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
                     // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
                     // because thread @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
                     shortcutBatchCtrl = true;
-                    getSession()->callbackDeliver(senderRank, msg);
+                    getSession()->callbackDeliver(senderRank, std::move(msg));
                     shortcutBatchCtrl = false;
                 }
             }
