@@ -10,7 +10,7 @@
 
 #include <algorithm>
 #include <ctgmath>
-#include <thread>
+#include <future>
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
@@ -175,7 +175,7 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
                     // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
                     // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
                     // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
-                    // because thread @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
+                    // because task @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
                     shortcutBatchCtrl = true;
                     getSession()->callbackDeliver(senderRank, std::move(msg));
                     shortcutBatchCtrl = false;
@@ -209,7 +209,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
              << "\n";
     commLayer->initHost(get<PORT>(sites[rank]), nbStepsInWave, this);
 
-    std::thread t([rank, verbose, sites, this]() {
+    auto t= std::async(std::launch::async,[rank, verbose, sites, this]() {
         // Send RankInfo
         for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
             std::unique_ptr<CommPeer> cp = getSession()->getCommLayer()->connectToHost(
@@ -248,7 +248,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
              << "==> Specify Tcp communication layer in program arguments.\n";
         exit (EXIT_FAILURE);
     }
-    t.join();
+    t.get();
 
     if (verbose)
         cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Wait for messages\n";

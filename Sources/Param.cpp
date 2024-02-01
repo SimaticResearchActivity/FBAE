@@ -60,7 +60,7 @@ Param::Param(mlib::OptParserExtended const& parser)
     }
 
     // Check that rank value is consistent with contents of site file
-    if ((rank != specialRankToRequestExecutionInThreads) && (rank > sites.size() - 1))
+    if ((rank != specialRankToRequestExecutionInTasks) && (rank > sites.size() - 1))
     {
         std::cerr << "ERROR: You specifed a rank of " << rank << ", but there are only " << sites.size() << " sites specified in JSON file \"" << siteFile << "\"\n"
                 << parser.synopsis () << std::endl;

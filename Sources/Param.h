@@ -11,7 +11,7 @@ constexpr int minSizeClientMessageToBroadcast{22};
 // Maximum length of a UDP packet
 constexpr size_t maxLength{65515};
 
-constexpr int specialRankToRequestExecutionInThreads{99};
+constexpr int specialRankToRequestExecutionInTasks{99};
 
 using HostTuple = std::tuple<std::string, int>;
 

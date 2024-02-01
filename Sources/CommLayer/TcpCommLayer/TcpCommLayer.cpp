@@ -23,12 +23,12 @@ constexpr int nbTcpConnectTentatives{20};
 constexpr chrono::duration durationBetweenTcpConnectTentatives{500ms};
 
 void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
-    std::vector<std::thread> threadsHandleConn(nbAwaitedConnections);
+    std::vector<std::future<void>> tasksHandleConn(nbAwaitedConnections);
     try
     {
         tcp::acceptor a(ioService, tcp::endpoint(tcp::v4(), static_cast<unsigned short>(port)));
 
-        for (auto &t : threadsHandleConn)
+        for (auto &t : tasksHandleConn)
         {
             auto ptrSock = make_unique<tcp::socket>(ioService);
             a.accept(*ptrSock);
@@ -36,7 +36,7 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
             boost::asio::ip::tcp::no_delay option(true);
             ptrSock->set_option(option);
 
-            t = thread(&TcpCommLayer::handleIncomingConn, this, std::move(ptrSock));
+            t = std::async(std::launch::async, &TcpCommLayer::handleIncomingConn, this, std::move(ptrSock));
         }
     }
     catch (boost::system::system_error& e)
@@ -44,11 +44,11 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
         if (e.code() == boost::asio::error::address_in_use)
             cerr << "ERROR: Server cannot bind to port " << port << " (probably because there is an other server running and already bound to this port)\n";
         else
-            cerr << "ERROR: Unexpected Boost Exception in thread acceptConn: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in task acceptConn: " << e.what() << "\n";
         exit(1);
     }
-    for (auto &t : threadsHandleConn) {
-        t.join();
+    for (auto &t : tasksHandleConn) {
+        t.get();
     }
 }
 
@@ -102,7 +102,7 @@ std::unique_ptr<CommPeer> TcpCommLayer::connectToHost(HostTuple host, AlgoLayer 
         if (ptrSock != nullptr)
         {
             auto peer = make_unique<TcpCommPeer>(ptrSock.get());
-            threadsToJoin.emplace_back(&TcpCommLayer::handleOutgoingConn, this, std::move(ptrSock));
+            tasksToJoin.emplace_back(std::async(std::launch::async, &TcpCommLayer::handleOutgoingConn, this, std::move(ptrSock)));
             return peer;
         }
         this_thread::sleep_for(durationBetweenTcpConnectTentatives);
@@ -145,7 +145,7 @@ void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::sock
         }
         else
         {
-            cerr << "ERROR: Unexpected Boost Exception in thread handleIncomingConn: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in task handleIncomingConn: " << e.what() << "\n";
             exit(1);
         }
     }
@@ -170,7 +170,7 @@ void TcpCommLayer::handleOutgoingConn(std::unique_ptr<boost::asio::ip::tcp::sock
             //  - boost::asio::error::connection_reset for Windows
             cerr << "ERROR: Server has disconnected (probably because it crashed)\n";
         else
-            cerr << "ERROR: Unexpected Boost Exception in thread handleOutgoingConn: " << e.what() << "\n";
+            cerr << "ERROR: Unexpected Boost Exception in task handleOutgoingConn: " << e.what() << "\n";
         exit(1);
     }
 }
@@ -178,7 +178,7 @@ void TcpCommLayer::handleOutgoingConn(std::unique_ptr<boost::asio::ip::tcp::sock
 void TcpCommLayer::initHost(int port, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer)
 {
     setAlgoLayer(aAlgoLayer);
-    threadsToJoin.emplace_back(&TcpCommLayer::acceptConn, this, port, nbAwaitedConnections);
+    tasksToJoin.emplace_back(std::async(std::launch::async, &TcpCommLayer::acceptConn, this, port, nbAwaitedConnections));
 }
 
 std::string TcpCommLayer::receiveEvent(boost::asio::ip::tcp::socket *ptrSock)
@@ -203,10 +203,10 @@ std::string TcpCommLayer::toString() {
 }
 
 void TcpCommLayer::waitForMsg(size_t maxDisconnections) {
-    // In TcpCommLayer, messages are received by handleIncomingConn and handleOutgoingConn threads.
-    // So we only have to wait for all these threads to die (Note: handleOutgoing threads are watched out by acceptConn
-    // thread ==> We only have to wait for acceptConn thread to die).
-    for (auto &t : threadsToJoin) {
-        t.join();
+    // In TcpCommLayer, messages are received by handleIncomingConn and handleOutgoingConn tasks.
+    // So we only have to wait for all these tasks to die (Note: handleOutgoing tasks are watched out by acceptConn
+    // task ==> We only have to wait for acceptConn task to die).
+    for (auto &t : tasksToJoin) {
+        t.get();
     }
 }

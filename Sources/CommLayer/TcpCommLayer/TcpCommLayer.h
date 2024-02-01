@@ -5,9 +5,9 @@
 #pragma once
 
 #include "boost/asio.hpp"
+#include <future>
 #include <mutex>
 #include <shared_mutex>
-#include <thread>
 #include "../CommLayer.h"
 #include "../../Param.h"
 #include "TcpCommPeer.h"
@@ -34,9 +34,9 @@ private:
      */
     std::shared_timed_mutex rwMtxIncomingPeers;
     /**
-     * @brief Threads created by TcpCommLayer which must be joined before existing an instance of TcpCommLayer
+     * @brief Tasks created by TcpCommLayer which must be joined before existing an instance of TcpCommLayer
      */
-    std::vector<std::thread> threadsToJoin;
+    std::vector<std::future<void>> tasksToJoin;
 
     /**
      * @brief Thread for accepting @nbAwaitedConnections connections on port @port

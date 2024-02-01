@@ -1,5 +1,5 @@
+#include <future>
 #include <iostream>
-#include <thread>
 #include "CommLayer/EnetCommLayer/EnetCommLayer.h"
 #include "OptParserExtended.h"
 #include "AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h"
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     //
     // Launch the application
     //
-    if (param.getRank() != specialRankToRequestExecutionInThreads)
+    if (param.getRank() != specialRankToRequestExecutionInTasks)
     {
         SessionLayer session{param, param.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
         session.execute();
@@ -104,15 +104,14 @@ int main(int argc, char* argv[])
     {
         size_t nbSites{param.getSites().size()};
         vector<unique_ptr<SessionLayer>> sessions;
-        // thread instead of jthread to be compatible with Clang on macOS
-        vector<thread> sessionThreads;
+        vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
             sessions.emplace_back(make_unique<SessionLayer>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
-            sessionThreads.emplace_back(&SessionLayer::execute, sessions.back().get());
+            sessionTasks.emplace_back(std::async(std::launch::async, &SessionLayer::execute, sessions.back().get()));
         }
-        for (auto& t: sessionThreads)
-            t.join();
+        for (auto& t: sessionTasks)
+            t.get();
     }
     return EXIT_SUCCESS;
 }
