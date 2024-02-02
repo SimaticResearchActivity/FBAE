@@ -125,7 +125,7 @@ void BBOBBAlgoLayer::beginWave() {
     // Send it
     if (getSession()->getParam().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-             << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << peersRank[lastSentStepMsg.step]
+             << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step])
              << "\n";
     auto s{serializeStruct(lastSentStepMsg)};
     peers[lastSentStepMsg.step]->sendMsg(std::move(s));
