@@ -32,9 +32,9 @@ std::string Measures::asCsv(int argSizeMsg)
 
     constexpr int nbMsgPerPing{ 2 };
     constexpr int nbBitsPerByte{ 8 };
-    constexpr int nbBitsPerMega{ 1000000 };
-    constexpr double nbMillisecondsPerSecond{ 1000.0};
-    constexpr double nbMicrosecondsPerSecond{ 1000000.0};
+    constexpr int nbBitsPerMega{ 1'000'000 };
+    constexpr double nbMillisecondsPerSecond{ 1'000.0};
+    constexpr double nbMicrosecondsPerSecond{ 1'000'000.0};
 
     auto mbps = nbMsgPerPing * static_cast<double>(pings.size()) * argSizeMsg * nbBitsPerByte
                        / (static_cast<double>(duration.count()) / nbMillisecondsPerSecond)
@@ -48,8 +48,8 @@ std::string Measures::asCsv(int argSizeMsg)
             + std::to_string(pings[pings.size() / 2].count()) + ","
             + std::to_string(pings[pings.size() * 3 / 4].count()) + ","
             + std::to_string(pings[pings.size() * 99 / 100].count()) + ","
-            + std::to_string(pings[pings.size() * 999 / 1000].count()) + ","
-            + std::to_string(pings[pings.size() * 9999 / 10000].count()) + ","
+            + std::to_string(pings[pings.size() * 999 / 1'000].count()) + ","
+            + std::to_string(pings[pings.size() * 9999 / 10'000].count()) + ","
             + std::to_string(pings[pings.size() - 1].count()) + ","
             + std::to_string(static_cast<double>(duration.count()) / nbMillisecondsPerSecond) + ","
             + std::to_string((stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond) + ","

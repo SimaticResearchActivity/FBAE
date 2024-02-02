@@ -202,12 +202,13 @@ void SessionLayer::processPerfResponseMsg(rank_t senderRank, std::string && msg)
 void SessionLayer::sendPeriodicPerfMessage() {
     okToSendPeriodicPerfMessage.wait();
     constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
+    constexpr double nbMillisecondsPerSecond{ 1'000.0 };
     const auto freq{ param.getFrequency() };
     auto startSending{ std::chrono::system_clock::now() };
     while(true) {
-        auto elapsedPeriod{ std::chrono::system_clock::now() - startSending };
+        auto elapsedPeriod{ duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startSending) };
         // Broadcast PerfMeasure messages until we reach the desired frequency
-        while (numPerfMeasure < freq * static_cast<double>(elapsedPeriod / 1000ms)) {
+        while (numPerfMeasure < freq * static_cast<double>(elapsedPeriod.count()) / nbMillisecondsPerSecond) {
             broadcastPerfMeasure();
             if (numPerfMeasure >= param.getNbMsg())
                 return;
