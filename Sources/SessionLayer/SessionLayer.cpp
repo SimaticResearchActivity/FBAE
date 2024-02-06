@@ -81,8 +81,8 @@ void SessionLayer::execute()
         static std::mutex mtx;
         scoped_lock lock{mtx};
         cout << Param::csvHeadline() << "," << Measures::csvHeadline() << "\n";
-        cout << param.asCsv(algoLayer->toString(), commLayer->toString(), to_string(rank)) << "," << measures.asCsv(
-                param.getSizeMsg()) << "\n";
+        cout << param.asCsv(algoLayer->toString(), commLayer->toString(), to_string(rank)) << "," << measures.asCsv()
+             << "\n";
     }
     if (param.getFrequency())
         taskSendPeriodicPerfMessage.get();
@@ -148,6 +148,7 @@ void SessionLayer::processPerfMeasureMsg(rank_t senderRank, std::string && msg) 
     auto spm{deserializeStruct<SessionPerfMeasure>(std::move(msg))};
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfMeasure from sender #" << static_cast<uint32_t>(senderRank) << " (senderRank = " << static_cast<uint32_t>(spm.senderRank) << " ; msgNum = " << spm.msgNum << ")\n";
+    measures.addNbBytesDelivered(param.getSizeMsg());
     // We check which process must send the PerfResponse. The formula hereafter guarantees that first PerfMeasure is
     // answered by successor of sender process, second PerfMeasure message is answered by successor of the successor of
     // sender process, etc.
@@ -169,6 +170,7 @@ void SessionLayer::processPerfResponseMsg(rank_t senderRank, std::string && msg)
     auto spr{deserializeStruct<SessionPerfResponse>(std::move(msg))};
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Deliver PerfResponse from sender #" << static_cast<uint32_t>(senderRank) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spr.perfMeasureSenderRank) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
+    measures.addNbBytesDelivered(param.getSizeMsg());
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
     if (spr.perfMeasureSenderRank == rank)
     {
