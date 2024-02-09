@@ -1,6 +1,5 @@
 #include <future>
 #include <iostream>
-#include "CommLayer/EnetCommLayer/EnetCommLayer.h"
 #include "OptParserExtended.h"
 #include "AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h"
 #include "SessionLayer/SessionLayer.h"
@@ -31,7 +30,6 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
     char commId = parser.getoptStringRequired('c')[0];
     switch(commId)
     {
-        case 'e': return make_unique<EnetCommLayer>();
         case 't': return make_unique<TcpCommLayer>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is \"" << commId << "\""
@@ -49,7 +47,7 @@ int main(int argc, char* argv[])
     //
     OptParserExtended parser{
             "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer based",
-            "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\te = Enet (reliable)\n\t\t\t\t\t\tt = TCP",
+            "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\tt = TCP",
             "f:frequency number \t [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
             "h|help \t Show help message",
             "m:maxBatchSize size_in_bytes \t [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)",

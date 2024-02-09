@@ -75,7 +75,7 @@ void SessionLayer::execute()
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Start execution\n";
     if (param.getFrequency())
         taskSendPeriodicPerfMessage = std::async(std::launch::async, &SessionLayer::sendPeriodicPerfMessage, this);
-    if (algoLayer->executeAndProducedStatistics())
+    if (algoLayer->executeAndCheckIfProducedStatistics())
     {
         // Display statistics
         static std::mutex mtx;

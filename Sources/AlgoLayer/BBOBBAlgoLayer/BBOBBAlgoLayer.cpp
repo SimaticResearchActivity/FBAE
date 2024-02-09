@@ -5,8 +5,9 @@
 #include "../../SessionLayer/SessionLayer.h"
 #include "BBOBBAlgoLayer.h"
 #include "BBOBBAlgoLayerMsg.h"
+#include "../AlgoLayer.h"
 #include "../../msgTemplates.h"
-#include "../../CommLayer/TcpCommLayer/TcpCommLayer.h"
+#include "../../CommLayer/CommLayer.h"
 
 #include <algorithm>
 #include <ctgmath>
@@ -27,41 +28,12 @@ inline bool instanceof(const T *ptr) {
     return dynamic_cast<const Base*>(ptr) != nullptr;
 }
 
-bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) {
+void BBOBBAlgoLayer::callbackHandleMessage(std::string && msgString) {
     peers_peersRank_ready.wait();
     auto msgId{static_cast<MsgId>(msgString[0])};
     switch (msgId) {
         using enum MsgId;
-
-        case RankInfo : {
-            auto bri{deserializeStruct<BroadcasterRankInfo>(std::move(msgString))};
-            if (getSession()->getParam().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-                     << " : Received RankInfo from broadcaster#" << static_cast<uint32_t>(bri.senderRank) << "\n";
-            if (++nbConnectedBroadcasters == nbStepsInWave) {
-
-                if (getSession()->getParam().getVerbose())
-                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-                         << " : All broadcasters are connected \n";
-
-                getSession()->callbackInitDone();
-
-                //Send Step 0 Message of wave 0
-                lastSentStepMsg.msgId = MsgId::Step;
-                lastSentStepMsg.wave = -1;
-                beginWave();
-                CatchUpIfLateInMessageSending();
-            }
-            break;
-        }
-
-        case AckDisconnectIntent : {
-            peer->disconnect();
-            break;
-        }
-
         case Step : {
-
             if (sendWave) {
 
                 auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
@@ -73,7 +45,7 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::
 
                 if (stepMsg.wave == lastSentStepMsg.wave) {
                     currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
-                    CatchUpIfLateInMessageSending();
+                    catchUpIfLateInMessageSending();
                 } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
                     // Message is early and needs to be treated in the next wave
                     nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
@@ -86,25 +58,11 @@ bool BBOBBAlgoLayer::callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::
             break;
         }
 
-        case DisconnectIntent : {
-            auto bdi{deserializeStruct<BroadcasterDisconnectIntent>(std::move(msgString))};
-            auto s{serializeStruct<StructAckDisconnectIntent>(StructAckDisconnectIntent{
-                    MsgId::AckDisconnectIntent,
-            })};
-            peer->sendMsg(std::move(s));
-            if (getSession()->getParam().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Broadcaster #"
-                     << static_cast<uint32_t>(bdi.senderRank) << " announced it will disconnect\n";
-            break;
-        }
-
         default: {
             cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
             exit(EXIT_FAILURE);
         }
     }
-
-    return msgId == MsgId::AckDisconnectIntent;
 }
 
 void BBOBBAlgoLayer::beginWave() {
@@ -128,10 +86,10 @@ void BBOBBAlgoLayer::beginWave() {
              << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step])
              << "\n";
     auto s{serializeStruct(lastSentStepMsg)};
-    peers[lastSentStepMsg.step]->sendMsg(std::move(s));
+    getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step], std::move(s));
 }
 
-void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
+void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
     // Are we able to send new stepMsg knowing the messages received in currentWaveReceivedStepMsg?
     auto step = lastSentStepMsg.step;
     while (lastSentStepMsg.step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
@@ -145,7 +103,7 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
                  << " : Send Step Message (step : " << lastSentStepMsg.step << " / wave : " << lastSentStepMsg.wave
                  << ") to Broadcaster#" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step]) << "\n";
         auto s{serializeStruct(lastSentStepMsg)};
-        peers[lastSentStepMsg.step]->sendMsg(std::move(s));
+        getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step], std::move(s));
         step = lastSentStepMsg.step;
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
@@ -187,11 +145,11 @@ void BBOBBAlgoLayer::CatchUpIfLateInMessageSending() {
         currentWaveReceivedStepMsg = nextWaveReceivedStepMsg;
         nextWaveReceivedStepMsg.clear();
         beginWave();
-        CatchUpIfLateInMessageSending();
+        catchUpIfLateInMessageSending();
     }
 }
 
-bool BBOBBAlgoLayer::executeAndProducedStatistics() {
+bool BBOBBAlgoLayer::executeAndCheckIfProducedStatistics() {
 
     bool verbose = getSession()->getParam().getVerbose();
 
@@ -201,58 +159,16 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
     setBroadcasters(sites);
 
-    const auto n = static_cast<int>(getSession()->getParam().getSites().size());
-    nbStepsInWave = static_cast<int>(n % 2 == 0 ? log2(n) : ceil(log2(n)));
-
-    if (getSession()->getParam().getVerbose())
-        cout << "\tBBOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << ": Wait for connections on port " << get<PORT>(sites[rank])
-             << "\n";
-    commLayer->initHost(get<PORT>(sites[rank]), nbStepsInWave, this);
-
-    auto t= std::async(std::launch::async,[rank, verbose, sites, this]() {
-        // Send RankInfo
-        for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
-            std::unique_ptr<CommPeer> cp = getSession()->getCommLayer()->connectToHost(
-                    getSession()->getParam().getSites()[(power_of_2 + rank) %
-                                                        getSession()->getParam().getSites().size()],
-                    this);
-            peers.push_back(std::move(cp));
-            //Data for verbose messages
-            if (verbose)
-                peersRank.push_back((power_of_2 + rank) % getSession()->getParam().getSites().size());
-        }
-
-        for (int power_of_2 = 1, i = 0; power_of_2 < sites.size(); power_of_2 *= 2, ++i) {
-            if (verbose)
-                cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Send RankInfo to Broadcaster#"
-                     << (power_of_2 + rank) % getSession()->getParam().getSites().size() << "\n";
-            auto s{serializeStruct<BroadcasterRankInfo>(BroadcasterRankInfo{
-                    MsgId::RankInfo,
-                    getSession()->getRank()
-            })};
-            peers[i]->sendMsg(std::move(s));
-        }
-        peers_peersRank_ready.count_down();
-        if (verbose)
-            cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Sent all RankInfo messages\n";
-    });
-
-    // We wait for all connectToHost to be done (and RankInfo messages sent) before we call waitForMsg
-    // Note: This way of doing is only compatible with Tcp layer not Enet layer! This is because Enet layer
-    //       requires to call waitForMsg in order to receive connection confirmation . Thus, we may receive
-    //       connection confirmations and, at the same time, protocol messages. As this is hard to reason, we
-    //       only authorize Tcp layer.
-    if (!instanceof<TcpCommLayer>(getSession()->getCommLayer())) {
-        cerr << "ERROR : " << toString() << " is only compatible with Tcp communication layer, but you specified "
-             << getSession()->getCommLayer()->toString() << " communication layer in program arguments "
-             << "==> Specify Tcp communication layer in program arguments.\n";
-        exit (EXIT_FAILURE);
+    vector<rank_t> dest;
+    for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
+        auto rankOutgoingPeer = static_cast<rank_t>((rank + power_of_2) % sites.size());
+        dest.push_back(rankOutgoingPeer);
+        peersRank[nbStepsInWave] = rankOutgoingPeer;
+        ++nbStepsInWave;
     }
-    t.get();
+    commLayer->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
-    if (verbose)
-        cout << "\tBBOOBBAlgoLayer / Broadcaster#" << static_cast<uint32_t>(rank) << " : Wait for messages\n";
-    commLayer->waitForMsg(nbStepsInWave);
+    peers_peersRank_ready.count_down();
 
     if (verbose)
         cout << "Broadcaster #" << static_cast<uint32_t>(rank)
@@ -263,16 +179,7 @@ bool BBOBBAlgoLayer::executeAndProducedStatistics() {
 
 void BBOBBAlgoLayer::terminate() {
     sendWave = false;
-    auto s{serializeStruct<BroadcasterDisconnectIntent>(BroadcasterDisconnectIntent{
-            MsgId::DisconnectIntent,
-            getSession()->getRank(),
-    })};
-    for (auto i = 0; i < peers.size(); ++i) {
-        if (getSession()->getParam().getVerbose())
-            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " announces to broadcaster #" << static_cast<uint32_t>(peersRank[i]) << " it will disconnect\n";
-        peers[i]->sendMsg(std::move(s));
-    }
-
+    getSession()->getCommLayer()->terminate();
 }
 
 std::string BBOBBAlgoLayer::toString() {

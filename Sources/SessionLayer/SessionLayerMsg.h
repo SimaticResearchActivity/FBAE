@@ -11,7 +11,7 @@ namespace fbae_SessionLayer {
 //---------------------------------------------------
     enum class SessionMsgId : MsgId_t
     {
-        FinishedPerfMeasures = 48, // We start with a value which be displayed as a character in debugger
+        FinishedPerfMeasures = '0', // We start with a value which is displayed as a visible character in debugger
         FirstBroadcast,
         PerfMeasure,
         PerfResponse

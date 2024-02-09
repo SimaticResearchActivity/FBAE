@@ -109,7 +109,7 @@ The interfaces between these layers are the following:
 
     - *Session layer* ==> *Algorithm layer*
 
-         - *Session layer* calls `AlgoLayer`'s `executeAndProducedStatistics()` method to launch *Algorithm layer*. Note that we stay in `executeAndProducedStatistics()` method until *Algorithm layer* is done executing.
+         - *Session layer* calls `AlgoLayer`'s `executeAndCheckIfProducedStatistics()` method to launch *Algorithm layer*. Note that we stay in `executeAndCheckIfProducedStatistics()` method until *Algorithm layer* is done executing.
          - Then it calls `totalOrderBroadcast()` method for each total-order broadcast it has to make. 
          - Finally it calls `terminate()` method to tell the *Algorithm layer* than it can shutdwon.
 
@@ -127,7 +127,7 @@ The interfaces between these layers are the following:
          - When *Algorithm layer* needs to send a message to another process, it can use:
 
              - `CommPeer`'s `send()` method to send a message to a single process.
-             - `CommLayer`'s `broadcastMsg()` method to broadcast a message to all processes connected to this process.
+             - `CommLayer`'s `multicastMsg()` method to broadcast a message to all processes connected to this process.
 
          - *Algorithm layer* calls `CommPeer`'s `disconnect()` method when it wants to disconnect from a peer process.
 

@@ -5,17 +5,12 @@ add_executable(fbae
         Param.cpp Param.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
-        CommLayer/EnetCommLayer/EnetCommLayer.cpp
-        CommLayer/EnetCommLayer/EnetCommLayer.h
         AlgoLayer/AlgoLayer.cpp
         AlgoLayer/AlgoLayer.h
         AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.cpp
         AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
-        CommLayer/CommPeer.h
-        CommLayer/EnetCommLayer/EnetCommPeer.cpp
-        CommLayer/EnetCommLayer/EnetCommPeer.h
         msgTemplates.h
         AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayerMsg.h
         SessionLayer/SessionLayerMsg.h
@@ -26,12 +21,9 @@ add_executable(fbae
         SessionLayer/SessionLayerMsg.h
         CommLayer/TcpCommLayer/TcpCommLayer.cpp
         CommLayer/TcpCommLayer/TcpCommLayer.h
-        CommLayer/TcpCommLayer/TcpCommPeer.cpp
-        CommLayer/TcpCommLayer/TcpCommPeer.h
         basicTypes.h
         get_cpu_time.cpp
         get_cpu_time.h)
-target_link_libraries(fbae PUBLIC enet)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
 else() # We are under UNIX

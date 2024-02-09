@@ -73,7 +73,7 @@ public:
     void callbackInitDone() const;
 
     /**
-     * @brief Entry point of @SessionLayer to executeAndProducedStatistics it.
+     * @brief Entry point of @SessionLayer to executeAndCheckIfProducedStatistics it.
      */
     void execute();
 

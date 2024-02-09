@@ -18,7 +18,6 @@
 
 class BBOBBAlgoLayer : public AlgoLayer {
 private :
-    std::vector<std::unique_ptr<CommPeer>> peers; //peers that the entity will communicate with
     std::vector<rank_t> peersRank;
     /**
      * @brief Latch used to guarantee that all outgoing connections are established (and thus peers and peersRank are
@@ -47,13 +46,11 @@ private :
 
     bool sendWave = true;
 
-    int nbConnectedBroadcasters= 0;
-
     /**
      * @brief The number of steps in each wave is also the number of peers this peer will connect to and also the
      * number of peers which will connect to this peer.
      */
-    int nbStepsInWave;
+    int nbStepsInWave{0};
 
     std::vector<std::string> msgsWaitingToBeBroadcast;
     fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
@@ -61,13 +58,13 @@ private :
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;
 
 public :
-    bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) override;
-    bool executeAndProducedStatistics() override;
+    void callbackHandleMessage(std::string && msgString) override;
+    bool executeAndCheckIfProducedStatistics() override;
     void totalOrderBroadcast(std::string && msg) override;
     void terminate() override;
     std::string toString() override;
     void beginWave();
-    void CatchUpIfLateInMessageSending();
+    void catchUpIfLateInMessageSending();
 };
 
 
