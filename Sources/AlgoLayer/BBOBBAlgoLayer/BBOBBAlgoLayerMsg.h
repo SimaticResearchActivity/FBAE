@@ -8,10 +8,16 @@
 
 namespace fbae_BBOBBAlgoLayer {
 
+    /**
+     * @brief Message Id used by BBOBB algorithm.
+     */
     enum class MsgId : MsgId_t {
-        Step = '0' // We start with a value which is displayed as a visible character in debugger
+        Step // Message containing a Step message sent during a wave of BBOBB algorithm.
     };
 
+    /**
+     * @brief Structure containing a batch of SessionMsg and the rank of the sender of this batch.
+     */
     struct BatchSessionMsg {
         rank_t senderRank{};
         std::vector<std::string> batchSessionMsg;
@@ -23,6 +29,9 @@ namespace fbae_BBOBBAlgoLayer {
         }
     };
 
+    /**
+     * @brief Structure of Step messages.
+     */
     struct StepMsg {
         MsgId msgId{};
         rank_t senderRank{};

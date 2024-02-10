@@ -6,16 +6,18 @@
 
 namespace fbae_SequencerAlgoLayer
 {
-    //---------------------------------------------------
-    // Id of messages exchanged between sequencer and broadcaster(s)
-    //---------------------------------------------------
+    /**
+     * @brief Message Id used by Sequencer algorithm.
+     */
     enum class MsgId : MsgId_t
     {
-        // Messages sent by the sequencer to broadcaster(s)
-        Broadcast = 65, // We start with a value which is displayed as a visible character in debugger
-        BroadcastRequest
+        Broadcast, /// Message sent by the sequencer to broadcaster(s) as a consequence of a @BroadcastRequest messag sent by a broadcaster.
+        BroadcastRequest // Message sent by a broadcaster to sequencer to request the broadcast of this message.
     };
 
+    /**
+     * @brief Structure of @Broadcast and @BroadcastRequest messages.
+     */
     struct StructBroadcastMessage
     {
         MsgId msgId{};

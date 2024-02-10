@@ -61,11 +61,13 @@ void SessionLayer::callbackDeliver(rank_t senderRank, std::string && msg) {
 
 void SessionLayer::callbackInitDone() const
 {
-    // Broadcast FirstBroadcast
-    if (param.getVerbose())
-        cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(rank) << ")\n";
-    auto s {serializeStruct<SessionFirstBroadcast>(SessionFirstBroadcast{SessionMsgId::FirstBroadcast})};
-    algoLayer->totalOrderBroadcast(std::move(s));
+    if (algoLayer->isBroadcastingMessage()){
+        // Broadcast FirstBroadcast
+        if (param.getVerbose())
+            cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(rank) << ")\n";
+        auto s {serializeStruct<SessionFirstBroadcast>(SessionFirstBroadcast{SessionMsgId::FirstBroadcast})};
+        algoLayer->totalOrderBroadcast(std::move(s));
+    }
 }
 
 void SessionLayer::execute()
@@ -73,10 +75,10 @@ void SessionLayer::execute()
     future<void> taskSendPeriodicPerfMessage;
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : Start execution\n";
-    if (param.getFrequency())
+    if (param.getFrequency() && algoLayer->isBroadcastingMessage())
         taskSendPeriodicPerfMessage = std::async(std::launch::async, &SessionLayer::sendPeriodicPerfMessage, this);
-    if (algoLayer->executeAndCheckIfProducedStatistics())
-    {
+    algoLayer->execute();
+    if (algoLayer->isBroadcastingMessage()) {
         // Display statistics
         static std::mutex mtx;
         scoped_lock lock{mtx};
@@ -84,7 +86,7 @@ void SessionLayer::execute()
         cout << param.asCsv(algoLayer->toString(), commLayer->toString(), to_string(rank)) << "," << measures.asCsv()
              << "\n";
     }
-    if (param.getFrequency())
+    if (param.getFrequency()  && algoLayer->isBroadcastingMessage())
         taskSendPeriodicPerfMessage.get();
     if (param.getVerbose())
         cout << "SessionLayer #" << static_cast<uint32_t>(rank) << " : End of execution\n";

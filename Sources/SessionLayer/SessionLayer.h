@@ -8,6 +8,45 @@
 #include "../Param.h"
 
 class SessionLayer {
+public:
+    SessionLayer(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+
+    /**
+     * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
+     * @param senderRank Rank of @msg sender.
+     * @param seqNum Sequence number of @msg.
+     * @param msg Message to be delivered.
+     */
+    void callbackDeliver(rank_t senderRank, std::string && msg);
+
+    /**
+     * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
+     */
+    void callbackInitDone() const;
+
+    /**
+     * @brief Entry point of @SessionLayer to execute it.
+     */
+    void execute();
+
+    /**
+     * @brief Getter for @commlayer.
+     * @return @commlayer
+     */
+    [[nodiscard]] CommLayer *getCommLayer() const;
+
+    /**
+     * @brief Getter for @param.
+     * @return @param
+     */
+    [[nodiscard]] const Param &getParam() const;
+
+    /**
+     * @brief Getter for @rank.
+     * @return @rank.
+     */
+    [[nodiscard]] rank_t getRank() const;
+
 private:
     const Param &param;
     const rank_t rank;
@@ -55,43 +94,4 @@ private:
      * @brief Thread to send PerfMessage at @Param::frequency per second.
      */
     void sendPeriodicPerfMessage();
-
-public:
-    SessionLayer(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
-
-    /**
-     * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
-     * @param senderRank Rank of @msg sender.
-     * @param seqNum Sequence number of @msg.
-     * @param msg Message to be delivered.
-     */
-    void callbackDeliver(rank_t senderRank, std::string && msg);
-
-    /**
-     * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
-     */
-    void callbackInitDone() const;
-
-    /**
-     * @brief Entry point of @SessionLayer to executeAndCheckIfProducedStatistics it.
-     */
-    void execute();
-
-    /**
-     * @brief Getter for @commlayer.
-     * @return @commlayer
-     */
-    [[nodiscard]] CommLayer *getCommLayer() const;
-
-    /**
-     * @brief Getter for @param.
-     * @return @param
-     */
-    [[nodiscard]] const Param &getParam() const;
-
-    /**
-     * @brief Getter for @rank.
-     * @return @rank.
-     */
-    [[nodiscard]] rank_t getRank() const;
 };

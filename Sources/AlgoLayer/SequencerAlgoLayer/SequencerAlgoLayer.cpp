@@ -42,7 +42,7 @@ void SequencerAlgoLayer::callbackHandleMessage(std::string && msgString)
     }
 }
 
-bool SequencerAlgoLayer::executeAndCheckIfProducedStatistics()
+void SequencerAlgoLayer::execute()
 {
     // In Sequencer algorithm, the last site is not broadcasting. We build @broadcasters vector accordingly.
     sequencerRank = static_cast<rank_t>(getSession()->getParam().getSites().size() - 1);
@@ -58,9 +58,13 @@ bool SequencerAlgoLayer::executeAndCheckIfProducedStatistics()
             dest.push_back(r);
         }
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, broadcasters.size(), this);
+        if (!isBroadcastingMessage()) {
+            // As the Sequencer is not broadcastin messages, it does not call getSession()->getCommLayer()->terminate()
+            // in a natural manner ==> We have to call it.
+            getSession()->getCommLayer()->terminate();
+        }
         if (getSession()->getParam().getVerbose())
             cout << "\tSequencerAlgoLayer / Sequencer : Finished waiting for messages ==> Giving back control to SessionLayer\n";
-        return false;
     }
     else
     {
@@ -69,8 +73,12 @@ bool SequencerAlgoLayer::executeAndCheckIfProducedStatistics()
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
         if (getSession()->getParam().getVerbose())
             cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
-        return true;
     }
+}
+
+bool SequencerAlgoLayer::isBroadcastingMessage() const {
+    // Return true if @ALgoLayer is a broadcaster and false if it is the sequencer
+    return getSession()->getRank() < getSession()->getParam().getSites().size() - 1;
 }
 
 void SequencerAlgoLayer::terminate() {

@@ -1,14 +1,13 @@
 #pragma once
 
-#include "memory"
+#include <latch>
+#include <memory>
 #include "../Param.h"
 #include "../basicTypes.h"
 
 class AlgoLayer;
 
 class CommLayer {
-private:
-    AlgoLayer* algoLayer{nullptr};
 public:
     virtual ~CommLayer() = default;
 
@@ -24,6 +23,12 @@ public:
      * @return @algoLayer.
      */
     [[nodiscard]] AlgoLayer* getAlgoLayer() const;
+
+    /**
+     * @brief Getter for @commLayerReady
+     * @return @commLayerReady
+     */
+    [[nodiscard]] std::latch &getInitDoneCalled();
 
     /**
      * @brief Open connection to peers (named outgoing peers) which rank is listed in @dest, accepts
@@ -58,4 +63,13 @@ public:
      * @return Name of the protocol used as @CommLayer
      */
     [[nodiscard]] virtual std::string toString() = 0;
+
+private:
+    AlgoLayer* algoLayer{nullptr};
+
+    /**
+     * @brief Latch used to guarantee that AlgoLayer::callbackInitDone() has been called before any call to
+     * AlgoLayer::callbackHandleMessage() is done by threads handling communication incoming messages.
+     */
+    std::latch initDoneCalled{1};
 };

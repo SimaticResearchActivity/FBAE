@@ -5,72 +5,64 @@
 #include "../../SessionLayer/SessionLayer.h"
 #include "BBOBBAlgoLayer.h"
 #include "BBOBBAlgoLayerMsg.h"
-#include "../AlgoLayer.h"
 #include "../../msgTemplates.h"
-#include "../../CommLayer/CommLayer.h"
 
 #include <algorithm>
-#include <ctgmath>
-#include <future>
 
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
-/**
- * @brief Functionality similar to Java's instanceof (found at https://www.tutorialspoint.com/cplusplus-equivalent-of-instanceof)
- * @tparam Base Are we an instance of this Base type?
- * @tparam T The type we want to test
- * @param ptr A pointer on an instance of T
- * @return true if @ptr (of type @T) is an instance of type @Base.
- */
-template<typename Base, typename T>
-inline bool instanceof(const T *ptr) {
-    return dynamic_cast<const Base*>(ptr) != nullptr;
+void BBOBBAlgoLayer::callbackHandleMessage(std::string && msgString) {
+    auto msgId{static_cast<MsgId>(msgString[0])};
+    if (msgId == MsgId::Step) {
+        if (!algoTerminated) {
+            auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
+
+            if (getSession()->getParam().getVerbose())
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
+                     << " : Receive a Step Message (wave : " << stepMsg.wave << " / step : "
+                     << stepMsg.step << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderRank) << "\n";
+
+            if (stepMsg.wave == lastSentStepMsg.wave) {
+                currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
+                catchUpIfLateInMessageSending();
+                if (!algoTerminated) {
+                    catchUpIfLateInMessageSending();
+                }
+            } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
+                // Message is early and needs to be treated in the next wave
+                nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
+            } else {
+                cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
+                     << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
+                     << " (with step = " << stepMsg.step << ") from Broadcaster #"
+                     << static_cast<uint32_t>(stepMsg.senderRank) << "\n";
+                exit(EXIT_FAILURE);
+            }
+        }
+    } else {
+        cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
+        exit(EXIT_FAILURE);
+   }
 }
 
-void BBOBBAlgoLayer::callbackHandleMessage(std::string && msgString) {
-    peers_peersRank_ready.wait();
-    auto msgId{static_cast<MsgId>(msgString[0])};
-    switch (msgId) {
-        using enum MsgId;
-        case Step : {
-            if (sendWave) {
-
-                auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
-
-                if (getSession()->getParam().getVerbose())
-                    cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-                         << " : Receive a Step Message (step : " << stepMsg.step << " / wave : "
-                         << stepMsg.wave << ") from Broadcaster#" << static_cast<uint32_t>(stepMsg.senderRank) << "\n";
-
-                if (stepMsg.wave == lastSentStepMsg.wave) {
-                    currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
-                    catchUpIfLateInMessageSending();
-                } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
-                    // Message is early and needs to be treated in the next wave
-                    nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
-                } else {
-                    cerr << "ERROR\tBBOBBAlgoLayer/ Broadcaster #" << getSession()->getRank() << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
-                         << " from sender #" << static_cast<int>(stepMsg.senderRank) << " (with step = " << stepMsg.step << ")\n";
-                    exit(EXIT_FAILURE);
-                }
-            }
-            break;
-        }
-
-        default: {
-            cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
-            exit(EXIT_FAILURE);
-        }
+void BBOBBAlgoLayer::callbackInitDone() {
+    AlgoLayer::callbackInitDone();
+    lastSentStepMsg.wave = -1;
+    beginWave();
+    catchUpIfLateInMessageSending();
+    if (!algoTerminated) {
+        catchUpIfLateInMessageSending();
     }
 }
 
 void BBOBBAlgoLayer::beginWave() {
     //Build first Step Message of a new Wave
-    lastSentStepMsg.wave += 1;
-    lastSentStepMsg.step = 0;
+    lastSentStepMsg.msgId = MsgId::Step;
     const auto senderRank = getSession()->getRank();
     lastSentStepMsg.senderRank = senderRank;
+    lastSentStepMsg.wave += 1;
+    lastSentStepMsg.step = 0;
     lastSentStepMsg.batchesBroadcast.clear();
     {
         lock_guard lck(mtxBatchCtrl);
@@ -83,16 +75,16 @@ void BBOBBAlgoLayer::beginWave() {
     // Send it
     if (getSession()->getParam().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-             << " : Send Step Message (step : 0 / wave : " << lastSentStepMsg.wave << ") to Broadcaster #" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step])
+             << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step])
              << "\n";
-    auto s{serializeStruct(lastSentStepMsg)};
-    getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step], std::move(s));
+    getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step],
+                                       serializeStruct(lastSentStepMsg));
 }
 
 void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
     // Are we able to send new stepMsg knowing the messages received in currentWaveReceivedStepMsg?
     auto step = lastSentStepMsg.step;
-    while (lastSentStepMsg.step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
+    while (step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
         // Build the new version of lastSentStepMsg
         lastSentStepMsg.step += 1;
         lastSentStepMsg.batchesBroadcast.insert(lastSentStepMsg.batchesBroadcast.end(),
@@ -100,10 +92,10 @@ void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
         // Send it
         if (getSession()->getParam().getVerbose())
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank())
-                 << " : Send Step Message (step : " << lastSentStepMsg.step << " / wave : " << lastSentStepMsg.wave
-                 << ") to Broadcaster#" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step]) << "\n";
-        auto s{serializeStruct(lastSentStepMsg)};
-        getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step], std::move(s));
+                 << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
+                 << ") to Broadcaster #" << static_cast<uint32_t>(peersRank[lastSentStepMsg.step]) << "\n";
+        getSession()->getCommLayer()->send(peersRank[lastSentStepMsg.step],
+                                           serializeStruct(lastSentStepMsg));
         step = lastSentStepMsg.step;
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
@@ -137,6 +129,9 @@ void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
                     shortcutBatchCtrl = true;
                     getSession()->callbackDeliver(senderRank, std::move(msg));
                     shortcutBatchCtrl = false;
+                    if (algoTerminated) {
+                        return;
+                    }
                 }
             }
         }
@@ -145,11 +140,10 @@ void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
         currentWaveReceivedStepMsg = nextWaveReceivedStepMsg;
         nextWaveReceivedStepMsg.clear();
         beginWave();
-        catchUpIfLateInMessageSending();
     }
 }
 
-bool BBOBBAlgoLayer::executeAndCheckIfProducedStatistics() {
+void BBOBBAlgoLayer::execute() {
 
     bool verbose = getSession()->getParam().getVerbose();
 
@@ -163,22 +157,23 @@ bool BBOBBAlgoLayer::executeAndCheckIfProducedStatistics() {
     for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
         auto rankOutgoingPeer = static_cast<rank_t>((rank + power_of_2) % sites.size());
         dest.push_back(rankOutgoingPeer);
-        peersRank[nbStepsInWave] = rankOutgoingPeer;
+        peersRank.push_back(rankOutgoingPeer);
         ++nbStepsInWave;
     }
     commLayer->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
-    peers_peersRank_ready.count_down();
-
     if (verbose)
         cout << "Broadcaster #" << static_cast<uint32_t>(rank)
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
+}
 
+bool BBOBBAlgoLayer::isBroadcastingMessage() const {
+    // In BBOBB algorithm, every participant is broadcasting.
     return true;
 }
 
 void BBOBBAlgoLayer::terminate() {
-    sendWave = false;
+    algoTerminated = true;
     getSession()->getCommLayer()->terminate();
 }
 

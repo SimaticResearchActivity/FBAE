@@ -109,7 +109,7 @@ The interfaces between these layers are the following:
 
     - *Session layer* ==> *Algorithm layer*
 
-         - *Session layer* calls `AlgoLayer`'s `executeAndCheckIfProducedStatistics()` method to launch *Algorithm layer*. Note that we stay in `executeAndCheckIfProducedStatistics()` method until *Algorithm layer* is done executing.
+         - *Session layer* calls `AlgoLayer`'s `execute()` method to launch *Algorithm layer*. Note that we stay in `execute()` method until *Algorithm layer* is done executing.
          - Then it calls `totalOrderBroadcast()` method for each total-order broadcast it has to make. 
          - Finally it calls `terminate()` method to tell the *Algorithm layer* than it can shutdwon.
 

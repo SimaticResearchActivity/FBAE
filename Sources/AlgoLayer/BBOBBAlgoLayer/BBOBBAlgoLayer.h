@@ -6,7 +6,6 @@
 #define FBAE_BBOBBALGOLAYER_H
 
 #include <condition_variable>
-#include <latch>
 #include <map>
 
 #include "cereal/archives/binary.hpp"
@@ -17,13 +16,21 @@
 #include "BBOBBAlgoLayerMsg.h"
 
 class BBOBBAlgoLayer : public AlgoLayer {
+public :
+    void callbackHandleMessage(std::string && msgString) override;
+    void callbackInitDone() override;
+    void execute() override;
+    [[nodiscard]] bool isBroadcastingMessage() const override;
+    void totalOrderBroadcast(std::string && msg) override;
+    void terminate() override;
+    std::string toString() override;
+    void beginWave();
+    void catchUpIfLateInMessageSending();
 private :
-    std::vector<rank_t> peersRank;
     /**
-     * @brief Latch used to guarantee that all outgoing connections are established (and thus peers and peersRank are
-     * initialized and ready to be used).
+     * @brief Vectors of rank of outgoing peers
      */
-    std::latch peers_peersRank_ready{1};
+    std::vector<rank_t> peersRank;
 
     /**
      * @brief Mutex coupled with @condVarBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
@@ -42,9 +49,12 @@ private :
      * order to avoid deadlocks, we accept that the number of bytes stored in @msgsWaitingToBeBroadcast is greater than
      * @maxBatchSize of @Param instance.
      */
-    bool shortcutBatchCtrl;
+    bool shortcutBatchCtrl{false};
 
-    bool sendWave = true;
+    /**
+     * @brief True when @disconnect() method has been called.
+     */
+    bool algoTerminated{false};
 
     /**
      * @brief The number of steps in each wave is also the number of peers this peer will connect to and also the
@@ -57,16 +67,5 @@ private :
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;
 
-public :
-    void callbackHandleMessage(std::string && msgString) override;
-    bool executeAndCheckIfProducedStatistics() override;
-    void totalOrderBroadcast(std::string && msg) override;
-    void terminate() override;
-    std::string toString() override;
-    void beginWave();
-    void catchUpIfLateInMessageSending();
 };
-
-
-
 #endif //FBAE_BBOBBALGOLAYER_H

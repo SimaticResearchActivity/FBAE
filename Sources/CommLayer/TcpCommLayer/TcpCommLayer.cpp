@@ -71,6 +71,7 @@ std::unique_ptr<boost::asio::ip::tcp::socket>  TcpCommLayer::connectToHost(const
 void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock) {
     try
     {
+        getInitDoneCalled().wait();
         for (;;)
         {
             auto s{receiveEvent(ptrSock.get())};
@@ -119,6 +120,10 @@ void TcpCommLayer::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, 
         rank2sock[r] = connectToHost(sites[r]);
     }
 
+    // We're done initializing @CommLayer
+    getAlgoLayer()->callbackInitDone();
+    getInitDoneCalled().count_down();
+
     taskAcceptConn.get();
 }
 
@@ -152,7 +157,7 @@ struct ForLength
 };
 
 void TcpCommLayer::send(rank_t r, string &&msg) {
-    assert(rank2sock.find(r) != rank2sock.end());
+    assert(rank2sock.contains(r));
     ForLength forLength{msg.length()};
     std::stringstream oStream;
     {
