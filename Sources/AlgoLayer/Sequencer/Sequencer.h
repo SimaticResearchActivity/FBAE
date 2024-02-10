@@ -2,7 +2,7 @@
 
 #include "../AlgoLayer.h"
 
-class SequencerAlgoLayer : public AlgoLayer {
+class Sequencer : public AlgoLayer {
 private:
     /**
      * @brief Rank of sequencer.

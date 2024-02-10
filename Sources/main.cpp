@@ -1,10 +1,10 @@
 #include <future>
 #include <iostream>
 #include "OptParserExtended.h"
-#include "AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h"
-#include "SessionLayer/SessionLayer.h"
-#include "CommLayer/TcpCommLayer/TcpCommLayer.h"
-#include "AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.h"
+#include "AlgoLayer/Sequencer/Sequencer.h"
+#include "SessionLayer/Session/Session.h"
+#include "CommLayer/Tcp/Tcp.h"
+#include "AlgoLayer/BBOBB/BBOBB.h"
 
 using namespace std;
 using namespace mlib;
@@ -14,8 +14,8 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
     char algoId = parser.getoptStringRequired('a')[0];
     switch(algoId)
     {
-        case 'S': return make_unique<SequencerAlgoLayer>();
-        case 'B' : return make_unique<BBOBBAlgoLayer>();
+        case 'S': return make_unique<Sequencer>();
+        case 'B' : return make_unique<BBOBB>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is " << algoId
                       << " which is not the identifier of a defined algorithm"
@@ -30,7 +30,7 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
     char commId = parser.getoptStringRequired('c')[0];
     switch(commId)
     {
-        case 't': return make_unique<TcpCommLayer>();
+        case 't': return make_unique<Tcp>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is \"" << commId << "\""
                       << " which is not the identifier of a defined communication layer"
@@ -96,18 +96,18 @@ int main(int argc, char* argv[])
     //
     if (param.getRank() != specialRankToRequestExecutionInTasks)
     {
-        SessionLayer session{param, param.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
+        Session session{param, param.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
         session.execute();
     }
     else
     {
         size_t nbSites{param.getSites().size()};
-        vector<unique_ptr<SessionLayer>> sessions;
+        vector<unique_ptr<Session>> sessions;
         vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
-            sessions.emplace_back(make_unique<SessionLayer>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
-            sessionTasks.emplace_back(std::async(std::launch::async, &SessionLayer::execute, sessions.back().get()));
+            sessions.emplace_back(make_unique<Session>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
+            sessionTasks.emplace_back(std::async(std::launch::async, &Session::execute, sessions.back().get()));
         }
         for (auto& t: sessionTasks)
             t.get();

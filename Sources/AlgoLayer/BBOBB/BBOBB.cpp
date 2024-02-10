@@ -3,8 +3,8 @@
 //
 
 #include "../../SessionLayer/SessionLayer.h"
-#include "BBOBBAlgoLayer.h"
-#include "BBOBBAlgoLayerMsg.h"
+#include "BBOBB.h"
+#include "BBOBBMsg.h"
 #include "../../msgTemplates.h"
 
 #include <algorithm>
@@ -12,7 +12,7 @@
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
-void BBOBBAlgoLayer::callbackHandleMessage(std::string && msgString) {
+void BBOBB::callbackHandleMessage(std::string && msgString) {
     auto msgId{static_cast<MsgId>(msgString[0])};
     if (msgId == MsgId::Step) {
         if (!algoTerminated) {
@@ -46,7 +46,7 @@ void BBOBBAlgoLayer::callbackHandleMessage(std::string && msgString) {
    }
 }
 
-void BBOBBAlgoLayer::callbackInitDone() {
+void BBOBB::callbackInitDone() {
     AlgoLayer::callbackInitDone();
     lastSentStepMsg.wave = -1;
     beginWave();
@@ -56,7 +56,7 @@ void BBOBBAlgoLayer::callbackInitDone() {
     }
 }
 
-void BBOBBAlgoLayer::beginWave() {
+void BBOBB::beginWave() {
     //Build first Step Message of a new Wave
     lastSentStepMsg.msgId = MsgId::Step;
     const auto senderRank = getSession()->getRank();
@@ -81,7 +81,7 @@ void BBOBBAlgoLayer::beginWave() {
                                        serializeStruct(lastSentStepMsg));
 }
 
-void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
+void BBOBB::catchUpIfLateInMessageSending() {
     // Are we able to send new stepMsg knowing the messages received in currentWaveReceivedStepMsg?
     auto step = lastSentStepMsg.step;
     while (step < nbStepsInWave - 1 && currentWaveReceivedStepMsg.contains(step)) {
@@ -143,7 +143,7 @@ void BBOBBAlgoLayer::catchUpIfLateInMessageSending() {
     }
 }
 
-void BBOBBAlgoLayer::execute() {
+void BBOBB::execute() {
 
     bool verbose = getSession()->getParam().getVerbose();
 
@@ -167,21 +167,21 @@ void BBOBBAlgoLayer::execute() {
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
 }
 
-bool BBOBBAlgoLayer::isBroadcastingMessage() const {
+bool BBOBB::isBroadcastingMessage() const {
     // In BBOBB algorithm, every participant is broadcasting.
     return true;
 }
 
-void BBOBBAlgoLayer::terminate() {
+void BBOBB::terminate() {
     algoTerminated = true;
     getSession()->getCommLayer()->terminate();
 }
 
-std::string BBOBBAlgoLayer::toString() {
+std::string BBOBB::toString() {
     return "BBOBB";
 }
 
-void BBOBBAlgoLayer::totalOrderBroadcast(std::string && msg) {
+void BBOBB::totalOrderBroadcast(std::string && msg) {
     unique_lock lck(mtxBatchCtrl);
     condVarBatchCtrl.wait(lck, [this] {
         return (msgsWaitingToBeBroadcast.size() * getSession()->getParam().getSizeMsg() < getSession()->getParam().getMaxBatchSize())

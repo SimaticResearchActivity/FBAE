@@ -1,5 +1,5 @@
-#ifndef FBAE_BBOBBALGOLAYERMSG_H
-#define FBAE_BBOBBALGOLAYERMSG_H
+#ifndef FBAE_BBOBBMSG_H
+#define FBAE_BBOBBMSG_H
 
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
@@ -48,4 +48,4 @@ namespace fbae_BBOBBAlgoLayer {
 
 }
 
-#endif //FBAE_BBOBBALGOLAYERMSG_H
+#endif //FBAE_BBOBBMSG_H

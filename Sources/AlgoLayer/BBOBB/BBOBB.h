@@ -2,8 +2,8 @@
 // Created by lardeur on 09/10/23.
 //
 
-#ifndef FBAE_BBOBBALGOLAYER_H
-#define FBAE_BBOBBALGOLAYER_H
+#ifndef FBAE_BBOBB_H
+#define FBAE_BBOBB_H
 
 #include <condition_variable>
 #include <map>
@@ -13,9 +13,9 @@
 #include "cereal/types/vector.hpp"
 
 #include "../AlgoLayer.h"
-#include "BBOBBAlgoLayerMsg.h"
+#include "BBOBBMsg.h"
 
-class BBOBBAlgoLayer : public AlgoLayer {
+class BBOBB : public AlgoLayer {
 public :
     void callbackHandleMessage(std::string && msgString) override;
     void callbackInitDone() override;
@@ -68,4 +68,4 @@ private :
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;
 
 };
-#endif //FBAE_BBOBBALGOLAYER_H
+#endif //FBAE_BBOBB_H

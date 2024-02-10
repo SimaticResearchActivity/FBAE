@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include "../../AlgoLayer/AlgoLayer.h"
-#include "TcpCommLayer.h"
+#include "Tcp.h"
 #include "../../SessionLayer/SessionLayer.h"
 #include "cereal/archives/binary.hpp"
 
@@ -23,7 +23,7 @@ constexpr int nbTcpConnectTentatives{20};
  */
 constexpr chrono::duration durationBetweenTcpConnectTentatives{500ms};
 
-void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
+void Tcp::acceptConn(int port, size_t nbAwaitedConnections) {
     std::vector<std::future<void>> tasksHandleConn(nbAwaitedConnections);
     try
     {
@@ -37,7 +37,7 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
             boost::asio::ip::tcp::no_delay option(true);
             ptrSock->set_option(option);
 
-            t = std::async(std::launch::async, &TcpCommLayer::handleIncomingConn, this, std::move(ptrSock));
+            t = std::async(std::launch::async, &Tcp::handleIncomingConn, this, std::move(ptrSock));
         }
     }
     catch (boost::system::system_error& e)
@@ -53,7 +53,7 @@ void TcpCommLayer::acceptConn(int port, size_t nbAwaitedConnections) {
     }
 }
 
-std::unique_ptr<boost::asio::ip::tcp::socket>  TcpCommLayer::connectToHost(const HostTuple &host)
+std::unique_ptr<boost::asio::ip::tcp::socket>  Tcp::connectToHost(const HostTuple &host)
 {
     unique_ptr<tcp::socket> ptrSock{nullptr};
     for (int i = 0 ; i < nbTcpConnectTentatives ; ++i)
@@ -68,7 +68,7 @@ std::unique_ptr<boost::asio::ip::tcp::socket>  TcpCommLayer::connectToHost(const
     exit(1);
 }
 
-void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock) {
+void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock) {
     try
     {
         getInitDoneCalled().wait();
@@ -100,20 +100,20 @@ void TcpCommLayer::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::sock
     }
 }
 
-void TcpCommLayer::multicastMsg(std::string && msg)
+void Tcp::multicastMsg(std::string && msg)
 {
     for (auto const& [r, sock]: rank2sock) {
         send(r, std::move(msg));
     }
 }
 
-void TcpCommLayer::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
+void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
     const auto sites = getAlgoLayer()->getSession()->getParam().getSites();
     auto rank = getAlgoLayer()->getSession()->getRank();
 
     // Accept nbAwaitedConnections connections from incoming peers
-    auto taskAcceptConn{ std::async(&TcpCommLayer::acceptConn, this, get<PORT>(sites[rank]), nbAwaitedConnections)};
+    auto taskAcceptConn{ std::async(&Tcp::acceptConn, this, get < PORT > (sites[rank]), nbAwaitedConnections)};
 
     // Connect to outgoing peers listed in dest
     for (const auto &r: dest) {
@@ -127,7 +127,7 @@ void TcpCommLayer::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, 
     taskAcceptConn.get();
 }
 
-std::string TcpCommLayer::receiveEvent(boost::asio::ip::tcp::socket *ptrSock)
+std::string Tcp::receiveEvent(boost::asio::ip::tcp::socket *ptrSock)
 {
     // Read the length of the message
     size_t len;
@@ -156,7 +156,7 @@ struct ForLength
     }
 };
 
-void TcpCommLayer::send(rank_t r, string &&msg) {
+void Tcp::send(rank_t r, string &&msg) {
     assert(rank2sock.contains(r));
     ForLength forLength{msg.length()};
     std::stringstream oStream;
@@ -171,14 +171,14 @@ void TcpCommLayer::send(rank_t r, string &&msg) {
     boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength.data(), sWithLength.length()));
 }
 
-void TcpCommLayer::terminate() {
+void Tcp::terminate() {
     for (auto const& [r, sock]: rank2sock) {
         sock->close();
     }
     rank2sock.clear();
 }
 
-unique_ptr<tcp::socket>  TcpCommLayer::tryConnectToHost(const HostTuple &host)
+unique_ptr<tcp::socket>  Tcp::tryConnectToHost(const HostTuple &host)
 {
     unique_ptr<tcp::socket> ptrSock{nullptr};
     try
@@ -209,6 +209,6 @@ unique_ptr<tcp::socket>  TcpCommLayer::tryConnectToHost(const HostTuple &host)
     return ptrSock;
 }
 
-std::string TcpCommLayer::toString() {
+std::string Tcp::toString() {
     return "TCP";
 }

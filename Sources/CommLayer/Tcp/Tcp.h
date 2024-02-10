@@ -12,9 +12,9 @@
 #include "../CommLayer.h"
 #include "../../Param.h"
 
-class TcpCommLayer : public CommLayer{
+class Tcp : public CommLayer{
 public:
-    TcpCommLayer() = default;
+    Tcp() = default;
     void multicastMsg(std::string && msg) override;
     void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
     void send(rank_t r, std::string && msg) override;

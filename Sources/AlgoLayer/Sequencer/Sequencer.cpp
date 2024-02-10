@@ -1,13 +1,13 @@
 #include <iostream>
 #include "../../SessionLayer/SessionLayer.h"
-#include "SequencerAlgoLayer.h"
-#include "SequencerAlgoLayerMsg.h"
+#include "Sequencer.h"
+#include "SequencerMsg.h"
 #include "../../msgTemplates.h"
 
 using namespace std;
 using namespace fbae_SequencerAlgoLayer;
 
-void SequencerAlgoLayer::callbackHandleMessage(std::string && msgString)
+void Sequencer::callbackHandleMessage(std::string && msgString)
 {
     auto msgId{ static_cast<MsgId>(msgString[0]) };
     switch (msgId)
@@ -42,7 +42,7 @@ void SequencerAlgoLayer::callbackHandleMessage(std::string && msgString)
     }
 }
 
-void SequencerAlgoLayer::execute()
+void Sequencer::execute()
 {
     // In Sequencer algorithm, the last site is not broadcasting. We build @broadcasters vector accordingly.
     sequencerRank = static_cast<rank_t>(getSession()->getParam().getSites().size() - 1);
@@ -76,20 +76,20 @@ void SequencerAlgoLayer::execute()
     }
 }
 
-bool SequencerAlgoLayer::isBroadcastingMessage() const {
+bool Sequencer::isBroadcastingMessage() const {
     // Return true if @ALgoLayer is a broadcaster and false if it is the sequencer
     return getSession()->getRank() < getSession()->getParam().getSites().size() - 1;
 }
 
-void SequencerAlgoLayer::terminate() {
+void Sequencer::terminate() {
     getSession()->getCommLayer()->terminate();
 }
 
-std::string SequencerAlgoLayer::toString() {
+std::string Sequencer::toString() {
     return "Sequencer";
 }
 
-void SequencerAlgoLayer::totalOrderBroadcast(std::string && msg) {
+void Sequencer::totalOrderBroadcast(std::string && msg) {
     // Send BroadcastRequest to sequencer
     auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastRequest,
                                                                                getSession()->getRank(),

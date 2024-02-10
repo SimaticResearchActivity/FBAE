@@ -7,23 +7,25 @@ add_executable(fbae
         CommLayer/CommLayer.h
         AlgoLayer/AlgoLayer.cpp
         AlgoLayer/AlgoLayer.h
-        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.cpp
-        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayer.h
+        AlgoLayer/Sequencer/Sequencer.cpp
+        AlgoLayer/Sequencer/Sequencer.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
         msgTemplates.h
-        AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayerMsg.h
+        AlgoLayer/Sequencer/SequencerMsg.h
         SessionLayer/SessionLayerMsg.h
-        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.cpp
-        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayer.h
-        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
-        AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h
+        AlgoLayer/BBOBB/BBOBB.cpp
+        AlgoLayer/BBOBB/BBOBB.h
+        AlgoLayer/BBOBB/BBOBBMsg.h
+        AlgoLayer/BBOBB/BBOBBMsg.h
         SessionLayer/SessionLayerMsg.h
-        CommLayer/TcpCommLayer/TcpCommLayer.cpp
-        CommLayer/TcpCommLayer/TcpCommLayer.h
+        CommLayer/Tcp/Tcp.cpp
+        CommLayer/Tcp/Tcp.h
         basicTypes.h
         get_cpu_time.cpp
-        get_cpu_time.h)
+        get_cpu_time.h
+        SessionLayer/Session/Session.cpp
+        SessionLayer/Session/Session.h)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
 else() # We are under UNIX

@@ -1,15 +1,13 @@
 #pragma once
 
-#include <latch>
-#include <memory>
-#include "../AlgoLayer/AlgoLayer.h"
 #include "../basicTypes.h"
-#include "../Measures.h"
+#include "../CommLayer/CommLayer.h"
 #include "../Param.h"
+
 
 class SessionLayer {
 public:
-    SessionLayer(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+    virtual ~SessionLayer() = default;
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
@@ -17,81 +15,33 @@ public:
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    void callbackDeliver(rank_t senderRank, std::string && msg);
+    virtual void callbackDeliver(rank_t senderRank, std::string && msg) = 0;
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
      */
-    void callbackInitDone() const;
+    virtual void callbackInitDone() const = 0;
 
     /**
      * @brief Entry point of @SessionLayer to execute it.
-     */
-    void execute();
+    */
+    virtual void execute() = 0;
 
     /**
      * @brief Getter for @commlayer.
-     * @return @commlayer
-     */
-    [[nodiscard]] CommLayer *getCommLayer() const;
+    * @return @commlayer
+    */
+    [[nodiscard]] virtual CommLayer *getCommLayer() const = 0;
 
     /**
      * @brief Getter for @param.
      * @return @param
      */
-    [[nodiscard]] const Param &getParam() const;
+    [[nodiscard]] virtual const Param &getParam() const = 0;
 
     /**
      * @brief Getter for @rank.
      * @return @rank.
      */
-    [[nodiscard]] rank_t getRank() const;
-
-private:
-    const Param &param;
-    const rank_t rank;
-    std::unique_ptr<AlgoLayer> algoLayer;
-    std::unique_ptr<CommLayer> commLayer;
-    Measures measures;
-    int32_t numPerfMeasure{0};
-    int32_t nbReceivedPerfResponseForSelf{0};
-    size_t nbReceivedFirstBroadcast{0};
-    size_t nbReceivedFinishedPerfMeasures{0};
-    std::latch okToSendPeriodicPerfMessage{1};
-
-    /**
-     * @brief Broadcasts a @PerfMeasure message with @msgNum incremented by 1.
-     */
-    void broadcastPerfMeasure();
-
-    /**
-     * @brief Called by @callbackDeliver to process @FinishedPerfMeasures message
-     * @param senderRank Rank of message sender.
-     */
-    void processFinishedPerfMeasuresMsg(rank_t senderRank);
-
-    /**
-     * @brief Called by @callbackDeliver to process @FirstBroadcast message
-     * @param senderRank Rank of message sender.
-     */
-    void processFirstBroadcastMsg(rank_t senderRank);
-
-    /**
-     * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
-     * @param msg Message to process.
-     */
-    void processPerfMeasureMsg(rank_t senderRank, std::string && msg);
-
-    /**
-     * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
-     * @param msg Message to process.
-     */
-    void processPerfResponseMsg(rank_t senderRank, std::string && msg);
-
-    /**
-     * @brief Thread to send PerfMessage at @Param::frequency per second.
-     */
-    void sendPeriodicPerfMessage();
+    [[nodiscard]] virtual rank_t getRank() const = 0;
 };
