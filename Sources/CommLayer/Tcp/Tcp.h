@@ -6,13 +6,21 @@
 
 #include "boost/asio.hpp"
 #include <future>
+#include <map>
 #include <mutex>
 #include <shared_mutex>
 #include "../CommLayer.h"
 #include "../../Param.h"
-#include "TcpCommPeer.h"
 
-class TcpCommLayer : public CommLayer{
+class Tcp : public CommLayer{
+public:
+    Tcp() = default;
+    void multicastMsg(std::string && msg) override;
+    void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
+    void send(rank_t r, std::string && msg) override;
+    void terminate() override;
+    std::string toString() override;
+
 private:
     /**
      * @brief As Boost tutorial explains, all programs that use asio need to have at least one boost::asio::io_service
@@ -21,22 +29,16 @@ private:
      * variable.
      */
     boost::asio::io_service ioService;
-    /**
-     * @brief Peers created by threadAcceptConn
-     */
-    std::vector<TcpCommPeer*> incomingPeers;
+
     /**
      * @brief Mutex used to guarantee that all calls to callbackHandleMessage are done in a critical section.
      */
     std::mutex mtxCallbackHandleMessage;
+
     /**
-     * @brief Mutex for controlling access to @incomingPeers
+     * @brief Mapping between rank of each outgoing peers and its associated socket
      */
-    std::shared_timed_mutex rwMtxIncomingPeers;
-    /**
-     * @brief Tasks created by TcpCommLayer which must be joined before existing an instance of TcpCommLayer
-     */
-    std::vector<std::future<void>> tasksToJoin;
+     std::map<rank_t,std::unique_ptr<boost::asio::ip::tcp::socket>> rank2sock;
 
     /**
      * @brief Thread for accepting @nbAwaitedConnections connections on port @port
@@ -44,34 +46,31 @@ private:
      * @param nbAwaitedConnections
      */
     void acceptConn(int port, size_t nbAwaitedConnections);
+
+    /**
+     * @brief Connect to host
+    * @param host Host to connect to.
+    * @return socket which can be used to communicate with @host.
+    */
+    std::unique_ptr<boost::asio::ip::tcp::socket> connectToHost(HostTuple const & host);
+
     /**
      * @brief Thread for handling messages received on @ptrSock (which was created by acceptConn)
      * @param ptrSock
      */
     void handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock);
-    /**
-     * @brief Thread for handling messages received on @ptrSock (which was created by connectToHost)
-     * @param ptrSock
-     */
-    void handleOutgoingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock);
+
     /**
      * @brief Waits till a packet is received on @psock
      * @param ptrSock
      * @return String containing received packet
      */
     static std::string receiveEvent(boost::asio::ip::tcp::socket *ptrSock);
+
     /**
      * @brief Tries to connect to host @host
      * @param host
      * @return unique_ptr containing socket if connection succeeds and nullptr if connection fails.
      */
-    std::unique_ptr<boost::asio::ip::tcp::socket>  tryConnectToHost(HostTuple host);
-public:
-    TcpCommLayer() = default;
-    void broadcastMsg(std::string && msg) override;
-    std::unique_ptr<CommPeer> connectToHost(HostTuple host, AlgoLayer *algoLayer) override;
-    void initHost(int port, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
-    std::string toString() override;
-    void waitForMsg(size_t maxDisconnections) override;
-
+    std::unique_ptr<boost::asio::ip::tcp::socket>  tryConnectToHost(HostTuple const & host);
 };

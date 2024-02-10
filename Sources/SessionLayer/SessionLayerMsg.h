@@ -9,14 +9,20 @@ namespace fbae_SessionLayer {
     //---------------------------------------------------
 // Messages totalOrderBroadcast by SessionLayer (to SessionLayer)
 //---------------------------------------------------
+    /**
+     * @brief Message Id used within @SessionLayer.
+    */
     enum class SessionMsgId : MsgId_t
     {
-        FinishedPerfMeasures = 48, // We start with a value which be displayed as a character in debugger
-        FirstBroadcast,
-        PerfMeasure,
-        PerfResponse
+        FinishedPerfMeasures, /// Broadcast message signifying its sender has finished to send all of its @PerfMeasure messages.
+        FirstBroadcast, /// Broadcast message used by a sender when it broadcasts a message for the first time.
+        PerfMeasure, /// Broadcast message used by a sender as Ping message
+        PerfResponse /// Broadcast message used as a Pong message in response to a @PerfMeasure message
     };
 
+    /**
+     * @brief Generic message structure containing only a msgId.
+     */
     struct GenericSessionMsgWithId
     {
         SessionMsgId msgId{};
@@ -29,9 +35,19 @@ namespace fbae_SessionLayer {
         }
     };
 
+    /**
+     * @brief Structure of @FinishedPerfMeasures message.
+     */
     using SessionFinishedPerfMeasures = GenericSessionMsgWithId;
+
+    /**
+     * @brief Structure of @FirstBroadcast message.
+     */
     using SessionFirstBroadcast = GenericSessionMsgWithId;
 
+    /**
+     * @brief Structure of @PerfMeasure message.
+     */
     struct SessionPerfMeasure
     {
         SessionMsgId msgId{};
@@ -48,6 +64,9 @@ namespace fbae_SessionLayer {
         }
     };
 
+    /**
+     * @brief Structure of @PerfResponse message.
+     */
     struct SessionPerfResponse
     {
         SessionMsgId msgId{};
@@ -63,5 +82,4 @@ namespace fbae_SessionLayer {
             archive(msgId, perfMeasureSenderRank, perfMeasureMsgNum, perfMeasureSendTime, perfMeasureFiller); // serialize things by passing them to the archive
         }
     };
-
 }

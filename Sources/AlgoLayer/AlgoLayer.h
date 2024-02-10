@@ -1,37 +1,37 @@
 #pragma once
 
-#include "memory"
+#include <memory>
 #include "../CommLayer/CommLayer.h"
-#include "../CommLayer/CommPeer.h"
 #include "../Param.h"
 class SessionLayer;
 
 class AlgoLayer {
-private:
-    /**
-     * @brief List of @sites which are indeed doing broadcasts.
-     */
-    std::vector<HostTuple> broadcasters;
-    SessionLayer *session{nullptr};
-
 public:
     virtual ~AlgoLayer() = default;
 
     /**
-     * @brief Handles packet (stored in @packetString) received from @peer. Should be called when process is a host,
-     * that is is has called @initHost() on @CommLayer.
-     * @param peer Peer from which packet was received.
+     * @brief Handles message received from @an incoming peer.
      * @param msgString String containing message.
-     * @return true if AckDisconnectIntent message was received and false otherwise
      */
-    virtual bool callbackHandleMessage(std::unique_ptr<CommPeer> peer, std::string && msgString) = 0;
+    virtual void callbackHandleMessage(std::string && msgString) = 0;
 
     /**
-     * @brief Executes concrete totalOrderBroadcast algorithm. Returns when algorithm is done.
-     * @return true if the execution lead to the production of statistics (e.g. case of a broadcaster in Sequencer
-     * algorithm) and false otherwise (e.g. case of the sequencer in Sequencer algorithm)
+     * @brief Callback called by @CommLayer when @CommLayer is initialized locally.
      */
-    virtual bool executeAndProducedStatistics() = 0;
+    virtual void callbackInitDone();
+
+    /**
+     * @brief Indicates whether @AlgoLayer is broadcasting messages or not.
+     * @return true if the execution of @ALgoLayer lead to the production of statistics (e.g. case of a broadcaster in
+     * Sequencer algorithm) and false otherwise (e.g. which can be the case of the sequencer in Sequencer algorithm of the
+     * sequencer is not a broadcaster)
+     */
+     [[nodiscard]] virtual bool isBroadcastingMessage() const = 0;
+
+    /**
+     * @brief Executes concrete Total Order Broadcast algorithm. Returns when algorithm is done.
+     */
+    virtual void execute() = 0;
 
     /**
      * @brief Getter for @broadcasters.
@@ -74,4 +74,15 @@ public:
      * @return Name of the algorithm used as @AlgoLayer
      */
     [[nodiscard]] virtual std::string toString() = 0;
+
+private:
+    /**
+     * @brief List of @sites which are indeed doing broadcasts.
+     */
+    std::vector<HostTuple> broadcasters;
+
+    /**
+     * @brief @SessionLayer which uses this @AlgoLayer
+     */
+    SessionLayer *session{nullptr};
 };

@@ -38,7 +38,7 @@ int main()
     cout << "Size PseudoSessionMsg = " << s_PseudoSessionMsg.size() - payloadSizeSessionMsg << " + payloadSize at Session level\n";
 
     // Overhead of fbae_SequencerAlgoLayer::StructBroadcastMessage
-    auto s_StructBroadcastMessage {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::BroadcastMessage,
+    auto s_StructBroadcastMessage {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
                                                                                                                                                     '1',
                                                                                                                                                     s_PseudoSessionMsg})};
     cout << "Size fbae_SequencerAlgoLayer::StructBroadcastMessage = " << s_StructBroadcastMessage.size() - payloadSizeSessionMsg << " + payloadSize at Session level\n";

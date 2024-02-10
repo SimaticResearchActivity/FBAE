@@ -1,30 +1,22 @@
 #pragma once
 
-#include "memory"
-#include "CommPeer.h"
+#include <latch>
+#include <memory>
 #include "../Param.h"
+#include "../basicTypes.h"
 
 class AlgoLayer;
 
 class CommLayer {
-private:
-    AlgoLayer* algoLayer{nullptr};
 public:
     virtual ~CommLayer() = default;
 
     /**
-     * @brief Broadcast message contained in @msg to all peer connected to the" process
+     * @brief Multicast message contained in @msg to all peer which the process connected to (Note: The peers which
+     * connected to the process are not concerned by this multicast)
      * @param msg Message to be totalOrderBroadcast
      */
-    virtual void broadcastMsg(std::string && msg) = 0;
-
-    /**
-     * @brief Connect to host @host.
-     * @param host Host to connect to.
-     * @param algoLayer @AlgoLayer using this @CommLayer.
-     * @return @CommPeer object which can be used to communicate with @host.
-     */
-    virtual std::unique_ptr<CommPeer> connectToHost(HostTuple host, AlgoLayer *algoLayer) = 0;
+    virtual void multicastMsg(std::string && msg) = 0;
 
     /**
      * @brief Getter for @algoLayer.
@@ -33,14 +25,20 @@ public:
     [[nodiscard]] AlgoLayer* getAlgoLayer() const;
 
     /**
-     * @brief Initializes accepting @nbAwaitedConnections connections on port @port. If such acceptance is blocking for
-     * the considered communication protocol, blocks until @nbAwaitedConnections connections have been established.
-     * @param port Socket port on which to wait for connections .
-     * @param nbAwaitedConnections Number of disconnections to wait before returning (case of communication protocol
-     * which is blocking on accepting connections).
+     * @brief Getter for @commLayerReady
+     * @return @commLayerReady
+     */
+    [[nodiscard]] std::latch &getInitDoneCalled();
+
+    /**
+     * @brief Open connection to peers (named outgoing peers) which rank is listed in @dest, accepts
+     * @nbAwaitedConnections connections from remote peers (named incoming peers), and waits for messages from
+     * incoming peers until all these incoming peers have closed their connection with the current process.
+     * @param dest Ranks of outgoing peer we must connect to.
+     * @param nbAwaitedConnections Number of incoming peers which must connect to us.
      * @param aAlgoLayer @AlgoLayer using this @CommLayer.
      */
-    virtual void initHost(int port, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) = 0;
+    virtual void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) = 0;
 
     /**
      * @brief Setter for @algoLayer.
@@ -49,18 +47,29 @@ public:
     void setAlgoLayer(AlgoLayer* aAlgoLayer);
 
     /**
+     * @brief Sends @msg to outgoing peer of rank @r.
+     * @param r Rank of outgoing peer
+     * @param msg Message to send.
+     */
+    virtual void send(rank_t r, std::string && msg) = 0;
+
+    /**
+     * @brief CommLayer must close all of its connections
+     */
+    virtual void terminate() = 0;
+
+    /**
      * @brief Return the name of the protocol used as @CommLayer
      * @return Name of the protocol used as @CommLayer
      */
     [[nodiscard]] virtual std::string toString() = 0;
 
+private:
+    AlgoLayer* algoLayer{nullptr};
+
     /**
-     * @brief Waits to receive messages until there are @maxDisconnect disconnections. When a message is received,
-     * calls @algoLayer->@handleMessageAsNonHostPeer() if @nonHostPeer is true and @algoLayer->@handleMessageAsHost()
-     * otherwise.
-     * @param nonHostPeer Must call @algoLayer->@handleMessageAsNonHostPeer() if @nonHostPeer is true and
-     * @algoLayer->@handleMessageAsHost() otherwise.
-     * @param maxDisconnections Maximum number of disconnections before returning.
+     * @brief Latch used to guarantee that AlgoLayer::callbackInitDone() has been called before any call to
+     * AlgoLayer::callbackHandleMessage() is done by threads handling communication incoming messages.
      */
-    virtual void waitForMsg(size_t maxDisconnections) = 0;
+    std::latch initDoneCalled{1};
 };
