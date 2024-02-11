@@ -2,6 +2,7 @@
 // Created by lardeur on 09/10/23.
 //
 
+#include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "BBOBB.h"
 #include "BBOBBMsg.h"
@@ -50,10 +51,8 @@ void BBOBB::callbackInitDone() {
     AlgoLayer::callbackInitDone();
     lastSentStepMsg.wave = -1;
     beginWave();
-    catchUpIfLateInMessageSending();
-    if (!algoTerminated) {
-        catchUpIfLateInMessageSending();
-    }
+    // As @CommLayer guarantees that we do not receive any message before @BBOBB::callbackInitDone() is finished,
+    // we o not need to call catchUpIfLateInMessageSending()
 }
 
 void BBOBB::beginWave() {
@@ -112,7 +111,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
         // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
         //       (thus, afterward, we will not deliver twice this BatchSessionMsg).
         constexpr int not_found = -1;
-        vector<int> positions(getSession()->getParam().getSites().size(), not_found);
+        vector<int> positions(getBroadcastersRank().size(), not_found);
         for (int pos = 0 ; pos < batches.size() ; ++pos) {
             positions[batches[pos].senderRank] = pos;
         }
@@ -144,32 +143,25 @@ void BBOBB::catchUpIfLateInMessageSending() {
 }
 
 void BBOBB::execute() {
+    // Compute vector of broadcasters rank
+    vector<rank_t> v(getSession()->getParam().getSites().size()); // All participants are broadcasting.
+    std::iota(v.begin(), v.end(), 0); // @broadcastersRank must always start with 0, if we want @Session::processPerfMeasureMsg() to work properly.
+    setBroadcastersRank(std::move(v));
 
-    bool verbose = getSession()->getParam().getVerbose();
-
-    auto commLayer = getSession()->getCommLayer();
-    auto sites = getSession()->getParam().getSites();
-    int rank = getSession()->getRank();
-
-    setBroadcasters(sites);
-
+    // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
+    const int rank = getSession()->getRank();
     vector<rank_t> dest;
-    for (int power_of_2 = 1; power_of_2 < sites.size(); power_of_2 *= 2) {
-        auto rankOutgoingPeer = static_cast<rank_t>((rank + power_of_2) % sites.size());
+    for (int power_of_2 = 1; power_of_2 < getBroadcastersRank().size(); power_of_2 *= 2) {
+        auto rankOutgoingPeer = static_cast<rank_t>((rank + power_of_2) % getBroadcastersRank().size());
         dest.push_back(rankOutgoingPeer);
         peersRank.push_back(rankOutgoingPeer);
         ++nbStepsInWave;
     }
-    commLayer->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
+    getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
-    if (verbose)
+    if (getSession()->getParam().getVerbose())
         cout << "Broadcaster #" << static_cast<uint32_t>(rank)
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
-}
-
-bool BBOBB::isBroadcastingMessage() const {
-    // In BBOBB algorithm, every participant is broadcasting.
-    return true;
 }
 
 void BBOBB::terminate() {

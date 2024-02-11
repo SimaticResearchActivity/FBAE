@@ -7,8 +7,8 @@
 #include "../Sources/basicTypes.h"
 #include "../Sources/msgTemplates.h"
 #include "../Sources/SessionLayer/SessionLayerMsg.h"
-#include "../Sources/AlgoLayer/SequencerAlgoLayer/SequencerAlgoLayerMsg.h"
-#include "../Sources/AlgoLayer/BBOBBAlgoLayer/BBOBBAlgoLayerMsg.h"
+#include "../Sources/AlgoLayer/Sequencer/SequencerMsg.h"
+#include "../Sources/AlgoLayer/BBOBB/BBOBBMsg.h"
 #include <vector>
 
 using namespace std;

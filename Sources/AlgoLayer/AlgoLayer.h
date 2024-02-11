@@ -26,7 +26,7 @@ public:
      * Sequencer algorithm) and false otherwise (e.g. which can be the case of the sequencer in Sequencer algorithm of the
      * sequencer is not a broadcaster)
      */
-     [[nodiscard]] virtual bool isBroadcastingMessage() const = 0;
+     [[nodiscard]] virtual bool isBroadcastingMessage() const;
 
     /**
      * @brief Executes concrete Total Order Broadcast algorithm. Returns when algorithm is done.
@@ -37,7 +37,7 @@ public:
      * @brief Getter for @broadcasters.
      * @return @broadcasters.
      */
-    [[nodiscard]] const std::vector<HostTuple> &getBroadcasters() const;
+    [[nodiscard]] const std::vector<rank_t> & getBroadcastersRank() const;
 
     /**
      * @brief Getter for @session
@@ -49,7 +49,7 @@ public:
      * @brief Setter for @broadcasters.
      * @param aBroadcasters  The value to set @broadcasters to.
      */
-    void setBroadcasters(const std::vector<HostTuple> &aBroadcasters);
+    void setBroadcastersRank(std::vector<rank_t> &&aBroadcasters);
 
     /**
      * @brief Setter for @session
@@ -77,9 +77,9 @@ public:
 
 private:
     /**
-     * @brief List of @sites which are indeed doing broadcasts.
+     * @brief Rank of @sites which are indeed doing broadcasts.
      */
-    std::vector<HostTuple> broadcasters;
+    std::vector<rank_t> broadcastersRank;
 
     /**
      * @brief @SessionLayer which uses this @AlgoLayer
