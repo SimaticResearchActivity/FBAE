@@ -1,4 +1,5 @@
 #include <iostream>
+#include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "Sequencer.h"
 #include "SequencerMsg.h"
@@ -46,18 +47,17 @@ void Sequencer::execute()
 {
     // In Sequencer algorithm, the last site is not broadcasting. We build @broadcasters vector accordingly.
     sequencerRank = static_cast<rank_t>(getSession()->getParam().getSites().size() - 1);
-    std::vector<HostTuple> broadcasters = getSession()->getParam().getSites();
-    broadcasters.pop_back();
-    setBroadcasters(broadcasters);
 
-    vector<rank_t> dest;
+    // Compute vector of broadcasters rank
+    vector<rank_t> v(getSession()->getParam().getSites().size() - 1); // -1 because sequencer is not broadcasting.
+    std::iota(v.begin(), v.end(), 0); // @broadcastersRank must always start with 0, if we want @Session::processPerfMeasureMsg() to work properly.
+    setBroadcastersRank(std::move(v));
+
+    // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
     if (getSession()->getRank() == sequencerRank)
     {
         // Process is sequencer
-        for (rank_t r = 0 ; r < sequencerRank ; ++r) {
-            dest.push_back(r);
-        }
-        getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, broadcasters.size(), this);
+        getSession()->getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersRank(), getBroadcastersRank().size(), this);
         if (!isBroadcastingMessage()) {
             // As the Sequencer is not broadcastin messages, it does not call getSession()->getCommLayer()->terminate()
             // in a natural manner ==> We have to call it.
@@ -69,16 +69,11 @@ void Sequencer::execute()
     else
     {
         // Process is a broadcaster
-        dest.push_back(sequencerRank);
+        vector<rank_t> dest{sequencerRank};
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
         if (getSession()->getParam().getVerbose())
             cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
     }
-}
-
-bool Sequencer::isBroadcastingMessage() const {
-    // Return true if @ALgoLayer is a broadcaster and false if it is the sequencer
-    return getSession()->getRank() < getSession()->getParam().getSites().size() - 1;
 }
 
 void Sequencer::terminate() {
