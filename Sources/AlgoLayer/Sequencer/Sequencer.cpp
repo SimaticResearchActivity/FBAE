@@ -54,7 +54,7 @@ void Sequencer::execute()
     setBroadcastersRank(std::move(v));
 
     // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
-    if (getSession()->getRank() == sequencerRank)
+    if (getSession()->getRankFromRuntimeArgument() == sequencerRank)
     {
         // Process is sequencer
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersRank(), getBroadcastersRank().size(), this);
@@ -72,7 +72,7 @@ void Sequencer::execute()
         vector<rank_t> dest{sequencerRank};
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
         if (getSession()->getParam().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
+            cout << "\tSequencerAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getSession()->getRankFromRuntimeArgument()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
     }
 }
 
@@ -87,7 +87,7 @@ std::string Sequencer::toString() {
 void Sequencer::totalOrderBroadcast(std::string && msg) {
     // Send BroadcastRequest to sequencer
     auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastRequest,
-                                                                               getSession()->getRank(),
+                                                                           getSession()->getRankFromRuntimeArgument(),
                                                                                std::move(msg)})};
     getSession()->getCommLayer()->send(sequencerRank, std::move(s));
 }

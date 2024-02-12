@@ -20,7 +20,7 @@ public:
     void execute() override;
     [[nodiscard]] CommLayer *getCommLayer() const override;
     [[nodiscard]] const Param &getParam() const override;
-    [[nodiscard]] rank_t getRank() const override;
+    [[nodiscard]] rank_t getRankFromRuntimeArgument() const override;
 
 private:
     const Param &param;

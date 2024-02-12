@@ -43,5 +43,5 @@ public:
      * @brief Getter for @rank.
      * @return @rank.
      */
-    [[nodiscard]] virtual rank_t getRank() const = 0;
+    [[nodiscard]] virtual rank_t getRankFromRuntimeArgument() const = 0;
 };

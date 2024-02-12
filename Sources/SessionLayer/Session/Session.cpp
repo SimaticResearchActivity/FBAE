@@ -106,7 +106,7 @@ const Param &Session::getParam() const
     return param;
 }
 
-rank_t Session::getRank() const {
+rank_t Session::getRankFromRuntimeArgument() const {
     return rank;
 }
 

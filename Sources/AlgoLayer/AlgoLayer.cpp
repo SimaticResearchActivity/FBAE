@@ -28,5 +28,5 @@ void AlgoLayer::setSession(SessionLayer *aSession)
 }
 
 bool AlgoLayer::isBroadcastingMessage() const {
-    return std::ranges::binary_search(broadcastersRank, getSession()->getRank());
+    return std::ranges::binary_search(broadcastersRank, getSession()->getRankFromRuntimeArgument());
 }
