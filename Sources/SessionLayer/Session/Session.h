@@ -15,7 +15,7 @@ class Session : public SessionLayer {
 public:
     Session(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
 
-    void callbackDeliver(rank_t senderRank, std::string && msg) override;
+    void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
     void execute() override;
     [[nodiscard]] CommLayer *getCommLayer() const override;

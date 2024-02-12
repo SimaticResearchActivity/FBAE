@@ -11,11 +11,11 @@ public:
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
-     * @param senderRank Rank of @msg sender.
+     * @param senderPos Position of @msg sender in @AlgoLayer::broadcasters.
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    virtual void callbackDeliver(rank_t senderRank, std::string && msg) = 0;
+    virtual void callbackDeliver(rank_t senderPos, std::string && msg) = 0;
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.

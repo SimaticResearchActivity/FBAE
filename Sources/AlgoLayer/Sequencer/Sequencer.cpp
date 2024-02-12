@@ -45,12 +45,9 @@ void Sequencer::callbackHandleMessage(std::string && msgString)
 
 void Sequencer::execute()
 {
-    // In Sequencer algorithm, the last site is not broadcasting. We build @broadcasters vector accordingly.
-    sequencerRank = static_cast<rank_t>(getSession()->getParam().getSites().size() - 1);
-
     // Compute vector of broadcasters rank
     vector<rank_t> v(getSession()->getParam().getSites().size() - 1); // -1 because sequencer is not broadcasting.
-    std::iota(v.begin(), v.end(), 0); // @broadcasters must always start with 0, if we want @Session::processPerfMeasureMsg() to work properly.
+    std::iota(v.begin(), v.end(), 1); // @broadcasters must start at 1, because sequencer always has rank 0.
     setBroadcasters(std::move(v));
 
     // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()

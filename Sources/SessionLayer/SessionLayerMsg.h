@@ -51,7 +51,7 @@ namespace fbae_SessionLayer {
     struct SessionPerfMeasure
     {
         SessionMsgId msgId{};
-        rank_t senderRank{};
+        rank_t senderPos{};
         int32_t msgNum{};
         std::chrono::time_point<std::chrono::system_clock> sendTime;
         std::string filler;
@@ -60,7 +60,7 @@ namespace fbae_SessionLayer {
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId, senderRank, msgNum, sendTime, filler); // serialize things by passing them to the archive
+            archive(msgId, senderPos, msgNum, sendTime, filler); // serialize things by passing them to the archive
         }
     };
 
@@ -70,7 +70,7 @@ namespace fbae_SessionLayer {
     struct SessionPerfResponse
     {
         SessionMsgId msgId{};
-        rank_t perfMeasureSenderRank{};
+        rank_t perfMeasureSenderPos{};
         int32_t perfMeasureMsgNum{};
         std::chrono::time_point<std::chrono::system_clock> perfMeasureSendTime;
         std::string perfMeasureFiller;
@@ -79,7 +79,7 @@ namespace fbae_SessionLayer {
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId, perfMeasureSenderRank, perfMeasureMsgNum, perfMeasureSendTime, perfMeasureFiller); // serialize things by passing them to the archive
+            archive(msgId, perfMeasureSenderPos, perfMeasureMsgNum, perfMeasureSendTime, perfMeasureFiller); // serialize things by passing them to the archive
         }
     };
 }

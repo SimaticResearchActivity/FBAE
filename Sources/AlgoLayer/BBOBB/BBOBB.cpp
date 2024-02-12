@@ -145,7 +145,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
 void BBOBB::execute() {
     // Compute vector of broadcasters pos
     vector<rank_t> v(getSession()->getParam().getSites().size()); // All participants are broadcasting.
-    std::iota(v.begin(), v.end(), 0); // @broadcasters must always start with 0, if we want @Session::processPerfMeasureMsg() to work properly.
+    std::iota(v.begin(), v.end(), 0);
     setBroadcasters(std::move(v));
 
     // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()

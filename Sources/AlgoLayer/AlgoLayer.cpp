@@ -23,10 +23,9 @@ SessionLayer* AlgoLayer::getSession() const {
 }
 
 void AlgoLayer::setBroadcasters(std::vector<rank_t> &&aBroadcasters) {
-    broadcasters = aBroadcasters;
-    // As @AlgoLayer::isBroadcastingMessage requires @broadcasters to be sorted, we sort it.
+    broadcasters = std::move(aBroadcasters);
+    // As AlgoLayer::getPosInBroadcasters() and @AlgoLayer::isBroadcastingMessage requires @broadcasters to be sorted, we sort it.
     std::ranges::sort(broadcasters);
-    assert(broadcasters[0] == 0); // @broadcasters must always start with 0, if we want @Session::processPerfMeasureMsg() to work properly.
 }
 
 void AlgoLayer::setSession(SessionLayer *aSession)
