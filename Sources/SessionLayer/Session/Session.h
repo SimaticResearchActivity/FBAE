@@ -15,12 +15,12 @@ class Session : public SessionLayer {
 public:
     Session(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
 
-    void callbackDeliver(rank_t senderRank, std::string && msg) override;
+    void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
     void execute() override;
     [[nodiscard]] CommLayer *getCommLayer() const override;
     [[nodiscard]] const Param &getParam() const override;
-    [[nodiscard]] rank_t getRank() const override;
+    [[nodiscard]] rank_t getRankFromRuntimeArgument() const override;
 
 private:
     const Param &param;
@@ -41,29 +41,29 @@ private:
 
     /**
      * @brief Called by @callbackDeliver to process @FinishedPerfMeasures message
-     * @param senderRank Rank of message sender.
+     * @param senderPos Rank of message sender.
      */
-    void processFinishedPerfMeasuresMsg(rank_t senderRank);
+    void processFinishedPerfMeasuresMsg(rank_t senderPos);
 
     /**
      * @brief Called by @callbackDeliver to process @FirstBroadcast message
-     * @param senderRank Rank of message sender.
+     * @param senderPos Rank of message sender.
      */
-    void processFirstBroadcastMsg(rank_t senderRank);
+    void processFirstBroadcastMsg(rank_t senderPos);
 
     /**
      * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
+     * @param senderPos Rank of message sender.
      * @param msg Message to process.
      */
-    void processPerfMeasureMsg(rank_t senderRank, std::string && msg);
+    void processPerfMeasureMsg(rank_t senderPos, std::string && msg);
 
     /**
      * @brief Called by @callbackDeliver to process @PerfMeasure message
-     * @param senderRank Rank of message sender.
+     * @param senderPos Rank of message sender.
      * @param msg Message to process.
      */
-    void processPerfResponseMsg(rank_t senderRank, std::string && msg);
+    void processPerfResponseMsg(rank_t senderPos, std::string && msg);
 
     /**
      * @brief Thread to send PerfMessage at @Param::frequency per second.

@@ -27,15 +27,9 @@ public :
     void catchUpIfLateInMessageSending();
 private :
     /**
-     * @brief Vectors of rank of outgoing peers
+     * @brief True when @disconnect() method has been called.
      */
-    std::vector<rank_t> peersRank;
-
-    /**
-     * @brief Mutex coupled with @condVarBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
-     * too big
-     */
-    std::mutex mtxBatchCtrl;
+    bool algoTerminated{false};
 
     /**
      * @brief Condition variable coupled with @mtxBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
@@ -44,16 +38,25 @@ private :
     std::condition_variable condVarBatchCtrl;
 
     /**
-     * @brief Variable used to shortcut BatchCtrl mechanism (with @mtxBatchCtrl and @condVarBatchCtrl), so that, in
-     * order to avoid deadlocks, we accept that the number of bytes stored in @msgsWaitingToBeBroadcast is greater than
-     * @maxBatchSize of @Param instance.
+     * @brief Received @Step messages which belong to current wave.
      */
-    bool shortcutBatchCtrl{false};
+    std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
 
     /**
-     * @brief True when @disconnect() method has been called.
+     * @brief Last @Step message which has been sent.
      */
-    bool algoTerminated{false};
+    fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
+
+    /**
+     * @brief Session messages waiting to be broadcast.
+     */
+    std::vector<std::string> msgsWaitingToBeBroadcast;
+
+    /**
+     * @brief Mutex coupled with @condVarBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
+     * too big
+     */
+    std::mutex mtxBatchCtrl;
 
     /**
      * @brief The number of steps in each wave is also the number of peers this peer will connect to and also the
@@ -61,10 +64,21 @@ private :
      */
     int nbStepsInWave{0};
 
-    std::vector<std::string> msgsWaitingToBeBroadcast;
-    fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
-    std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
+    /**
+     * @brief Received @Step messages which belong to next wave.
+     */
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;
 
+    /**
+     * @brief Vectors of positions of outgoing peers
+     */
+    std::vector<rank_t> peersPos;
+
+    /**
+     * @brief Variable used to shortcut BatchCtrl mechanism (with @mtxBatchCtrl and @condVarBatchCtrl), so that, in
+     * order to avoid deadlocks, we accept that the number of bytes stored in @msgsWaitingToBeBroadcast is greater than
+     * @maxBatchSize of @Param instance.
+     */
+    bool shortcutBatchCtrl{false};
 };
 #endif //FBAE_BBOBB_H

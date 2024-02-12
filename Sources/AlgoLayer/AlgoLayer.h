@@ -37,7 +37,13 @@ public:
      * @brief Getter for @broadcasters.
      * @return @broadcasters.
      */
-    [[nodiscard]] const std::vector<rank_t> & getBroadcastersRank() const;
+    [[nodiscard]] const std::vector<rank_t> & getBroadcasters() const;
+
+    /**
+     * @brief Returns position of a broadcasting participant in @broadcasters vector.
+     * @return Position in @broadcasters vector if participant is indeed a broadcasting participant. Note: In debug mode, an assert checks that participant is indeed a broadcasting participant.
+     */
+    [[nodiscard]] rank_t getPosInBroadcasters() const;
 
     /**
      * @brief Getter for @session
@@ -49,7 +55,7 @@ public:
      * @brief Setter for @broadcasters.
      * @param aBroadcasters  The value to set @broadcasters to.
      */
-    void setBroadcastersRank(std::vector<rank_t> &&aBroadcasters);
+    void setBroadcasters(std::vector<rank_t> &&aBroadcasters);
 
     /**
      * @brief Setter for @session
@@ -79,7 +85,7 @@ private:
     /**
      * @brief Rank of @sites which are indeed doing broadcasts.
      */
-    std::vector<rank_t> broadcastersRank;
+    std::vector<rank_t> broadcasters;
 
     /**
      * @brief @SessionLayer which uses this @AlgoLayer
