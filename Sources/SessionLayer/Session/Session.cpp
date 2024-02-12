@@ -24,7 +24,7 @@ Session::Session(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> alg
 
 void Session::broadcastPerfMeasure() {
     if (param.getVerbose())
-        cout << "Session #" << static_cast<uint32_t>(rank) << " : Broadcast PerfMeasure (senderRank = " << static_cast<uint32_t>(rank) << " ; msgNum = " << numPerfMeasure << ")\n";
+        cout << "Session #" << static_cast<uint32_t>(rank) << " : Broadcast PerfMeasure (senderPos = " << static_cast<uint32_t>(rank) << " ; msgNum = " << numPerfMeasure << ")\n";
     if (numPerfMeasure == param.getNbMsg()*param.getWarmupCooldown()/100/2)
         measures.setStartTime();
     auto s {serializeStruct<SessionPerfMeasure>(SessionPerfMeasure{SessionMsgId::PerfMeasure,
@@ -110,34 +110,34 @@ rank_t Session::getRankFromRuntimeArgument() const {
     return rank;
 }
 
-void Session::processFinishedPerfMeasuresMsg(rank_t senderRank)
+void Session::processFinishedPerfMeasuresMsg(rank_t senderPos)
 {
     ++nbReceivedFinishedPerfMeasures;
     if (param.getVerbose())
-        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver FinishedPerfMeasures from sender #" << static_cast<uint32_t>(senderRank) << " (nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
+        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver FinishedPerfMeasures from sender #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
 
-    if (nbReceivedFinishedPerfMeasures > algoLayer->getBroadcastersRank().size())
+    if (nbReceivedFinishedPerfMeasures > algoLayer->getBroadcasters().size())
     {
         cerr << "ERROR : Delivering a FinishedPerfMeasures message while we already have received all FinishedPerfMeasures messages we were waiting for.\n";
         exit(EXIT_FAILURE);
     }
-    if (nbReceivedFinishedPerfMeasures == algoLayer->getBroadcastersRank().size())
+    if (nbReceivedFinishedPerfMeasures == algoLayer->getBroadcasters().size())
     {
-        // All broadcastersRank are done doing measures ==> We can ask the AlgoLayer to terminate.
+        // All broadcasters are done doing measures ==> We can ask the AlgoLayer to terminate.
         algoLayer -> terminate();
     }
 }
 
-void Session::processFirstBroadcastMsg(rank_t senderRank) {
+void Session::processFirstBroadcastMsg(rank_t senderPos) {
     ++nbReceivedFirstBroadcast;
     if (param.getVerbose())
-        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver FirstBroadcast from sender #" << static_cast<uint32_t>(senderRank) << " (nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
-    if (nbReceivedFirstBroadcast > algoLayer->getBroadcastersRank().size())
+        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver FirstBroadcast from sender #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
+    if (nbReceivedFirstBroadcast > algoLayer->getBroadcasters().size())
     {
         cerr << "ERROR : Delivering a FirstBroadcast message while we already have received all FirstBroadcast messages we were waiting for.\n";
         exit(EXIT_FAILURE);
     }
-    if (nbReceivedFirstBroadcast == algoLayer->getBroadcastersRank().size())
+    if (nbReceivedFirstBroadcast == algoLayer->getBroadcasters().size())
     {
         // As we have received all awaited FirstBroadcast messages, we know that @AlgoLayer is fully
         // operational ==> We can start our performance measures.
@@ -150,15 +150,15 @@ void Session::processFirstBroadcastMsg(rank_t senderRank) {
     }
 }
 
-void Session::processPerfMeasureMsg(rank_t senderRank, std::string && msg) {
+void Session::processPerfMeasureMsg(rank_t senderPos, std::string && msg) {
     auto spm{deserializeStruct<SessionPerfMeasure>(std::move(msg))};
     if (param.getVerbose())
-        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver PerfMeasure from sender #" << static_cast<uint32_t>(senderRank) << " (senderRank = " << static_cast<uint32_t>(spm.senderRank) << " ; msgNum = " << spm.msgNum << ")\n";
+        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver PerfMeasure from sender #" << static_cast<uint32_t>(senderPos) << " (senderPos = " << static_cast<uint32_t>(spm.senderRank) << " ; msgNum = " << spm.msgNum << ")\n";
     measures.addNbBytesDelivered(param.getSizeMsg());
     // We check which process must send the PerfResponse. The formula hereafter guarantees that first PerfMeasure is
     // answered by successor of sender process, second PerfMeasure message is answered by successor of the successor of
     // sender process, etc.
-    if ((spm.senderRank + spm.msgNum) % algoLayer->getBroadcastersRank().size() == rank)
+    if ((spm.senderRank + spm.msgNum) % algoLayer->getBroadcasters().size() == rank)
     {
         // Current process must broadcast PerfResponse message for this PerfMeasure message.
         if (param.getVerbose())
@@ -172,10 +172,10 @@ void Session::processPerfMeasureMsg(rank_t senderRank, std::string && msg) {
     }
 }
 
-void Session::processPerfResponseMsg(rank_t senderRank, std::string && msg) {
+void Session::processPerfResponseMsg(rank_t senderPos, std::string && msg) {
     auto spr{deserializeStruct<SessionPerfResponse>(std::move(msg))};
     if (param.getVerbose())
-        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver PerfResponse from sender #" << static_cast<uint32_t>(senderRank) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spr.perfMeasureSenderRank) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
+        cout << "Session #" << static_cast<uint32_t>(rank) << " : Deliver PerfResponse from sender #" << static_cast<uint32_t>(senderPos) << " (perfMeasureSenderRank = " << static_cast<uint32_t>(spr.perfMeasureSenderRank) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
     measures.addNbBytesDelivered(param.getSizeMsg());
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
     if (spr.perfMeasureSenderRank == rank)
@@ -198,7 +198,7 @@ void Session::processPerfResponseMsg(rank_t senderRank, std::string && msg) {
         }
         else
         {
-            // Process is done with sending PerfMeasure messages. It tells it is done to all broadcastersRank
+            // Process is done with sending PerfMeasure messages. It tells it is done to all broadcasters
             if (param.getVerbose())
                 cout << "Session #" << static_cast<uint32_t>(rank) << " : Broadcast FinishedPerfMeasures by sender #" << static_cast<uint32_t>(rank) << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};

@@ -16,16 +16,16 @@ namespace fbae_BBOBBAlgoLayer {
     };
 
     /**
-     * @brief Structure containing a batch of SessionMsg and the rank of the sender of this batch.
+     * @brief Structure containing a batch of SessionMsg and the position of the sender of this batch.
      */
     struct BatchSessionMsg {
-        rank_t senderRank{};
+        rank_t senderPos{};
         std::vector<std::string> batchSessionMsg;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(senderRank, batchSessionMsg); // serialize things by passing them to the archive
+            archive(senderPos, batchSessionMsg); // serialize things by passing them to the archive
         }
     };
 
@@ -34,7 +34,7 @@ namespace fbae_BBOBBAlgoLayer {
      */
     struct StepMsg {
         MsgId msgId{};
-        rank_t senderRank{};
+        rank_t senderPos{};
         int wave;
         int step;
         std::vector<BatchSessionMsg> batchesBroadcast;
@@ -42,7 +42,7 @@ namespace fbae_BBOBBAlgoLayer {
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive &archive) {
-            archive(msgId, senderRank, wave, step, batchesBroadcast); // serialize things by passing them to the archive
+            archive(msgId, senderPos, wave, step, batchesBroadcast); // serialize things by passing them to the archive
         }
     };
 
