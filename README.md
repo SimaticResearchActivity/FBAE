@@ -3,9 +3,9 @@ Framework for Broadcast Algorithms Evaluation
 
 ## Introduction
 
-*FBAE* is a software framework, developped in C++, to evaluate performances (latency and throughput) of Total-Order Broadcast Algorithms when there are no failures. It has been tested on Linux and Windows. It should also compile and execute on MacOS.
+*FBAE* is a software framework, developped in C++, to evaluate performances (latency and throughput) of Total-Order Broadcast Algorithms when there are no failures. It has been tested on Linux, macOS and Windows.
 
-Thanks to *FBAE*, it is possible to evaluate (and thus compare) the performances of different Total-Order broadcast algorithms using different communication protocols ([ENet](http://enet.bespin.org) and TCP are available, but we recommend that you use systematically TCP protocol as ENet experiences reentrancy problems).
+Thanks to *FBAE*, it is possible to evaluate (and thus compare) the performances of different Total-Order broadcast algorithms using different communication protocols (For the moment, only TCP is available, but other communication layers are foreseen).
 
 ## Compilation of *FBAE*
 
@@ -39,59 +39,89 @@ This file example defines 3 sites, each running on localhost, the first site lis
 
 Note `Resources` directory of *FBAE* repository contains samples of site files.
 
-### Launch *fbae* executable
+### Launch manually *fbae* executable
 Once your site file is ready, you can run `fbae` executable according to the following usage:
 
 ```txt
-fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -h|--help -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -v|--verbose
+fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <size_in_bytes> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -v|--verbose -w|--warmupCooldown <number>
 Where:
   -a|--algo <algo_identifier>                Broadcast Algorithm
+                                                B = BBOBB
                                                 S = Sequencer based
   -c|--comm <communicationLayer_identifier>  Communication layer to be used
-                                                e = Enet (reliable)
                                                 t = TCP
+  -f|--frequency <number>                    [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
   -h|--help                                  Show help message
+  -m|--maxBatchSize <size_in_bytes>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
   -n|--nbMsg <number>                        Number of messages to be sent
   -r|--rank <rank_number>                    Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)
   -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [22,65515])
   -S|--site <siteFile_name>                  Name (including path) of the sites file to be used
   -v|--verbose                               [optional] Verbose display required
+  -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage session messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
 ```
 
 For instance, you can open 3 terminals and run:
 
-- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_3_local.json` on terminal 2 (In this example, we first launch `fbae` executable with rank 2, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the last site specified in json file).
-- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../Resources/sites_3_local.json` on terminal 1
-- `./fbae -a S -c t -n 20 -r 0 -s 32 -S ../../Resources/sites_3_local.json` on terminal 0
+- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../Resources/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
+- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../Resources/sites_3_local.json` on terminal 1.
+- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_3_local.json` on terminal 2.
 
 After a while (depending on the number of messages to be sent you specified), `fbae` displays the statistics (structured in CSV format) observed for this process, e.g.:
 
 ```txt
-algo,commLayer,nbMsg,rank,sizeMsg,siteFile,nbReceivedMsg,nbSentMsg,ratio nbRcv/nbSent,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max
-Sequencer,TCP,100,99,32,../../Resources/sites_3_local.json,100,200,0.500000,0.241571,0.130782,0.239602,0.244068,0.248755,0.417237,0.417237,0.417237,0.417237
+algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile,nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)
+Sequencer,TCP,0,2147483647,3,0%,2,1024,../../Resources/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
 ```
 
 Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../Resources/sites_3_local.json`
+
+### Launch *fbae* executable thanks to a script
+
+`Tools` directory contains `launch_fbae.py` Python script. Its usage is:
+
+``` shell
+python3 launch_fbae.py path_to_fbae_executable path_to_result_directory all_fbae_arguments_except_-r_or_--rank
+```
+
+For instance, if file `sites_8_machines.json` contains the specification of 8 hosts/ports, command:
+
+``` shell
+python3 launchFBAE.py /absolute_path/FBAE /absolute_path/FBAE/results/ -a B -c t -n 5 -s 32 -S /absolute_path/FBAE/sites_8_machines.json
+```
+
+launches instances of fbae on each of these 8 hosts/ports. When these instances are done, each generates a result file in `/aboslute_path/FBAE/results`, the name of the file containing the rank of the instance, in its last character. For instance, file `/absolute_path/FBAE/results/result_-a_B_-c_t_-n_5_-s_32_-S__netfs_inf_simatic_FBAE_sites_8_b313.json_--rank_0`
+contains the results produced by instance ranked 0 (see `--rank_0` at the end of the name of the file.
 
 ## Current status of *FBAE*
 
 ### Total-Order broadcast algorithms
 
-#### Sequencer-Based algorithm
+This section lists the total-order broadcast algorithms which can be currently evaluated with *FBAE*.
 
-In this algorithm, one site (the last one specified in the sites file) is given the role of Sequencer. The other sites specified in the site file are given the role of Broadcasters.
+#### *BBOBB* Algorithm
+
+This algorithm is described in paper [BBOBB: A total order broadcast algorithm achieving low latency and high throughput](https://hal.science/hal-01316509v1/file/BBOBB_c_%20A%20total%20order%20broadcast%20algorithm%20achieving%20low%20latency%20and%20high%20throughput.pdf) by Michel Simatic and Benoit Tellier, 46th Annual IEEE/IFIP International Conference on Dependable Systems and Networks (DSN 2016), Toulouse, France, June 2016.
+
+In *BBOBB* algorithm, all sites broadcast messages.
+
+#### *Sequencer*-based algorithm
+
+In *Sequencer*-based algorithm, one site (the first one specified in the sites file) is given the role of Sequencer. The other sites specified in the site file are given the role of Broadcasters.
 
 When a Broadcaster wants to broadcast a message, it sends its message to the Sequencer which sends it back to all Broadcasters, so that they can deliver it.
 
 ### Communication protocols
 
-#### ENet
+This section lists the communication protocols which can be currently invoked for algorithm evaluation with *FBAE*.
 
-[ENet](http://enet.bespin.org) is a reliable UDP networking library. It is also able to guarantee FIFO on communication channels. We use all of these properties in *FBAE*. Unfortunately, Enet experiences reentrancy problems with some Total-Order broadcast algorithms. Thus, we recommend not to use this communication protocol in FBAE.
+#### *TCP*
 
-#### TCP
+*TCP* communication protocols is implemented thanks to [Boost](http://www.boost.org) library.
 
-TCP communication protocols is implemented thanks to [Boost](http://www.boost.org) library.
+#### (deprecated) *ENet*
+
+[ENet](http://enet.bespin.org) is a reliable UDP networking library. It is also able to guarantee FIFO on communication channels. We used all of these properties in *FBAE*. Unfortunately, *Enet* experiences reentrancy problems with *BBOBB* algorithm*. Thus, it is not anymore offered in *FBAE*.
 
 ## Extending *FABE*
 
@@ -101,7 +131,7 @@ TCP communication protocols is implemented thanks to [Boost](http://www.boost.or
 
 - *Session layer* (made of `SessionLayer` class) is the layer responsible for performance evaluation. It requests Total-order broadcasts from the *Algorithm layer*.
 - *Algorithm layer* (made of `AlgoLayer` factory class and its subclasses) is the layer responsible for putting in place Total-order guarantees, once messages have been exchanged between processes by the *Communication layer*.
-- *Communication layer* (made of `CommLayer` factory class and its subclasses, and also of `CommPeer` factory class and its subclasses) is the layer responsible for exchanging messages between processes.
+- *Communication layer* (made of `CommLayer` factory class and its subclasses) is the layer responsible for exchanging messages between processes.
 
 The interfaces between these layers are the following:
 
@@ -109,75 +139,108 @@ The interfaces between these layers are the following:
 
     - *Session layer* ==> *Algorithm layer*
 
-         - *Session layer* calls `AlgoLayer`'s `execute()` method to launch *Algorithm layer*. Note that we stay in `execute()` method until *Algorithm layer* is done executing.
-         - Then it calls `totalOrderBroadcast()` method for each total-order broadcast it has to make. 
-         - Finally it calls `terminate()` method to tell the *Algorithm layer* than it can shutdwon.
+         - *Session layer* calls `AlgoLayer::execute()` method to launch *Algorithm layer*. Note that we stay in `execute()` method until *Algorithm layer* is done executing.
+         - Then it calls `AlgoLayer::totalOrderBroadcast()` method for each total-order broadcast it has to make. 
+         - Finally it calls `AlgoLayer::terminate()` method to tell the *Algorithm layer* than it can shutdwon.
 
      - *Algorithm layer* ==> *Session layer*
-         - Once *Algorithm layer* considers it is fully initialized locally, it calls `callbackInitDone()` method in *Session layer*.
-         - Each time a message can be delivered, it calls `callbackDeliver()` method.
+         - Once *Algorithm layer* considers it is fully initialized locally, it calls `SessionLayer::callbackInitDone()` method in *Session layer*.
+         - Each time a message can be delivered, it calls `SessionLayer::callbackDeliver()` method.
 
 - *Algorithm layer* / *Communication layer*
 
     - *Algorithm layer* ==> *Communication layer*
 
-         - *Algorithm layer* calls `CommLayer`'s `initHost()` method when it wants to be able to accept connections from other processes.
-         - And/or it calls `CommLayer`'s `connectToHost()` method when it wants to establish a connection with another process. Note: If *Algorithm layer* need to call `initHost()` and also one or several time `connectToHost()`, it must make the calls to `connectToHost()` in a dedicated thread in order to call `waitForMsg()` as soon as possible (see example in *BBOBB* algorithm layer implementation).
-         - Then it calls `CommLayer`'s `waitForMsg()` method. Note that we stay in `waitForMsg()` method until *Communication layer* detect a pre-specified number of disconnections (see parameter `maxDisconnections` of `waitForMsg()` method).
+         - *Algorithm layer* calls `CommLayer::openDestAndWaitIncomingMsg()` method when it wants to:
+         
+           1. accept commpunication links (e.g. connections in the case of TCP) from other processes,
+           2. establish communication links with other processes,
+           3. wait for incoming messages until `CommLayer::terminate()` is called.
          - When *Algorithm layer* needs to send a message to another process, it can use:
 
-             - `CommPeer`'s `send()` method to send a message to a single process.
-             - `CommLayer`'s `multicastMsg()` method to broadcast a message to all processes connected to this process.
+             - `CommLayer::send()` method to send a message to a single process.
+             - `CommLayer::multicastMsg()` method to multicast a message to all processes with which the current process has established communication links.
 
-         - *Algorithm layer* calls `CommPeer`'s `disconnect()` method when it wants to disconnect from a peer process.
+         - *Algorithm layer* calls `CommLayer::terminate()` method when it wants to stop all of the communications with remote processes.
 
     - *Communication layer* ==> *Algorithm layer*
 
-         - When *Communication layer* receives a message, it calls `callbackHandleMessage()` method in *Algorithm layer*.
+         - When *CommunicationLayer* is fully initailized, it calls `AlgoLayer::callbackInitDone()`.
+         - When *Communication layer* receives a message, it calls `AlgoLayer::callbackHandleMessage()` method.
+         - Note:
+           1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackHandleMessage()` before `AlgoLayer::callbackInitDone()` is done executing.
+           2. Even if it may be multithreaded, *CommunicationLayer* guarantees that there will never be simultaneous calls to `AlgoLayer::callbackHandleMessage()`.
 
 ### Adding another Total-Order broadcast algorithm
 
-If you want to add another Total-Order broadcast algorithm:
+This section describes how to add another Total-Order broadcast algorithm to *FBAE*. To illustrate the procedure, it gives examples assuming that your algorithm is named `Foo`.
 
-1. Make a new subclass of `AlgoLayer` by inspiring yourself from:
+Before presenting the procedure, you need to understand the difference between:
+- The rank of a process participating, i.e. the rank which has be given to this process when running `fbae` executable.
+- The position of process participating as a broadcaster. 
 
-    - `SequencerAlgoLayer.h` to declare the class implementing your algorithm,
-    - `SequencerAlgoLayer.cpp` to define this class,
-    - `SequencerAlgoLayerMsg.h` to define the identifier and the structure of each message used by your algorithm.
+For instance:
+- In *Sequencer* algorithm
+  - Sequencer process always has *rank* 0. Sequencer process has no position, as it does not participate as a broadcaster.
+  - The other processes (ranked 1, 2, 3, etc.) participate as broadcasters. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
+- In *BBOBB* algorithm, all processes participate as braodcasters. Each of them has a position (as broadcaster) which corresponds to its rank.
 
-2. Note concerning your *Algorithm layer*:
+Now we can present the procedure for adding another Total-Order broadcast algorithm:
 
-     - When `callbackHandleMessage()` method is called in the context of an instance of your `AlgoLayer` subclass, *FBAE* guarantees that `callbackHandleMessage()` will not be called concurrently n the context of the same instance of `AlgoLayer` subclass.
-    - Each call to `CommLayer`'s `connectToHost()` method must be followed by the sending of a `MsgId::RankInfo` message to the host you connected to.
-    - Your `terminate` method must always send  `MsgId::DisconnectIntent` message to the host you are connected to.
-    - Moreover, upon receiving this `MsgId::DisconnectIntent` message (see `callbackHandleMessage()` method), your code must answer a `MsgId::AckDisconnectIntent` message to the sender.
-    - Finally, upon receiving this `MsgId::AckDisconnectIntent` message (see `callbackHandleMessage()` method), your code must call `disconnect()` method of the communication peer representing the host you are connected to.
+1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [mscgen](https://www.mcternan.me.uk/mscgen/) or [mscgen_js](https://mscgen.js.org/).
 
-3. Modify `main.cpp` to integrate your new class:
+2. Create a subdirectory `AlgoLayer` directory, named after the name of your algorithm. For instance, `AlgoLayer/Foo` directory.
+
+3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `AlgoLayer/Foo/FooMsg.h`, containing:
+
+   1. Definition of a namespace dedicated to your algorithm.
+   2. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
+   3. Definition of the structure of the different messages. Note: This definition must include [Cereal](http://uscilab.github.io/cereal/ serialization method (for examples, see implementation of *Sequencer* or *BBOBB* algorithms and [Cereal quick start](http://uscilab.github.io/cereal/quickstart.html)).
+
+4. Create the class which will implement your algorithm, e.g. `AlgoLayer/Foo/Foo.h` (to define your class) and `AlgoLayer/Foo/Foo.cpp` (to implement your class).
+
+5. Implement `Foo::toString()` method.
+
+6.  Implement `Foo::execute()` method to handle the different messages your algorithm can receive.
+  
+       - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcasters(std::move(thisVzector))`.
+       - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSession()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
+
+7.  Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:
+       - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm.
+       - Your algorithm stores the message to broadcast in a "batch" of messages waiting to be broadcast by the algorithm, like *BBOBB* algorithm (see `msgsWaitingToBeBroadcast` variable).
+  
+8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
+       - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
+
+9.  Implement `Foo::callbackHandleMessage()` method to handle all of the messages your algorithm is manipulating. In particular, if a session message can be delivered, call `getSession()->callbackDeliver()`. Note:
+        - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `shortcutBatchCtrl = true;` and `shortcutBatchCtrl = false;` instructions.
+        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackHandleMessage()`.
+
+10. Implement `Foo::terminate()` method.
+
+11. Implement and run unitary tests to check your implementation works properly.
+
+12. Modify `main.cpp` to integrate your new class:
 
     - In `main` function, modify `parser` variable intialization in order to specify (in the same way as letter `'S'` in string `"\n\t\t\t\t\t\tS = Sequencer based"` specifies `'S'` as the letter for *Sequencer algorithm*) the letter which will specify your added algorithm.
     - In `concreteAlgoLayer()` function, add a `case` with this new letter to create an instance of your class.
+
+13. Run integration tests.
 
 ### Adding another communication protocol
 
 If you want to add another communication protocol:
 
-1. Make a new subclass of `CommLayer` by inspiring yourself from:
+1. Make a new subclass of `CommLayer` by inspiring yourself from `Tcp.h` and `Tcp.cpp`. Note:
 
-    - `EnetCommLayer.h` to declare the class implementing your usage of the protocol,
-    - `EnetCommLayer.cpp` to define this class,
-    - Note: *FBAE* must guarantee that, when `callbackHandleMessage()` method is called in the context of an instance of an `AlgoLayer` subclass, `callbackHandleMessage()` will not be called concurrently n the context of the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackHandleMessage()` with a mutual exclusion (see an example in `TcpCommLayer::handleIncomingConn()`).
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackInitDone()` method is called, `AlgoLayer::callbackHandleMessage()` was not previously called. This is the role of:
+        - `getInitDoneCalled().wait();` instruction in `Tcp::handleIncomingConn()`
+        - `getInitDoneCalled().count_down();` instruction in `Tcp::openDestAndWaitIncomingMsg()`
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackHandleMessage()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackHandleMessage()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
 
-2. Make a new subclass of `CommPeer` by inspiring yourself from:
-    - `EnetCommPeer.h` to declare the classe representing a peer in your usage of the protocol,
-    - `EnetCommPeer.cpp` to define this class.
 
-3. Modify `main.cpp` to integrate your new class:
+2. Modify `main.cpp` to integrate your new class:
 
     - In `main` function, modify `parser` variable intialization in order to specify (in the same way as letter `'e'` in string `"\n\t\t\t\t\ŧ\t\te = Enet (reliable)"` specifies `'e'` as the letter for *Enet (reliable)*) the letter which will specify your added communication protocol.
     - In `concreteCommLayer()` function, add a `case` with this new letter to create an instance of your `CommLayer` subclass.
-    - Note: There is nothing to do in `main.cpp` concerning new `CommPeer` subclass, as creation of instances of this subclass will be done inside your `CommLayer` subclass.
-
-
-
-
