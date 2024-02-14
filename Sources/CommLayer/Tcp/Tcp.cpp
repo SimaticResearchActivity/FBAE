@@ -100,10 +100,10 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     }
 }
 
-void Tcp::multicastMsg(std::string && msg)
+void Tcp::multicastMsg(const std::string &msg)
 {
     for (auto const& [r, sock]: rank2sock) {
-        send(r, std::move(msg));
+        send(r, msg);
     }
 }
 
@@ -156,7 +156,7 @@ struct ForLength
     }
 };
 
-void Tcp::send(rank_t r, string &&msg) {
+void Tcp::send(rank_t r, const std::string &msg) {
     assert(rank2sock.contains(r));
     ForLength forLength{msg.length()};
     std::stringstream oStream;
@@ -168,7 +168,7 @@ void Tcp::send(rank_t r, string &&msg) {
     auto sWithLength = oStream.str();
     sWithLength.append(msg);
 
-    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength.data(), sWithLength.length()));
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
 }
 
 void Tcp::terminate() {

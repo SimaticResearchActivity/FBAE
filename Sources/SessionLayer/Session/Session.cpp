@@ -76,11 +76,8 @@ void Session::callbackInitDone() const
 
 void Session::execute()
 {
-    future<void> taskSendPeriodicPerfMessage;
     if (param.getVerbose())
         cout << "Session (Warning: this may not be Session pos!) #" << static_cast<uint32_t>(rank) << " : Start execution\n";
-    if (param.getFrequency() && algoLayer->isBroadcastingMessage())
-        taskSendPeriodicPerfMessage = std::async(std::launch::async, &Session::sendPeriodicPerfMessage, this);
     algoLayer->execute();
     if (algoLayer->isBroadcastingMessage()) {
         // Display statistics
@@ -143,7 +140,7 @@ void Session::processFirstBroadcastMsg(rank_t senderPos) {
         // operational ==> We can start our performance measures.
         if (param.getFrequency())
             // We start periodic sending of PerfMessage
-            okToSendPeriodicPerfMessage.count_down();
+            taskSendPeriodicPerfMessage = std::async(std::launch::async, &Session::sendPeriodicPerfMessage, this);
         else
             // We send a single PerfMeasure
             broadcastPerfMeasure();
@@ -208,7 +205,6 @@ void Session::processPerfResponseMsg(rank_t senderPos, std::string && msg) {
 }
 
 void Session::sendPeriodicPerfMessage() {
-    okToSendPeriodicPerfMessage.wait();
     constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
     constexpr double nbMillisecondsPerSecond{ 1'000.0 };
     const auto freq{ param.getFrequency() };

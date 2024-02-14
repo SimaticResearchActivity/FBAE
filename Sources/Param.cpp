@@ -7,7 +7,7 @@
 
 Param::Param(mlib::OptParserExtended const& parser)
 : nbMsg{parser.getoptIntRequired('n')}
-, rank{static_cast<uint8_t>(parser.getoptIntRequired('r'))}
+, rank{static_cast<rank_t>(parser.getoptIntRequired('r'))}
 , sizeMsg{parser.getoptIntRequired('s')}
 , siteFile{parser.getoptStringRequired('S')}
 , verbose{parser.hasopt ('v')}
@@ -110,7 +110,7 @@ int64_t Param::getNbMsg() const {
     return nbMsg;
 }
 
-uint8_t Param::getRank() const
+rank_t Param::getRank() const
 {
     return rank;
 }

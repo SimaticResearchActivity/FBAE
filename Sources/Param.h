@@ -3,6 +3,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include "basicTypes.h"
 #include "OptParserExtended.h"
 
 // The following value has been found experimentally when filler field of SenderMessageToBroadcast has size 0
@@ -24,7 +25,7 @@ private:
     int frequency{0};
     int maxBatchSize{INT32_MAX};
     int64_t nbMsg{0};
-    uint8_t rank{0};
+    rank_t rank{0};
     int sizeMsg{0};
     std::string siteFile{};
     std::vector<HostTuple> sites;
@@ -39,7 +40,7 @@ public:
     [[nodiscard]] int getFrequency() const;
     [[nodiscard]] int getMaxBatchSize() const;
     [[nodiscard]] int64_t getNbMsg() const;
-    [[nodiscard]] uint8_t getRank() const;
+    [[nodiscard]] rank_t getRank() const;
     [[nodiscard]] std::vector<HostTuple> getSites() const;
     [[nodiscard]] int getSizeMsg() const;
     [[nodiscard]] bool getVerbose() const;

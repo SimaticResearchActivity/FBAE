@@ -23,7 +23,7 @@ void Sequencer::callbackHandleMessage(std::string && msgString)
             auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::Broadcast,
                                                                                    msgToBroadcast.senderPos,
                                                                                    msgToBroadcast.sessionMsg})};
-            getSession()->getCommLayer()->multicastMsg(std::move(s));
+            getSession()->getCommLayer()->multicastMsg(s);
             break;
         }
         //
@@ -86,5 +86,5 @@ void Sequencer::totalOrderBroadcast(std::string && msg) {
     auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastRequest,
                                                                            getPosInBroadcasters(),
                                                                                std::move(msg)})};
-    getSession()->getCommLayer()->send(sequencerRank, std::move(s));
+    getSession()->getCommLayer()->send(sequencerRank, s);
 }
