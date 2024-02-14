@@ -5,7 +5,7 @@
 #ifndef FBAE_SESSION_H
 #define FBAE_SESSION_H
 
-#include <latch>
+#include <future>
 #include <memory>
 #include "../SessionLayer.h"
 #include "../../Measures.h"
@@ -32,7 +32,7 @@ private:
     int32_t nbReceivedPerfResponseForSelf{0};
     size_t nbReceivedFirstBroadcast{0};
     size_t nbReceivedFinishedPerfMeasures{0};
-    std::latch okToSendPeriodicPerfMessage{1};
+    std::future<void> taskSendPeriodicPerfMessage;
 
     /**
      * @brief Broadcasts a @PerfMeasure message with @msgNum incremented by 1.

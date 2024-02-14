@@ -12,13 +12,6 @@ public:
     virtual ~CommLayer() = default;
 
     /**
-     * @brief Multicast message contained in @msg to all peer which the process connected to (Note: The peers which
-     * connected to the process are not concerned by this multicast)
-     * @param msg Message to be totalOrderBroadcast
-     */
-    virtual void multicastMsg(std::string && msg) = 0;
-
-    /**
      * @brief Getter for @algoLayer.
      * @return @algoLayer.
      */
@@ -29,6 +22,13 @@ public:
      * @return @commLayerReady
      */
     [[nodiscard]] std::latch &getInitDoneCalled();
+
+    /**
+     * @brief Multicast message contained in @msg to all peer which the process connected to (Note: The peers which
+     * connected to the process are not concerned by this multicast)
+     * @param msg Message to be totalOrderBroadcast
+     */
+    virtual void multicastMsg(const std::string &msg) = 0;
 
     /**
      * @brief Open connection to peers (named outgoing peers) which rank is listed in @dest, accepts
@@ -51,7 +51,7 @@ public:
      * @param r Rank of outgoing peer
      * @param msg Message to send.
      */
-    virtual void send(rank_t r, std::string && msg) = 0;
+    virtual void send(rank_t r, const std::string &msg) = 0;
 
     /**
      * @brief CommLayer must close all of its connections
