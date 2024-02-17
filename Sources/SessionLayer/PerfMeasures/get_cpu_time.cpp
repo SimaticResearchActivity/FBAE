@@ -26,8 +26,7 @@ unsigned long long get_cpu_time(){
 
 //  Posix/Linux
 #else
-#include <time.h>
-#include <sys/time.h>
+#include <ctime>
 
 unsigned long long get_cpu_time(){
     return (unsigned long long)clock();

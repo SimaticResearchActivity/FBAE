@@ -1,7 +1,7 @@
 add_executable(fbae
   main.cpp
   options.cpp options.h OptParserExtended.cpp OptParserExtended.h
-        Measures.cpp Measures.h
+        SessionLayer/PerfMeasures/Measures.cpp SessionLayer/PerfMeasures/Measures.h
         Arguments.cpp Arguments.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
@@ -22,8 +22,8 @@ add_executable(fbae
         CommLayer/Tcp/Tcp.cpp
         CommLayer/Tcp/Tcp.h
         basicTypes.h
-        get_cpu_time.cpp
-        get_cpu_time.h
+        SessionLayer/PerfMeasures/get_cpu_time.cpp
+        SessionLayer/PerfMeasures/get_cpu_time.h
         SessionLayer/PerfMeasures/PerfMeasures.cpp
         SessionLayer/PerfMeasures/PerfMeasures.h)
 if (WIN32)

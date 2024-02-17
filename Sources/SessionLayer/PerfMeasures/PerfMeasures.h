@@ -2,13 +2,13 @@
 // Created by simatic on 2/10/24.
 //
 
-#ifndef FBAE_PERFMEASURES_H
-#define FBAE_PERFMEASURES_H
+#ifndef FBAE_PERF_MEASURES_H
+#define FBAE_PERF_MEASURES_H
 
 #include <future>
 #include <memory>
 #include "../SessionLayer.h"
-#include "../../Measures.h"
+#include "Measures.h"
 #include "../../AlgoLayer/AlgoLayer.h"
 
 class PerfMeasures : public SessionLayer {
@@ -70,4 +70,4 @@ private:
 };
 
 
-#endif //FBAE_PERFMEASURES_H
+#endif //FBAE_PERF_MEASURES_H
