@@ -18,10 +18,8 @@ public:
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
     void execute() override;
-    [[nodiscard]] rank_t getRankFromRuntimeArgument() const override;
 
 private:
-    const rank_t rank;
     Measures measures;
     int32_t numPerfMeasure{0};
     int32_t nbReceivedPerfResponseForSelf{0};

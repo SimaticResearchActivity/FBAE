@@ -110,7 +110,7 @@ void Tcp::multicastMsg(const std::string &msg)
 void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
     const auto sites = getAlgoLayer()->getSessionLayer()->getArguments().getSites();
-    auto rank = getAlgoLayer()->getSessionLayer()->getRankFromRuntimeArgument();
+    auto rank = getAlgoLayer()->getSessionLayer()->getRank();
 
     // Accept nbAwaitedConnections connections from incoming peers
     auto taskAcceptConn{ std::async(&Tcp::acceptConn, this, get < PORT > (sites[rank]), nbAwaitedConnections)};

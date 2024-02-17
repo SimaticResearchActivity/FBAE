@@ -1,11 +1,18 @@
 #include "SessionLayer.h"
 #include "../AlgoLayer/AlgoLayer.h"
 
-SessionLayer::SessionLayer(const Arguments &aArguments, std::unique_ptr<AlgoLayer> anAlgoLayer)
-    : arguments{aArguments}
-    , algoLayer{std::move(anAlgoLayer)}
+SessionLayer::SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
+    : arguments{arguments}
+    , rank{rank}
+    , algoLayer{std::move(algoLayer)}
 {
-    getAlgoLayer()->setSessionLayer(this);
+    this->algoLayer->setSessionLayer(this);
+}
+
+SessionLayer::SessionLayer(const Arguments &arguments, rank_t rank)
+        : arguments{arguments}
+        , algoLayer{nullptr}
+        , rank{rank}{
 }
 
 AlgoLayer * SessionLayer::getAlgoLayer() const {
@@ -14,4 +21,8 @@ AlgoLayer * SessionLayer::getAlgoLayer() const {
 
 const Arguments &SessionLayer::getArguments() const {
     return arguments;
+}
+
+rank_t SessionLayer::getRank() const {
+    return rank;
 }

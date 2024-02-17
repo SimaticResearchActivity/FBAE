@@ -13,8 +13,8 @@
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
-BBOBB::BBOBB(std::unique_ptr<CommLayer> aCommLayer)
-        : AlgoLayer{std::move(aCommLayer)}
+BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
+        : AlgoLayer{std::move(commLayer)}
 {
 }
 

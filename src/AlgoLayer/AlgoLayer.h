@@ -9,7 +9,7 @@ class AlgoLayer {
 public:
     virtual ~AlgoLayer() = default;
 
-    explicit AlgoLayer(std::unique_ptr<CommLayer> aCommLayer);
+    explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer);
 
     /**
      * @brief Handles message received from @an incoming peer.

@@ -20,7 +20,7 @@ namespace fbae_SessionLayer {
         PerfMeasure, /// Broadcast message used by a sender as Ping message
         PerfResponse, /// Broadcast message used as a Pong message in response to a @PerfMeasure message
         // Messages used for serialization tests
-        ForSerializationTests /// Broadcast message used for serialization tests
+        TestMessage /// Broadcast message used for tests
     };
 
     /**
@@ -87,9 +87,9 @@ namespace fbae_SessionLayer {
     };
 
     /**
-     * @brief Structure of messages used for serialization tests
+     * @brief Structure of messages used for tests
      */
-    struct SessionForSerializationTests
+    struct SessionTest
     {
         fbae_SessionLayer::SessionMsgId msgId{};
         std::string payload;

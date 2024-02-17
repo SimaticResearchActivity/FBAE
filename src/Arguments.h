@@ -34,6 +34,7 @@ private:
 
 public:
     explicit Arguments(mlib::OptParserExtended const& parser);
+    explicit Arguments(std::vector<HostTuple> const& sites); // Constructor used only for tests.
     [[nodiscard]] std::string
     asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const;
     static std::string csvHeadline();

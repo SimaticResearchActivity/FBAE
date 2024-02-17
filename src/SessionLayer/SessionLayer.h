@@ -9,7 +9,13 @@ class SessionLayer {
 public:
     virtual ~SessionLayer() = default;
 
-    explicit SessionLayer(const Arguments &aArguments,std::unique_ptr<AlgoLayer> anAlgoLayer);
+    explicit SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
+
+    /**
+     * @brief Constructor used only for tests.
+     * @param rank
+     */
+    explicit SessionLayer(const Arguments &arguments, rank_t rank);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
@@ -45,9 +51,10 @@ public:
      * @brief Getter for @rank.
      * @return @rank.
      */
-    [[nodiscard]] virtual rank_t getRankFromRuntimeArgument() const = 0;
+    [[nodiscard]] virtual rank_t getRank() const;
 
 private:
     const Arguments &arguments;
     std::unique_ptr<AlgoLayer> algoLayer;
+    const rank_t rank;
 };

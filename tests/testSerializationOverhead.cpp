@@ -10,15 +10,15 @@
 #include "../src/AlgoLayer/Sequencer/SequencerMsg.h"
 #include "../src/AlgoLayer/BBOBB/BBOBBMsg.h"
 
-namespace fbae_tests_serializationOverhead {
+namespace fbae_test_serializationOverhead {
 
     using namespace std;
 
     constexpr size_t sizeStringInSessionMsg = 9;
 
     TEST(SerializationOverhead, SerializedSessionMsg) {
-        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionForSerializationTests>(fbae_SessionLayer::SessionForSerializationTests{fbae_SessionLayer::SessionMsgId::ForSerializationTests,
-                                                                                                      string(
+        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionTest>(fbae_SessionLayer::SessionTest{fbae_SessionLayer::SessionMsgId::TestMessage,
+                                                                                                          string(
                                                                                                                     sizeStringInSessionMsg,
                                                                                                                     'A')})};
         // Serialization overhead is sizeof(size_t) because Cereal need to store the size of the string.
@@ -27,8 +27,8 @@ namespace fbae_tests_serializationOverhead {
     }
 
     TEST(SerializationOverhead, SerializedSequencerMsg) {
-        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionForSerializationTests>(fbae_SessionLayer::SessionForSerializationTests{fbae_SessionLayer::SessionMsgId::ForSerializationTests,
-                                                                                                      string(
+        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionTest>(fbae_SessionLayer::SessionTest{fbae_SessionLayer::SessionMsgId::TestMessage,
+                                                                                                          string(
                                                                                                               sizeStringInSessionMsg,
                                                                                                               'A')})};
         auto s_StructBroadcastMessage {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
@@ -40,8 +40,8 @@ namespace fbae_tests_serializationOverhead {
     }
 
     TEST(SerializationOverhead, SerializedBatchMsg) {
-        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionForSerializationTests>(fbae_SessionLayer::SessionForSerializationTests{fbae_SessionLayer::SessionMsgId::ForSerializationTests,
-                                                                                                                                            string(
+        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionTest>(fbae_SessionLayer::SessionTest{fbae_SessionLayer::SessionMsgId::TestMessage,
+                                                                                                          string(
                                                                                                                                                     sizeStringInSessionMsg,
                                                                                                                                                     'A')})};
         constexpr auto nbSessionMsgPerBatch = 1;
@@ -57,8 +57,8 @@ namespace fbae_tests_serializationOverhead {
     }
 
     TEST(SerializationOverhead, SerializedBBOBBStepMsg) {
-        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionForSerializationTests>(fbae_SessionLayer::SessionForSerializationTests{fbae_SessionLayer::SessionMsgId::ForSerializationTests,
-                                                                                                                                            string(
+        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionTest>(fbae_SessionLayer::SessionTest{fbae_SessionLayer::SessionMsgId::TestMessage,
+                                                                                                          string(
                                                                                                                                                     sizeStringInSessionMsg,
                                                                                                                                                     'A')})};
         constexpr auto nbSessionMsgPerBatch = 1;

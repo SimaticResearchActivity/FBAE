@@ -12,9 +12,8 @@
 using namespace std;
 using namespace fbae_SessionLayer;
 
-PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> anAlgoLayer)
-        : SessionLayer{arguments, std::move(anAlgoLayer)}
-        , rank{rank}
+PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
+        : SessionLayer{arguments, rank, std::move(algoLayer)}
         , measures{static_cast<size_t>(arguments.getNbMsg() * (100 - arguments.getWarmupCooldown()) / 100) + 1}//We add +1 to avoid not allocating enough size because of rounding by default
 {
 }
@@ -65,7 +64,7 @@ void PerfMeasures::callbackInitDone() const
     if (getAlgoLayer()->isBroadcastingMessage()){
         // Broadcast FirstBroadcast
         if (getArguments().getVerbose())
-            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(rank) << ")\n";
+            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(getRank()) << ")\n";
         auto s {serializeStruct<SessionFirstBroadcast>(SessionFirstBroadcast{SessionMsgId::FirstBroadcast})};
         getAlgoLayer()->totalOrderBroadcast(std::move(s));
     }
@@ -74,24 +73,20 @@ void PerfMeasures::callbackInitDone() const
 void PerfMeasures::execute()
 {
     if (getArguments().getVerbose())
-        cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(rank) << " : Start execution\n";
+        cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(getRank()) << " : Start execution\n";
     getAlgoLayer()->execute();
     if (getAlgoLayer()->isBroadcastingMessage()) {
         // Display statistics
         static std::mutex mtx;
         scoped_lock lock{mtx};
         cout << Arguments::csvHeadline() << "," << Measures::csvHeadline() << "\n";
-        cout << getArguments().asCsv(getAlgoLayer()->toString(), getAlgoLayer()->getCommLayer()->toString(), to_string(rank)) << "," << measures.asCsv()
+        cout << getArguments().asCsv(getAlgoLayer()->toString(), getAlgoLayer()->getCommLayer()->toString(), to_string(getRank())) << "," << measures.asCsv()
              << "\n";
     }
     if (getArguments().getFrequency()  && getAlgoLayer()->isBroadcastingMessage())
         taskSendPeriodicPerfMessage.get();
     if (getArguments().getVerbose())
-        cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(rank) << " : End of execution\n";
-}
-
-rank_t PerfMeasures::getRankFromRuntimeArgument() const {
-    return rank;
+        cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(getRank()) << " : End of execution\n";
 }
 
 void PerfMeasures::processFinishedPerfMeasuresMsg(rank_t senderPos)
@@ -146,7 +141,7 @@ void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, std::string && msg) {
     {
         // Current process must broadcast PerfResponse message for this PerfMeasure message.
         if (getArguments().getVerbose())
-            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast PerfResponse by sender pos #" << static_cast<uint32_t>(rank) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; perfMeasureMsgNum = " << spm.msgNum << ")\n";
+            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast PerfResponse by sender pos #" << static_cast<uint32_t>(getRank()) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; perfMeasureMsgNum = " << spm.msgNum << ")\n";
         auto s {serializeStruct<SessionPerfResponse>(SessionPerfResponse{SessionMsgId::PerfResponse,
                                                                          spm.senderPos,
                                                                          spm.msgNum,

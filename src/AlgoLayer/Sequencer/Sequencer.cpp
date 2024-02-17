@@ -8,8 +8,8 @@
 using namespace std;
 using namespace fbae_SequencerAlgoLayer;
 
-Sequencer::Sequencer(std::unique_ptr<CommLayer> aCommLayer)
-        : AlgoLayer{std::move(aCommLayer)}
+Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer)
+        : AlgoLayer{std::move(commLayer)}
 {
 }
 
@@ -56,7 +56,7 @@ void Sequencer::execute()
     setBroadcasters(std::move(v));
 
     // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
-    if (getSessionLayer()->getRankFromRuntimeArgument() == sequencerRank)
+    if (getSessionLayer()->getRank() == sequencerRank)
     {
         // Process is sequencer
         getCommLayer()->openDestAndWaitIncomingMsg(getBroadcasters(), getBroadcasters().size(), this);
@@ -74,7 +74,7 @@ void Sequencer::execute()
         vector<rank_t> dest{sequencerRank};
         getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
         if (getSessionLayer()->getArguments().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster with rank #" << static_cast<uint32_t>(getSessionLayer()->getRankFromRuntimeArgument()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
+            cout << "\tSequencerAlgoLayer / Broadcaster with rank #" << static_cast<uint32_t>(getSessionLayer()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
     }
 }
 

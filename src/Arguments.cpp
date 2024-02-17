@@ -5,6 +5,11 @@
 #include <cereal/types/tuple.hpp>
 #include <cereal/types/vector.hpp>
 
+Arguments::Arguments(std::vector<HostTuple> const& sites)
+    : sites{sites}
+{
+}
+
 Arguments::Arguments(mlib::OptParserExtended const& parser)
 : nbMsg{parser.getoptIntRequired('n')}
 , rank{static_cast<rank_t>(parser.getoptIntRequired('r'))}
@@ -130,4 +135,3 @@ bool Arguments::getVerbose() const {
 int Arguments::getWarmupCooldown() const {
     return warmupCooldown;
 }
-

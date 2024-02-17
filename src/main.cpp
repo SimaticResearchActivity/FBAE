@@ -24,7 +24,7 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
     }
 }
 
-unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser, unique_ptr<CommLayer> commLayer)
+unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
 {
     char algoId = parser.getoptStringRequired('a')[0];
     switch(algoId)
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     //
     if (arguments.getRank() != specialRankToRequestExecutionInTasks)
     {
-        PerfMeasures session{arguments, arguments.getRank(), concreteAlgoLayer(parser, concreteCommLayer(parser))};
+        PerfMeasures session{arguments, arguments.getRank(), concreteAlgoLayer(parser)};
         session.execute();
     }
     else
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
         vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
-            sessions.emplace_back(make_unique<PerfMeasures>(arguments, rank, concreteAlgoLayer(parser, concreteCommLayer(parser))));
+            sessions.emplace_back(make_unique<PerfMeasures>(arguments, rank, concreteAlgoLayer(parser)));
             sessionTasks.emplace_back(std::async(std::launch::async, &PerfMeasures::execute, sessions.back().get()));
         }
         for (auto& t: sessionTasks)

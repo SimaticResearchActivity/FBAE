@@ -3,10 +3,10 @@
 #include "AlgoLayer.h"
 #include "../SessionLayer/SessionLayer.h"
 
-AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> aCommLayer)
-    : commLayer{std::move(aCommLayer)}
+AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> commLayer)
+    : commLayer{std::move(commLayer)}
 {
-    commLayer->setAlgoLayer(this);
+    this->commLayer->setAlgoLayer(this);
 }
 
 void AlgoLayer::callbackInitDone() {
@@ -23,7 +23,7 @@ CommLayer *AlgoLayer::getCommLayer() const
 }
 
 rank_t AlgoLayer::getPosInBroadcasters() const {
-    auto rank = sessionLayer->getRankFromRuntimeArgument();
+    auto rank = sessionLayer->getRank();
     auto lower = std::ranges::lower_bound(broadcasters, rank);
     assert(lower != broadcasters.end() && *lower == rank);
     return static_cast<rank_t>(lower - broadcasters.begin());
@@ -45,5 +45,5 @@ void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer)
 }
 
 bool AlgoLayer::isBroadcastingMessage() const {
-    return std::ranges::binary_search(broadcasters, getSessionLayer()->getRankFromRuntimeArgument());
+    return std::ranges::binary_search(broadcasters, getSessionLayer()->getRank());
 }
