@@ -3,13 +3,13 @@
 #include "../basicTypes.h"
 #include "../CommLayer/CommLayer.h"
 #include "../Arguments.h"
-
+class AlgoLayer;
 
 class SessionLayer {
 public:
     virtual ~SessionLayer() = default;
 
-    explicit SessionLayer(const Arguments &aArguments);
+    explicit SessionLayer(const Arguments &aArguments,std::unique_ptr<AlgoLayer> anAlgoLayer);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
@@ -30,16 +30,16 @@ public:
     virtual void execute() = 0;
 
     /**
+     * @brief Getter for @algolayer.
+    * @return @algolayer
+    */
+    [[nodiscard]] AlgoLayer * getAlgoLayer() const;
+
+    /**
      * @brief Getter for @arguments.
      * @return @arguments
      */
     [[nodiscard]] const Arguments &getArguments() const;
-
-    /**
-     * @brief Getter for @commlayer.
-    * @return @commlayer
-    */
-    [[nodiscard]] virtual CommLayer *getCommLayer() const = 0;
 
     /**
      * @brief Getter for @rank.
@@ -49,4 +49,5 @@ public:
 
 private:
     const Arguments &arguments;
+    std::unique_ptr<AlgoLayer> algoLayer;
 };

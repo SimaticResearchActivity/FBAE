@@ -3,12 +3,23 @@
 #include "AlgoLayer.h"
 #include "../SessionLayer/SessionLayer.h"
 
+AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> aCommLayer)
+    : commLayer{std::move(aCommLayer)}
+{
+    commLayer->setAlgoLayer(this);
+}
+
 void AlgoLayer::callbackInitDone() {
     sessionLayer->callbackInitDone();
 }
 
 const std::vector<rank_t> & AlgoLayer::getBroadcasters() const {
     return broadcasters;
+}
+
+CommLayer *AlgoLayer::getCommLayer() const
+{
+    return commLayer.get();
 }
 
 rank_t AlgoLayer::getPosInBroadcasters() const {

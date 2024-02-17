@@ -17,15 +17,24 @@
 
 class BBOBB : public AlgoLayer {
 public :
+    explicit BBOBB(std::unique_ptr<CommLayer> aCommLayer);
     void callbackHandleMessage(std::string && msgString) override;
     void callbackInitDone() override;
     void execute() override;
     void totalOrderBroadcast(std::string && msg) override;
     void terminate() override;
     std::string toString() override;
-    void beginWave();
-    void catchUpIfLateInMessageSending();
 private :
+    /**
+     * @brief Method called when a wave begins
+     */
+    void beginWave();
+
+    /**
+     * @brief Method called to see if current participant is late in processing received step messages.
+     */
+    void catchUpIfLateInMessageSending();
+
     /**
      * @brief True when @disconnect() method has been called.
      */

@@ -13,6 +13,11 @@
 using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
+BBOBB::BBOBB(std::unique_ptr<CommLayer> aCommLayer)
+        : AlgoLayer{std::move(aCommLayer)}
+{
+}
+
 void BBOBB::callbackHandleMessage(std::string && msgString) {
     auto msgId{static_cast<MsgId>(msgString[0])};
     if (msgId == MsgId::Step) {
@@ -76,7 +81,7 @@ void BBOBB::beginWave() {
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
              << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
              << "\n";
-    getSessionLayer()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
+    getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                             serializeStruct(lastSentStepMsg));
 }
 
@@ -93,7 +98,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
                  << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
                  << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
-        getSessionLayer()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
+        getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                                 serializeStruct(lastSentStepMsg));
         step = lastSentStepMsg.step;
     }
@@ -157,7 +162,7 @@ void BBOBB::execute() {
         peersPos.push_back(rankOutgoingPeer);
         ++nbStepsInWave;
     }
-    getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
+    getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
     if (getSessionLayer()->getArguments().getVerbose())
         cout << "Broadcaster #" << static_cast<uint32_t>(pos)
@@ -166,7 +171,7 @@ void BBOBB::execute() {
 
 void BBOBB::terminate() {
     algoTerminated = true;
-    getSessionLayer()->getCommLayer()->terminate();
+    getCommLayer()->terminate();
 }
 
 std::string BBOBB::toString() {

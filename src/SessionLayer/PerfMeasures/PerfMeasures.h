@@ -13,18 +13,15 @@
 
 class PerfMeasures : public SessionLayer {
 public:
-    PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+    PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
 
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
     void execute() override;
-    [[nodiscard]] CommLayer *getCommLayer() const override;
     [[nodiscard]] rank_t getRankFromRuntimeArgument() const override;
 
 private:
     const rank_t rank;
-    std::unique_ptr<AlgoLayer> algoLayer;
-    std::unique_ptr<CommLayer> commLayer;
     Measures measures;
     int32_t numPerfMeasure{0};
     int32_t nbReceivedPerfResponseForSelf{0};

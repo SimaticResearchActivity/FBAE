@@ -9,6 +9,8 @@ class AlgoLayer {
 public:
     virtual ~AlgoLayer() = default;
 
+    explicit AlgoLayer(std::unique_ptr<CommLayer> aCommLayer);
+
     /**
      * @brief Handles message received from @an incoming peer.
      * @param msgString String containing message.
@@ -38,6 +40,12 @@ public:
      * @return @broadcasters.
      */
     [[nodiscard]] const std::vector<rank_t> & getBroadcasters() const;
+
+    /**
+     * @brief Getter for @commlayer.
+    * @return @commlayer
+    */
+    [[nodiscard]] CommLayer *getCommLayer() const;
 
     /**
      * @brief Returns position of a broadcasting participant in @broadcasters vector.
@@ -86,6 +94,11 @@ private:
      * @brief Rank of @sites which are indeed doing broadcasts.
      */
     std::vector<rank_t> broadcasters;
+
+    /**
+     * @brief @CommLayer used by this @AlgoLayer
+     */
+    std::unique_ptr<CommLayer> commLayer;
 
     /**
      * @brief @SessionLayer which uses this @AlgoLayer
