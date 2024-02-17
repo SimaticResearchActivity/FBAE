@@ -25,7 +25,8 @@ add_executable(fbae
         SessionLayer/PerfMeasures/get_cpu_time.cpp
         SessionLayer/PerfMeasures/get_cpu_time.h
         SessionLayer/PerfMeasures/PerfMeasures.cpp
-        SessionLayer/PerfMeasures/PerfMeasures.h)
+        SessionLayer/PerfMeasures/PerfMeasures.h
+)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
 else() # We are under UNIX

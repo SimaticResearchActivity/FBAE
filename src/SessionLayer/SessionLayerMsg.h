@@ -7,17 +7,20 @@
 
 namespace fbae_SessionLayer {
     //---------------------------------------------------
-// Messages totalOrderBroadcast by SessionLayer (to SessionLayer)
-//---------------------------------------------------
+    // Messages totalOrderBroadcast between any instances of SessionLayer (or subclasses)
+    //---------------------------------------------------
     /**
      * @brief Message Id used within @SessionLayer.
     */
     enum class SessionMsgId : MsgId_t
     {
+        // Messages used within PerfMeasures subclass
         FinishedPerfMeasures, /// Broadcast message signifying its sender has finished to send all of its @PerfMeasure messages.
         FirstBroadcast, /// Broadcast message used by a sender when it broadcasts a message for the first time.
         PerfMeasure, /// Broadcast message used by a sender as Ping message
-        PerfResponse /// Broadcast message used as a Pong message in response to a @PerfMeasure message
+        PerfResponse, /// Broadcast message used as a Pong message in response to a @PerfMeasure message
+        // Messages used for serialization tests
+        ForSerializationTests /// Broadcast message used for serialization tests
     };
 
     /**
@@ -82,4 +85,21 @@ namespace fbae_SessionLayer {
             archive(msgId, perfMeasureSenderPos, perfMeasureMsgNum, perfMeasureSendTime, perfMeasureFiller); // serialize things by passing them to the archive
         }
     };
+
+    /**
+     * @brief Structure of messages used for serialization tests
+     */
+    struct SessionForSerializationTests
+    {
+        fbae_SessionLayer::SessionMsgId msgId{};
+        std::string payload;
+
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive& archive)
+        {
+            archive(msgId, payload); // serialize things by passing them to the archive
+        }
+    };
+
 }
