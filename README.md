@@ -37,7 +37,7 @@ First, write a JSON site file defining the sites which will run instances of *FB
 
 This file example defines 3 sites, each running on localhost, the first site listening for connections on port 4096, the second one on port 4097, and the third one on port 4098.
 
-Note `Resources` directory of *FBAE* repository contains samples of site files.
+Note: `res` directory of *FBAE* repository contains samples of site files.
 
 ### Launch manually *fbae* executable
 Once your site file is ready, you can run `fbae` executable according to the following usage:
@@ -63,22 +63,22 @@ Where:
 
 For instance, you can open 3 terminals and run:
 
-- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../Resources/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
-- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../Resources/sites_3_local.json` on terminal 1.
-- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_3_local.json` on terminal 2.
+- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
+- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../res/sites_3_local.json` on terminal 1.
+- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../res/sites_3_local.json` on terminal 2.
 
 After a while (depending on the number of messages to be sent you specified), `fbae` displays the statistics (structured in CSV format) observed for this process, e.g.:
 
 ```txt
 algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile,nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)
-Sequencer,TCP,0,2147483647,3,0%,2,1024,../../Resources/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
+Sequencer,TCP,0,2147483647,3,0%,2,1024,../../res/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
 ```
 
-Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../Resources/sites_3_local.json`
+Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../res/sites_3_local.json`
 
 ### Launch *fbae* executable thanks to a script
 
-`Tools` directory contains `launch_fbae.py` Python script. Its usage is:
+`utils` directory contains `launch_fbae.py` Python script. Its usage is:
 
 ``` shell
 python3 launch_fbae.py path_to_fbae_executable path_to_result_directory all_fbae_arguments_except_-r_or_--rank

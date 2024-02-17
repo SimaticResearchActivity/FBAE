@@ -47,6 +47,6 @@ endif()
 # Give access to cereal include directory
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 
-add_subdirectory(Sources)
-add_subdirectory(SerializationOverhead)
+add_subdirectory(src)
+add_subdirectory(tests)
 
