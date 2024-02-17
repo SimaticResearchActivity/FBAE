@@ -37,7 +37,7 @@ endif()
 # Now simply link against gtest or gtest_main as needed. Eg
 #   enable_testing()  already done in top CMakeLists.txt
 add_executable(tests
-        serializationOverhead.cpp
+        testSerializationOverhead.cpp
         ../src/AlgoLayer/BBOBB/BBOBBMsg.h
         ../src/AlgoLayer/Sequencer/SequencerMsg.h
         ../src/SessionLayer/SessionLayerMsg.h
