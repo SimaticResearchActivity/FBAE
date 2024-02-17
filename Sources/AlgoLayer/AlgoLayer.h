@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "../CommLayer/CommLayer.h"
-#include "../Param.h"
+#include "../Arguments.h"
 class SessionLayer;
 
 class AlgoLayer {

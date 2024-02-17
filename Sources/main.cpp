@@ -89,24 +89,24 @@ int main(int argc, char* argv[])
         exit (0);
     }
 
-    Param param{parser};
+    Arguments arguments{parser};
 
     //
     // Launch the application
     //
-    if (param.getRank() != specialRankToRequestExecutionInTasks)
+    if (arguments.getRank() != specialRankToRequestExecutionInTasks)
     {
-        Session session{param, param.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
+        Session session{arguments, arguments.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
         session.execute();
     }
     else
     {
-        size_t nbSites{param.getSites().size()};
+        size_t nbSites{arguments.getSites().size()};
         vector<unique_ptr<Session>> sessions;
         vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
-            sessions.emplace_back(make_unique<Session>(param, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
+            sessions.emplace_back(make_unique<Session>(arguments, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
             sessionTasks.emplace_back(std::async(std::launch::async, &Session::execute, sessions.back().get()));
         }
         for (auto& t: sessionTasks)

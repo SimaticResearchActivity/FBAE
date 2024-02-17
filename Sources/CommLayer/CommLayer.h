@@ -2,7 +2,7 @@
 
 #include <latch>
 #include <memory>
-#include "../Param.h"
+#include "../Arguments.h"
 #include "../basicTypes.h"
 
 class AlgoLayer;
@@ -21,7 +21,7 @@ public:
      * @brief Getter for @commLayerReady
      * @return @commLayerReady
      */
-    [[nodiscard]] std::latch &getInitDoneCalled();
+        [[nodiscard]] std::latch &getInitDoneCalled();
 
     /**
      * @brief Multicast message contained in @msg to all peer which the process connected to (Note: The peers which

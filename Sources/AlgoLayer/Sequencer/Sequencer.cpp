@@ -46,7 +46,7 @@ void Sequencer::callbackHandleMessage(std::string && msgString)
 void Sequencer::execute()
 {
     // Compute vector of broadcasters rank
-    vector<rank_t> v(getSession()->getParam().getSites().size() - 1); // -1 because sequencer is not broadcasting.
+    vector<rank_t> v(getSession()->getArguments().getSites().size() - 1); // -1 because sequencer is not broadcasting.
     std::iota(v.begin(), v.end(), 1); // @broadcasters must start at 1, because sequencer always has rank 0.
     setBroadcasters(std::move(v));
 
@@ -60,7 +60,7 @@ void Sequencer::execute()
             // in a natural manner ==> We have to call it.
             getSession()->getCommLayer()->terminate();
         }
-        if (getSession()->getParam().getVerbose())
+        if (getSession()->getArguments().getVerbose())
             cout << "\tSequencerAlgoLayer / Sequencer : Finished waiting for messages ==> Giving back control to SessionLayer\n";
     }
     else
@@ -68,7 +68,7 @@ void Sequencer::execute()
         // Process is a broadcaster
         vector<rank_t> dest{sequencerRank};
         getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
-        if (getSession()->getParam().getVerbose())
+        if (getSession()->getArguments().getVerbose())
             cout << "\tSequencerAlgoLayer / Broadcaster with rank #" << static_cast<uint32_t>(getSession()->getRankFromRuntimeArgument()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
     }
 }

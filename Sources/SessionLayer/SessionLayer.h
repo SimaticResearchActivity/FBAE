@@ -2,12 +2,14 @@
 
 #include "../basicTypes.h"
 #include "../CommLayer/CommLayer.h"
-#include "../Param.h"
+#include "../Arguments.h"
 
 
 class SessionLayer {
 public:
     virtual ~SessionLayer() = default;
+
+    explicit SessionLayer(const Arguments &aArguments);
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is able to deliver totalOrderBroadcast @msg.
@@ -28,20 +30,23 @@ public:
     virtual void execute() = 0;
 
     /**
+     * @brief Getter for @arguments.
+     * @return @arguments
+     */
+    [[nodiscard]] const Arguments &getArguments() const;
+
+    /**
      * @brief Getter for @commlayer.
     * @return @commlayer
     */
     [[nodiscard]] virtual CommLayer *getCommLayer() const = 0;
 
     /**
-     * @brief Getter for @param.
-     * @return @param
-     */
-    [[nodiscard]] virtual const Param &getParam() const = 0;
-
-    /**
      * @brief Getter for @rank.
      * @return @rank.
      */
     [[nodiscard]] virtual rank_t getRankFromRuntimeArgument() const = 0;
+
+private:
+    const Arguments &arguments;
 };

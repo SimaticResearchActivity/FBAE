@@ -10,7 +10,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include "../CommLayer.h"
-#include "../../Param.h"
+#include "../../Arguments.h"
 
 class Tcp : public CommLayer{
 public:

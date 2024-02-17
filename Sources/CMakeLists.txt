@@ -2,7 +2,7 @@ add_executable(fbae
   main.cpp
   options.cpp options.h OptParserExtended.cpp OptParserExtended.h
         Measures.cpp Measures.h
-        Param.cpp Param.h
+        Arguments.cpp Arguments.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
         AlgoLayer/AlgoLayer.cpp

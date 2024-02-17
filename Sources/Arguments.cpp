@@ -1,11 +1,11 @@
-#include "Param.h"
+#include "Arguments.h"
 #include <fstream>
 #include <iostream>
 #include <cereal/archives/json.hpp>
 #include <cereal/types/tuple.hpp>
 #include <cereal/types/vector.hpp>
 
-Param::Param(mlib::OptParserExtended const& parser)
+Arguments::Arguments(mlib::OptParserExtended const& parser)
 : nbMsg{parser.getoptIntRequired('n')}
 , rank{static_cast<rank_t>(parser.getoptIntRequired('r'))}
 , sizeMsg{parser.getoptIntRequired('s')}
@@ -79,7 +79,7 @@ Param::Param(mlib::OptParserExtended const& parser)
 }
 
 [[nodiscard]] std::string
-Param::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
+Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
     return std::string {
         algoStr + ","
@@ -93,41 +93,41 @@ Param::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::s
         + siteFile};
 }
 
-std::string Param::csvHeadline()
+std::string Arguments::csvHeadline()
 {
     return std::string { "algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
 }
 
-int Param::getFrequency() const {
+int Arguments::getFrequency() const {
     return frequency;
 }
 
-int Param::getMaxBatchSize() const {
+int Arguments::getMaxBatchSize() const {
     return maxBatchSize;
 }
 
-int64_t Param::getNbMsg() const {
+int64_t Arguments::getNbMsg() const {
     return nbMsg;
 }
 
-rank_t Param::getRank() const
+rank_t Arguments::getRank() const
 {
     return rank;
 }
 
-std::vector<std::tuple<std::string, int>> Param::getSites() const
+std::vector<std::tuple<std::string, int>> Arguments::getSites() const
 {
     return sites;
 }
 
-int Param::getSizeMsg() const {
+int Arguments::getSizeMsg() const {
     return sizeMsg;
 }
-bool Param::getVerbose() const {
+bool Arguments::getVerbose() const {
     return verbose;
 }
 
-int Param::getWarmupCooldown() const {
+int Arguments::getWarmupCooldown() const {
     return warmupCooldown;
 }
 

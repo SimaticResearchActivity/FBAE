@@ -13,17 +13,15 @@
 
 class Session : public SessionLayer {
 public:
-    Session(const Param &param, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+    Session(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
 
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
     void execute() override;
     [[nodiscard]] CommLayer *getCommLayer() const override;
-    [[nodiscard]] const Param &getParam() const override;
     [[nodiscard]] rank_t getRankFromRuntimeArgument() const override;
 
 private:
-    const Param &param;
     const rank_t rank;
     std::unique_ptr<AlgoLayer> algoLayer;
     std::unique_ptr<CommLayer> commLayer;

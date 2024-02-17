@@ -83,7 +83,7 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     {
         if (e.code() == boost::asio::error::eof)
         {
-            if (getAlgoLayer()->getSession()->getParam().getVerbose())
+            if (getAlgoLayer()->getSession()->getArguments().getVerbose())
                 cout << "Client disconnected\n";
         }
         else if (e.code() == boost::asio::error::connection_reset)
@@ -109,7 +109,7 @@ void Tcp::multicastMsg(const std::string &msg)
 
 void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
-    const auto sites = getAlgoLayer()->getSession()->getParam().getSites();
+    const auto sites = getAlgoLayer()->getSession()->getArguments().getSites();
     auto rank = getAlgoLayer()->getSession()->getRankFromRuntimeArgument();
 
     // Accept nbAwaitedConnections connections from incoming peers

@@ -20,7 +20,7 @@ using HostTuple = std::tuple<std::string, int>;
 constexpr int HOSTNAME{0};
 constexpr int PORT{1};
 
-class Param {
+class Arguments {
 private:
     int frequency{0};
     int maxBatchSize{INT32_MAX};
@@ -33,7 +33,7 @@ private:
     int warmupCooldown{0};
 
 public:
-    explicit Param(mlib::OptParserExtended const& parser);
+    explicit Arguments(mlib::OptParserExtended const& parser);
     [[nodiscard]] std::string
     asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const;
     static std::string csvHeadline();
