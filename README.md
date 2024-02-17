@@ -50,7 +50,7 @@ Where:
                                                 S = Sequencer based
   -c|--comm <communicationLayer_identifier>  Communication layer to be used
                                                 t = TCP
-  -f|--frequency <number>                    [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
+  -f|--frequency <number>                    [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
   -h|--help                                  Show help message
   -m|--maxBatchSize <size_in_bytes>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
   -n|--nbMsg <number>                        Number of messages to be sent
@@ -58,7 +58,7 @@ Where:
   -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [22,65515])
   -S|--site <siteFile_name>                  Name (including path) of the sites file to be used
   -v|--verbose                               [optional] Verbose display required
-  -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage session messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
+  -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage sessionLayer messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
 ```
 
 For instance, you can open 3 terminals and run:
@@ -204,7 +204,7 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 6.  Implement `Foo::execute()` method to handle the different messages your algorithm can receive.
   
        - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcasters(std::move(thisVzector))`.
-       - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSession()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
+       - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
 
 7.  Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:
        - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm.
@@ -213,7 +213,7 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
        - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
 
-9.  Implement `Foo::callbackHandleMessage()` method to handle all of the messages your algorithm is manipulating. In particular, if a session message can be delivered, call `getSession()->callbackDeliver()`. Note:
+9.  Implement `Foo::callbackHandleMessage()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
         - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `shortcutBatchCtrl = true;` and `shortcutBatchCtrl = false;` instructions.
         - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackHandleMessage()`.
 

@@ -48,7 +48,7 @@ private :
     fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
 
     /**
-     * @brief Session messages waiting to be broadcast.
+     * @brief PerfMeasures messages waiting to be broadcast.
      */
     std::vector<std::string> msgsWaitingToBeBroadcast;
 

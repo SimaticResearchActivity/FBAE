@@ -35,13 +35,13 @@ int main()
                                                                                         payloadSizeSessionMsg,
                                                                                         'A')})};
 
-    cout << "Size PseudoSessionMsg = " << s_PseudoSessionMsg.size() - payloadSizeSessionMsg << " + payloadSize at Session level\n";
+    cout << "Size PseudoSessionMsg = " << s_PseudoSessionMsg.size() - payloadSizeSessionMsg << " + payloadSize at PerfMeasures level\n";
 
     // Overhead of fbae_SequencerAlgoLayer::StructBroadcastMessage
     auto s_StructBroadcastMessage {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
                                                                                                                                                     '1',
                                                                                                                                                     s_PseudoSessionMsg})};
-    cout << "Size fbae_SequencerAlgoLayer::StructBroadcastMessage = " << s_StructBroadcastMessage.size() - payloadSizeSessionMsg << " + payloadSize at Session level\n";
+    cout << "Size fbae_SequencerAlgoLayer::StructBroadcastMessage = " << s_StructBroadcastMessage.size() - payloadSizeSessionMsg << " + payloadSize at PerfMeasures level\n";
     // Overhead of fbae_BBOBBAlgoLayer::StepMsg
     std::vector<std::string> v_11{s_PseudoSessionMsg};
     fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsg_11 {
@@ -53,7 +53,7 @@ int main()
          << sizeHeaderAndSizeVectorEncodingInBatchSessionMsg
          << " + nbSessionMsgPerBatch x ( "
          << s_batchSessionMsg_11.size() - sizeHeaderAndSizeVectorEncodingInBatchSessionMsg - payloadSizeSessionMsg
-         << " + payloadSize at Session level )\n";
+         << " + payloadSize at PerfMeasures level )\n";
 
     std::vector<fbae_BBOBBAlgoLayer::BatchSessionMsg> v_batchSessionMsg_11{batchSessionMsg_11};
     auto s_Step_11 {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
@@ -69,7 +69,7 @@ int main()
          << sizeHeaderAndSizeVectorEncodingInBatchSessionMsg
          << " + nbSessionMsgPerBatch x ( "
          << s_batchSessionMsg_11.size() - sizeHeaderAndSizeVectorEncodingInBatchSessionMsg - payloadSizeSessionMsg
-         << " + payloadSize at Session level ) ]\n";
+         << " + payloadSize at PerfMeasures level ) ]\n";
 }
 
 

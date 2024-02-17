@@ -2,8 +2,8 @@
 // Created by simatic on 2/10/24.
 //
 
-#ifndef FBAE_SESSION_H
-#define FBAE_SESSION_H
+#ifndef FBAE_PERFMEASURES_H
+#define FBAE_PERFMEASURES_H
 
 #include <future>
 #include <memory>
@@ -11,9 +11,9 @@
 #include "../../Measures.h"
 #include "../../AlgoLayer/AlgoLayer.h"
 
-class Session : public SessionLayer {
+class PerfMeasures : public SessionLayer {
 public:
-    Session(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
+    PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::unique_ptr<CommLayer> commLayer);
 
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
     void callbackInitDone() const override;
@@ -70,4 +70,4 @@ private:
 };
 
 
-#endif //FBAE_SESSION_H
+#endif //FBAE_PERFMEASURES_H

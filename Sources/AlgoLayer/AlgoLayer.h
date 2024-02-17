@@ -46,10 +46,10 @@ public:
     [[nodiscard]] rank_t getPosInBroadcasters() const;
 
     /**
-     * @brief Getter for @session
-     * @return @session
+     * @brief Getter for @sessionLayer
+     * @return @sessionLayer
      */
-    [[nodiscard]] SessionLayer *getSession() const;
+    [[nodiscard]] SessionLayer *getSessionLayer() const;
 
     /**
      * @brief Setter for @broadcasters.
@@ -58,10 +58,10 @@ public:
     void setBroadcasters(std::vector<rank_t> &&aBroadcasters);
 
     /**
-     * @brief Setter for @session
-     * @param aSession
+     * @brief Setter for @sessionLayer
+     * @param aSessionLayer
      */
-    void setSession(SessionLayer *aSession);
+    void setSessionLayer(SessionLayer *aSessionLayer);
 
     /**
      * @brief Broadcasts @msg in a total-order manner.
@@ -90,5 +90,5 @@ private:
     /**
      * @brief @SessionLayer which uses this @AlgoLayer
      */
-    SessionLayer *session{nullptr};
+    SessionLayer *sessionLayer{nullptr};
 };

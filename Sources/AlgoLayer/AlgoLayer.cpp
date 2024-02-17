@@ -4,7 +4,7 @@
 #include "../SessionLayer/SessionLayer.h"
 
 void AlgoLayer::callbackInitDone() {
-    session->callbackInitDone();
+    sessionLayer->callbackInitDone();
 }
 
 const std::vector<rank_t> & AlgoLayer::getBroadcasters() const {
@@ -12,14 +12,14 @@ const std::vector<rank_t> & AlgoLayer::getBroadcasters() const {
 }
 
 rank_t AlgoLayer::getPosInBroadcasters() const {
-    auto rank = session->getRankFromRuntimeArgument();
+    auto rank = sessionLayer->getRankFromRuntimeArgument();
     auto lower = std::ranges::lower_bound(broadcasters, rank);
     assert(lower != broadcasters.end() && *lower == rank);
     return static_cast<rank_t>(lower - broadcasters.begin());
 }
 
-SessionLayer* AlgoLayer::getSession() const {
-    return session;
+SessionLayer* AlgoLayer::getSessionLayer() const {
+    return sessionLayer;
 }
 
 void AlgoLayer::setBroadcasters(std::vector<rank_t> &&aBroadcasters) {
@@ -28,11 +28,11 @@ void AlgoLayer::setBroadcasters(std::vector<rank_t> &&aBroadcasters) {
     std::ranges::sort(broadcasters);
 }
 
-void AlgoLayer::setSession(SessionLayer *aSession)
+void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer)
 {
-    session = aSession;
+    sessionLayer = aSessionLayer;
 }
 
 bool AlgoLayer::isBroadcastingMessage() const {
-    return std::ranges::binary_search(broadcasters, getSession()->getRankFromRuntimeArgument());
+    return std::ranges::binary_search(broadcasters, getSessionLayer()->getRankFromRuntimeArgument());
 }

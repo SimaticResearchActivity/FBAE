@@ -83,7 +83,7 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     {
         if (e.code() == boost::asio::error::eof)
         {
-            if (getAlgoLayer()->getSession()->getArguments().getVerbose())
+            if (getAlgoLayer()->getSessionLayer()->getArguments().getVerbose())
                 cout << "Client disconnected\n";
         }
         else if (e.code() == boost::asio::error::connection_reset)
@@ -109,8 +109,8 @@ void Tcp::multicastMsg(const std::string &msg)
 
 void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
-    const auto sites = getAlgoLayer()->getSession()->getArguments().getSites();
-    auto rank = getAlgoLayer()->getSession()->getRankFromRuntimeArgument();
+    const auto sites = getAlgoLayer()->getSessionLayer()->getArguments().getSites();
+    auto rank = getAlgoLayer()->getSessionLayer()->getRankFromRuntimeArgument();
 
     // Accept nbAwaitedConnections connections from incoming peers
     auto taskAcceptConn{ std::async(&Tcp::acceptConn, this, get < PORT > (sites[rank]), nbAwaitedConnections)};

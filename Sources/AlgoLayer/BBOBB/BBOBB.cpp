@@ -19,7 +19,7 @@ void BBOBB::callbackHandleMessage(std::string && msgString) {
         if (!algoTerminated) {
             auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
 
-            if (getSession()->getArguments().getVerbose())
+            if (getSessionLayer()->getArguments().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
                      << " : Receive a Step Message (wave : " << stepMsg.wave << " / step : "
                      << stepMsg.step << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
@@ -72,12 +72,12 @@ void BBOBB::beginWave() {
     condVarBatchCtrl.notify_one();
 
     // Send it
-    if (getSession()->getArguments().getVerbose())
+    if (getSessionLayer()->getArguments().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
              << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
              << "\n";
-    getSession()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
-                                       serializeStruct(lastSentStepMsg));
+    getSessionLayer()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
+                                            serializeStruct(lastSentStepMsg));
 }
 
 void BBOBB::catchUpIfLateInMessageSending() {
@@ -89,12 +89,12 @@ void BBOBB::catchUpIfLateInMessageSending() {
         lastSentStepMsg.batchesBroadcast.insert(lastSentStepMsg.batchesBroadcast.end(),
                                                 currentWaveReceivedStepMsg[step].batchesBroadcast.begin(), currentWaveReceivedStepMsg[step].batchesBroadcast.end() );
         // Send it
-        if (getSession()->getArguments().getVerbose())
+        if (getSessionLayer()->getArguments().getVerbose())
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
                  << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
                  << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
-        getSession()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
-                                           serializeStruct(lastSentStepMsg));
+        getSessionLayer()->getCommLayer()->send(peersPos[lastSentStepMsg.step],
+                                                serializeStruct(lastSentStepMsg));
         step = lastSentStepMsg.step;
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
@@ -126,7 +126,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
                     // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
                     // because task @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
                     shortcutBatchCtrl = true;
-                    getSession()->callbackDeliver(senderRank, std::move(msg));
+                    getSessionLayer()->callbackDeliver(senderRank, std::move(msg));
                     shortcutBatchCtrl = false;
                     if (algoTerminated) {
                         return;
@@ -144,7 +144,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
 
 void BBOBB::execute() {
     // Compute vector of broadcasters pos
-    vector<rank_t> v(getSession()->getArguments().getSites().size()); // All participants are broadcasting.
+    vector<rank_t> v(getSessionLayer()->getArguments().getSites().size()); // All participants are broadcasting.
     std::iota(v.begin(), v.end(), 0);
     setBroadcasters(std::move(v));
 
@@ -157,16 +157,16 @@ void BBOBB::execute() {
         peersPos.push_back(rankOutgoingPeer);
         ++nbStepsInWave;
     }
-    getSession()->getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
+    getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
-    if (getSession()->getArguments().getVerbose())
+    if (getSessionLayer()->getArguments().getVerbose())
         cout << "Broadcaster #" << static_cast<uint32_t>(pos)
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
 }
 
 void BBOBB::terminate() {
     algoTerminated = true;
-    getSession()->getCommLayer()->terminate();
+    getSessionLayer()->getCommLayer()->terminate();
 }
 
 std::string BBOBB::toString() {
@@ -176,7 +176,7 @@ std::string BBOBB::toString() {
 void BBOBB::totalOrderBroadcast(std::string && msg) {
     unique_lock lck(mtxBatchCtrl);
     condVarBatchCtrl.wait(lck, [this] {
-        return (msgsWaitingToBeBroadcast.size() * getSession()->getArguments().getSizeMsg() < getSession()->getArguments().getMaxBatchSize())
+        return (msgsWaitingToBeBroadcast.size() * getSessionLayer()->getArguments().getSizeMsg() < getSessionLayer()->getArguments().getMaxBatchSize())
                || shortcutBatchCtrl;
     });
     msgsWaitingToBeBroadcast.emplace_back(std::move(msg));

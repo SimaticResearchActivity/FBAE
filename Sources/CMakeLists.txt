@@ -24,8 +24,8 @@ add_executable(fbae
         basicTypes.h
         get_cpu_time.cpp
         get_cpu_time.h
-        SessionLayer/Session/Session.cpp
-        SessionLayer/Session/Session.h)
+        SessionLayer/PerfMeasures/PerfMeasures.cpp
+        SessionLayer/PerfMeasures/PerfMeasures.h)
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)
 else() # We are under UNIX

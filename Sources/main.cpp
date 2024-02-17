@@ -2,7 +2,7 @@
 #include <iostream>
 #include "OptParserExtended.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
-#include "SessionLayer/Session/Session.h"
+#include "SessionLayer/PerfMeasures/PerfMeasures.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     OptParserExtended parser{
             "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer based",
             "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\tt = TCP",
-            "f:frequency number \t [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
+            "f:frequency number \t [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
             "h|help \t Show help message",
             "m:maxBatchSize size_in_bytes \t [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)",
             "n:nbMsg number \t Number of messages to be sent",
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
             "s:size size_in_bytes \t Size of messages sent by a client (must be in interval [22,65515])",
             "S:site siteFile_name \t Name (including path) of the sites file to be used",
             "v|verbose \t [optional] Verbose display required",
-            "w:warmupCooldown number \t [optional] Number in [0,99] representing percentage of PerfMessage session messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)"
+            "w:warmupCooldown number \t [optional] Number in [0,99] representing percentage of PerfMessage sessionLayer messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)"
     };
 
     int nonopt;
@@ -96,18 +96,18 @@ int main(int argc, char* argv[])
     //
     if (arguments.getRank() != specialRankToRequestExecutionInTasks)
     {
-        Session session{arguments, arguments.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
+        PerfMeasures session{arguments, arguments.getRank(), concreteAlgoLayer(parser), concreteCommLayer(parser)};
         session.execute();
     }
     else
     {
         size_t nbSites{arguments.getSites().size()};
-        vector<unique_ptr<Session>> sessions;
+        vector<unique_ptr<PerfMeasures>> sessions;
         vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
-            sessions.emplace_back(make_unique<Session>(arguments, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
-            sessionTasks.emplace_back(std::async(std::launch::async, &Session::execute, sessions.back().get()));
+            sessions.emplace_back(make_unique<PerfMeasures>(arguments, rank, concreteAlgoLayer(parser), concreteCommLayer(parser)));
+            sessionTasks.emplace_back(std::async(std::launch::async, &PerfMeasures::execute, sessions.back().get()));
         }
         for (auto& t: sessionTasks)
             t.get();
