@@ -16,7 +16,7 @@ public:
     PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
 
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
-    void callbackInitDone() const override;
+    void callbackInitDone() override;
     void execute() override;
 
 private:

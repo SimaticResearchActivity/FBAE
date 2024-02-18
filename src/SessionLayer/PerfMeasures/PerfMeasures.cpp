@@ -59,7 +59,7 @@ void PerfMeasures::callbackDeliver(rank_t senderPos, std::string && msg) {
     }
 }
 
-void PerfMeasures::callbackInitDone() const
+void PerfMeasures::callbackInitDone()
 {
     if (getAlgoLayer()->isBroadcastingMessages()){
         // Broadcast FirstBroadcast

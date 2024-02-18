@@ -3,10 +3,15 @@
 //
 
 #include <cassert>
+#include "../../src/AlgoLayer/AlgoLayer.h"
 #include "CommStub.h"
 
 std::vector<rank_t> &CommStub::getConnectedDest() {
     return connectedDest;
+}
+
+size_t CommStub::getNbAwaitedConnections() const {
+    return nbAwaitedConnections;
 }
 
 std::vector<std::pair<rank_t, std::string>> &CommStub::getSent() {
@@ -19,9 +24,11 @@ void CommStub::multicastMsg(const std::string &msg) {
     }
 }
 
-void CommStub::openDestAndWaitIncomingMsg(const std::vector<rank_t> &dest, size_t nbAwaitedConnections,
+void CommStub::openDestAndWaitIncomingMsg(const std::vector<rank_t> &dest, size_t aNbAwaitedConnections,
                                           AlgoLayer *aAlgoLayer) {
     connectedDest = dest;
+    nbAwaitedConnections = aNbAwaitedConnections;
+    getAlgoLayer()->callbackInitDone();
 }
 
 void CommStub::send(rank_t r, const std::string &msg) {
@@ -37,5 +44,3 @@ std::string CommStub::toString() {
     // No sense to call this method in the context of tests.
     assert(false);
 }
-
-

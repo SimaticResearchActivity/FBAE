@@ -14,9 +14,8 @@ void SessionStub::callbackDeliver(rank_t senderPos, std::string &&msg) {
     delivered.emplace_back(senderPos, std::move(msg));
 }
 
-void SessionStub::callbackInitDone() const {
-    // No sense to call this method in the context of tests.
-    assert(false);
+void SessionStub::callbackInitDone() {
+    callbackInitDoneCalled = true;
 }
 
 void SessionStub::execute() {
@@ -26,4 +25,8 @@ void SessionStub::execute() {
 
 std::vector<std::pair<rank_t, std::string>> &SessionStub::getDelivered() {
     return delivered;
+}
+
+bool SessionStub::isCallbackInitdoneCalled() const {
+    return callbackInitDoneCalled;
 }

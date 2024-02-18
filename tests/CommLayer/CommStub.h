@@ -8,10 +8,11 @@
 
 class CommStub : public CommLayer {
 public:
-    std::vector<rank_t> &getConnectedDest();
-    std::vector<std::pair<rank_t, std::string>> &getSent();
+    [[nodiscard]] std::vector<rank_t> &getConnectedDest();
+    [[nodiscard]] size_t getNbAwaitedConnections() const;
+    [[nodiscard]] std::vector<std::pair<rank_t, std::string>> &getSent();
     void multicastMsg(const std::string &msg) override;
-    void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
+    void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t aNbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
     void send(rank_t r, const std::string &msg) override;
     void terminate() override;
     std::string toString() override;
@@ -20,6 +21,11 @@ private:
      * @brief Connected destinations during execution of @openDestAndWaitIncomingMsg() method
      */
     std::vector<rank_t> connectedDest;
+
+    /**
+     * @brief Number of awaited connections
+     */
+    size_t nbAwaitedConnections;
 
     /**
      * @brief List of [destination,msg] sent by @send() or @multicastMsg() methods

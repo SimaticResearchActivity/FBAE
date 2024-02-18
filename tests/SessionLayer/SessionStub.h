@@ -13,14 +13,20 @@ public:
     SessionStub(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
 
     void callbackDeliver(rank_t senderPos, std::string && msg) override;
-    void callbackInitDone() const override;
+    void callbackInitDone() override;
     void execute() override;
-    std::vector<std::pair<rank_t, std::string>> &getDelivered();
+    [[nodiscard]] std::vector<std::pair<rank_t, std::string>> &getDelivered();
+    [[nodiscard]] bool isCallbackInitdoneCalled() const;
 private:
     /**
      * @brief Vector of [sender,msg] for which @callbackDeliver() method was called
      */
     std::vector<std::pair<rank_t, std::string>> delivered;
+
+    /**
+     * @brief Indicates whether @SessionLayer::callbackInitDone called or not.
+     */
+    bool callbackInitDoneCalled{false};
 };
 
 

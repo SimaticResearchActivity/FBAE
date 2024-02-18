@@ -28,7 +28,7 @@ public:
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
      */
-    virtual void callbackInitDone() const = 0;
+    virtual void callbackInitDone() = 0;
 
     /**
      * @brief Entry point of @SessionLayer to execute it.
