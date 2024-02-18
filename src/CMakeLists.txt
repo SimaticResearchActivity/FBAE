@@ -7,6 +7,7 @@ add_executable(fbae
         CommLayer/CommLayer.h
         AlgoLayer/AlgoLayer.cpp
         AlgoLayer/AlgoLayer.h
+        AlgoLayer/AlgoLayerMsg.h
         AlgoLayer/Sequencer/Sequencer.cpp
         AlgoLayer/Sequencer/Sequencer.h
         SessionLayer/SessionLayer.cpp
@@ -26,6 +27,7 @@ add_executable(fbae
         SessionLayer/PerfMeasures/get_cpu_time.h
         SessionLayer/PerfMeasures/PerfMeasures.cpp
         SessionLayer/PerfMeasures/PerfMeasures.h
+        AlgoLayer/AlgoLayerMsg.h
 )
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)

@@ -209,14 +209,14 @@ Now we can present the procedure for adding another Total-Order broadcast algori
        - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
 
 7.  Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:
-       - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm.
-       - Your algorithm stores the message to broadcast in a "batch" of messages waiting to be broadcast by the algorithm, like *BBOBB* algorithm (see `msgsWaitingToBeBroadcast` variable).
+       - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm. In that case, you must override `AlgoLayer::totalOrderBroadcast()` method.
+       - Your algorithm stores the message to broadcast in a "batch" of messages waiting to be broadcast by the algorithm, like *BBOBB* algorithm. In that case, you do not need to implement anything as your class will use `AlgoLayer::totalOrderBroadcast()` method.
   
 8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
        - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
 
 9.  Implement `Foo::callbackReceive()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
-        - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `shortcutBatchCtrl = true;` and `shortcutBatchCtrl = false;` instructions.
+        - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `batchCtrlShortcut = true;` and `batchCtrlShortcut = false;` instructions.
         - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackReceive()`.
 
 10. Implement `Foo::terminate()` method.

@@ -188,6 +188,7 @@ void PerfMeasures::processPerfResponseMsg(rank_t senderPos, std::string && msg) 
 }
 
 void PerfMeasures::sendPeriodicPerfMessage() {
+    getAlgoLayer()->batchRegisterThreadForFullBatchCtrl();
     constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
     constexpr double nbMillisecondsPerSecond{ 1'000.0 };
     const auto freq{ getArguments().getFrequency() };
