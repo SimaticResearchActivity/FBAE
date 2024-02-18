@@ -64,6 +64,7 @@ add_executable(tests
         CommLayer/CommStub.cpp
         CommLayer/CommStub.h
         AlgoLayer/testSequencer.cpp
+        AlgoLayer/testBBOBB.cpp
 )
 target_link_libraries(tests gtest_main)
 if (UNIX)
