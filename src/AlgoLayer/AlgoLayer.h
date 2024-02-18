@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include "../CommLayer/CommLayer.h"
 #include "../Arguments.h"
 class SessionLayer;
@@ -23,14 +24,6 @@ public:
     virtual void callbackInitDone();
 
     /**
-     * @brief Indicates whether @AlgoLayer is broadcasting messages or not.
-     * @return true if the execution of @ALgoLayer lead to the production of statistics (e.g. case of a broadcaster in
-     * Sequencer algorithm) and false otherwise (e.g. which can be the case of the sequencer in Sequencer algorithm of the
-     * sequencer is not a broadcaster)
-     */
-     [[nodiscard]] virtual bool isBroadcastingMessage() const;
-
-    /**
      * @brief Executes concrete Total Order Broadcast algorithm. Returns when algorithm is done.
      */
     virtual void execute() = 0;
@@ -39,7 +32,7 @@ public:
      * @brief Getter for @broadcasters.
      * @return @broadcasters.
      */
-    [[nodiscard]] const std::vector<rank_t> & getBroadcasters() const;
+    [[nodiscard]] const std::vector<rank_t> & getBroadcastersGroup() const;
 
     /**
      * @brief Getter for @commlayer.
@@ -49,9 +42,9 @@ public:
 
     /**
      * @brief Returns position of a broadcasting participant in @broadcasters vector.
-     * @return Position in @broadcasters vector if participant is indeed a broadcasting participant. Note: In debug mode, an assert checks that participant is indeed a broadcasting participant.
+     * @return Position in @broadcasters vector if participant is indeed a broadcasting participant and nullopt if participant is not a broadcasting participant.
      */
-    [[nodiscard]] rank_t getPosInBroadcasters() const;
+    [[nodiscard]] std::optional<rank_t> getPosInBroadcastersGroup() const;
 
     /**
      * @brief Getter for @sessionLayer
@@ -60,10 +53,18 @@ public:
     [[nodiscard]] SessionLayer *getSessionLayer() const;
 
     /**
-     * @brief Setter for @broadcasters.
-     * @param aBroadcasters  The value to set @broadcasters to.
+     * @brief Indicates whether @AlgoLayer is broadcasting messages or not.
+     * @return true if the execution of @ALgoLayer lead to the production of statistics (e.g. case of a broadcaster in
+     * Sequencer algorithm) and false otherwise (e.g. which can be the case of the sequencer in Sequencer algorithm of the
+     * sequencer is not a broadcaster)
      */
-    void setBroadcasters(std::vector<rank_t> &&aBroadcasters);
+     [[nodiscard]] bool isBroadcastingMessages() const;
+
+    /**
+     * @brief Setter for @broadcasters.
+     * @param aBroadcastersGroup  The value to set @broadcasters to.
+     */
+    void setBroadcastersGroup(std::vector<rank_t> &&aBroadcastersGroup);
 
     /**
      * @brief Setter for @sessionLayer
@@ -93,7 +94,7 @@ private:
     /**
      * @brief Rank of @sites which are indeed doing broadcasts.
      */
-    std::vector<rank_t> broadcasters;
+    std::vector<rank_t> broadcastersGroup;
 
     /**
      * @brief @CommLayer used by this @AlgoLayer

@@ -25,7 +25,7 @@ void BBOBB::callbackReceive(std::string && msgString) {
             auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
 
             if (getSessionLayer()->getArguments().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
+                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
                      << " : Receive a Step Message (wave : " << stepMsg.wave << " / step : "
                      << stepMsg.step << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
 
@@ -39,7 +39,7 @@ void BBOBB::callbackReceive(std::string && msgString) {
                 // Message is early and needs to be treated in the next wave
                 nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
             } else {
-                cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
+                cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
                      << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
                      << " (with step = " << stepMsg.step << ") from Broadcaster #"
                      << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
@@ -63,7 +63,7 @@ void BBOBB::callbackInitDone() {
 void BBOBB::beginWave() {
     //Build first Step Message of a new Wave
     lastSentStepMsg.msgId = MsgId::Step;
-    const auto senderPos = getPosInBroadcasters();
+    const auto senderPos = getPosInBroadcastersGroup().value();
     lastSentStepMsg.senderPos = senderPos;
     lastSentStepMsg.wave += 1;
     lastSentStepMsg.step = 0;
@@ -78,7 +78,7 @@ void BBOBB::beginWave() {
 
     // Send it
     if (getSessionLayer()->getArguments().getVerbose())
-        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
+        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
              << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
              << "\n";
     getCommLayer()->send(peersPos[lastSentStepMsg.step],
@@ -95,7 +95,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
                                                 currentWaveReceivedStepMsg[step].batchesBroadcast.begin(), currentWaveReceivedStepMsg[step].batchesBroadcast.end() );
         // Send it
         if (getSessionLayer()->getArguments().getVerbose())
-            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcasters())
+            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
                  << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
                  << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
         getCommLayer()->send(peersPos[lastSentStepMsg.step],
@@ -116,7 +116,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
         // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
         //       (thus, afterward, we will not deliver twice this BatchSessionMsg).
         constexpr int not_found = -1;
-        vector<int> positions(getBroadcasters().size(), not_found);
+        vector<int> positions(getBroadcastersGroup().size(), not_found);
         for (int pos = 0 ; pos < batches.size() ; ++pos) {
             positions[batches[pos].senderPos] = pos;
         }
@@ -151,13 +151,13 @@ void BBOBB::execute() {
     // Compute vector of broadcasters pos
     vector<rank_t> v(getSessionLayer()->getArguments().getSites().size()); // All participants are broadcasting.
     std::iota(v.begin(), v.end(), 0);
-    setBroadcasters(std::move(v));
+    setBroadcastersGroup(std::move(v));
 
     // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
-    const auto pos = getPosInBroadcasters();
+    const auto pos = getPosInBroadcastersGroup().value();
     vector<rank_t> dest;
-    for (int power_of_2 = 1; power_of_2 < getBroadcasters().size(); power_of_2 *= 2) {
-        auto rankOutgoingPeer = static_cast<rank_t>((pos + power_of_2) % getBroadcasters().size());
+    for (int power_of_2 = 1; power_of_2 < getBroadcastersGroup().size(); power_of_2 *= 2) {
+        auto rankOutgoingPeer = static_cast<rank_t>((pos + power_of_2) % getBroadcastersGroup().size());
         dest.push_back(rankOutgoingPeer);
         peersPos.push_back(rankOutgoingPeer);
         ++nbStepsInWave;

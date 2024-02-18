@@ -182,7 +182,7 @@ Before presenting the procedure, you need to understand the difference between:
 For instance:
 - In *Sequencer* algorithm
   - Sequencer process always has *rank* 0. Sequencer process has no position, as it does not participate as a broadcaster.
-  - The other processes (ranked 1, 2, 3, etc.) participate as broadcasters. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
+  - The other processes (ranked 1, 2, 3, etc.) participate as broadcastersGroup. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
 - In *BBOBB* algorithm, all processes participate as braodcasters. Each of them has a position (as broadcaster) which corresponds to its rank.
 
 Now we can present the procedure for adding another Total-Order broadcast algorithm:
@@ -203,7 +203,7 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 
 6.  Implement `Foo::execute()` method to handle the different messages your algorithm can receive.
   
-       - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcasters(std::move(thisVzector))`.
+       - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcastersGroup(std::move(thisVzector))`.
        - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
 
 7.  Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:

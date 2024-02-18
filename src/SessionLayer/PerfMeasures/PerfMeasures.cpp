@@ -20,11 +20,11 @@ PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_
 
 void PerfMeasures::broadcastPerfMeasure() {
     if (getArguments().getVerbose())
-        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast PerfMeasure (senderPos = " << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " ; msgNum = " << numPerfMeasure << ")\n";
+        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Broadcast PerfMeasure (senderPos = " << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " ; msgNum = " << numPerfMeasure << ")\n";
     if (numPerfMeasure == getArguments().getNbMsg()*getArguments().getWarmupCooldown()/100/2)
         measures.setStartTime();
     auto s {serializeStruct<SessionPerfMeasure>(SessionPerfMeasure{SessionMsgId::PerfMeasure,
-                                                                   getAlgoLayer()->getPosInBroadcasters(),
+                                                                   getAlgoLayer()->getPosInBroadcastersGroup().value(),
                                                                    numPerfMeasure,
                                                                    std::chrono::system_clock::now(),
                                                                    std::string(
@@ -61,10 +61,10 @@ void PerfMeasures::callbackDeliver(rank_t senderPos, std::string && msg) {
 
 void PerfMeasures::callbackInitDone() const
 {
-    if (getAlgoLayer()->isBroadcastingMessage()){
+    if (getAlgoLayer()->isBroadcastingMessages()){
         // Broadcast FirstBroadcast
         if (getArguments().getVerbose())
-            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(getRank()) << ")\n";
+            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Broadcast FirstBroadcast (sender = " << static_cast<uint32_t>(getRank()) << ")\n";
         auto s {serializeStruct<SessionFirstBroadcast>(SessionFirstBroadcast{SessionMsgId::FirstBroadcast})};
         getAlgoLayer()->totalOrderBroadcast(std::move(s));
     }
@@ -75,7 +75,7 @@ void PerfMeasures::execute()
     if (getArguments().getVerbose())
         cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(getRank()) << " : Start execution\n";
     getAlgoLayer()->execute();
-    if (getAlgoLayer()->isBroadcastingMessage()) {
+    if (getAlgoLayer()->isBroadcastingMessages()) {
         // Display statistics
         static std::mutex mtx;
         scoped_lock lock{mtx};
@@ -83,7 +83,7 @@ void PerfMeasures::execute()
         cout << getArguments().asCsv(getAlgoLayer()->toString(), getAlgoLayer()->getCommLayer()->toString(), to_string(getRank())) << "," << measures.asCsv()
              << "\n";
     }
-    if (getArguments().getFrequency()  && getAlgoLayer()->isBroadcastingMessage())
+    if (getArguments().getFrequency()  && getAlgoLayer()->isBroadcastingMessages())
         taskSendPeriodicPerfMessage.get();
     if (getArguments().getVerbose())
         cout << "PerfMeasures (Warning: this may not be PerfMeasures pos!) #" << static_cast<uint32_t>(getRank()) << " : End of execution\n";
@@ -93,14 +93,14 @@ void PerfMeasures::processFinishedPerfMeasuresMsg(rank_t senderPos)
 {
     ++nbReceivedFinishedPerfMeasures;
     if (getArguments().getVerbose())
-        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Deliver FinishedPerfMeasures from sender pos #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
+        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver FinishedPerfMeasures from sender pos #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFinishedPerfMeasures = " << nbReceivedFinishedPerfMeasures << ")\n";
 
-    if (nbReceivedFinishedPerfMeasures > getAlgoLayer()->getBroadcasters().size())
+    if (nbReceivedFinishedPerfMeasures > getAlgoLayer()->getBroadcastersGroup().size())
     {
         cerr << "ERROR : Delivering a FinishedPerfMeasures message while we already have received all FinishedPerfMeasures messages we were waiting for.\n";
         exit(EXIT_FAILURE);
     }
-    if (nbReceivedFinishedPerfMeasures == getAlgoLayer()->getBroadcasters().size())
+    if (nbReceivedFinishedPerfMeasures == getAlgoLayer()->getBroadcastersGroup().size())
     {
         // All broadcasters are done doing measures ==> We can ask the getAlgoLayer() to terminate.
         getAlgoLayer() -> terminate();
@@ -110,13 +110,13 @@ void PerfMeasures::processFinishedPerfMeasuresMsg(rank_t senderPos)
 void PerfMeasures::processFirstBroadcastMsg(rank_t senderPos) {
     ++nbReceivedFirstBroadcast;
     if (getArguments().getVerbose())
-        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Deliver FirstBroadcast from sender pos #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
-    if (nbReceivedFirstBroadcast > getAlgoLayer()->getBroadcasters().size())
+        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver FirstBroadcast from sender pos #" << static_cast<uint32_t>(senderPos) << " (nbReceivedFirstBroadcast = " << nbReceivedFirstBroadcast << ")\n";
+    if (nbReceivedFirstBroadcast > getAlgoLayer()->getBroadcastersGroup().size())
     {
         cerr << "ERROR : Delivering a FirstBroadcast message while we already have received all FirstBroadcast messages we were waiting for.\n";
         exit(EXIT_FAILURE);
     }
-    if (nbReceivedFirstBroadcast == getAlgoLayer()->getBroadcasters().size())
+    if (nbReceivedFirstBroadcast == getAlgoLayer()->getBroadcastersGroup().size())
     {
         // As we have received all awaited FirstBroadcast messages, we know that @getAlgoLayer() is fully
         // operational ==> We can start our performance measures.
@@ -132,16 +132,17 @@ void PerfMeasures::processFirstBroadcastMsg(rank_t senderPos) {
 void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, std::string && msg) {
     auto spm{deserializeStruct<SessionPerfMeasure>(std::move(msg))};
     if (getArguments().getVerbose())
-        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Deliver PerfMeasure from sender pos #" << static_cast<uint32_t>(senderPos) << " (senderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; msgNum = " << spm.msgNum << ")\n";
+        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver PerfMeasure from sender pos #" << static_cast<uint32_t>(senderPos) << " (senderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; msgNum = " << spm.msgNum << ")\n";
     measures.addNbBytesDelivered(getArguments().getSizeMsg());
     // We check which process must send the PerfResponse. The formula hereafter guarantees that first PerfMeasure is
     // answered by successor of sender process, second PerfMeasure message is answered by successor of the successor of
     // sender process, etc.
-    if ((spm.senderPos + spm.msgNum) % getAlgoLayer()->getBroadcasters().size() == getAlgoLayer()->getPosInBroadcasters())
+    if ((spm.senderPos + spm.msgNum) % getAlgoLayer()->getBroadcastersGroup().size() ==
+            getAlgoLayer()->getPosInBroadcastersGroup().value())
     {
         // Current process must broadcast PerfResponse message for this PerfMeasure message.
         if (getArguments().getVerbose())
-            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast PerfResponse by sender pos #" << static_cast<uint32_t>(getRank()) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; perfMeasureMsgNum = " << spm.msgNum << ")\n";
+            cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Broadcast PerfResponse by sender pos #" << static_cast<uint32_t>(getRank()) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spm.senderPos) << " ; perfMeasureMsgNum = " << spm.msgNum << ")\n";
         auto s {serializeStruct<SessionPerfResponse>(SessionPerfResponse{SessionMsgId::PerfResponse,
                                                                          spm.senderPos,
                                                                          spm.msgNum,
@@ -154,13 +155,13 @@ void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, std::string && msg) {
 void PerfMeasures::processPerfResponseMsg(rank_t senderPos, std::string && msg) {
     auto spr{deserializeStruct<SessionPerfResponse>(std::move(msg))};
     if (getArguments().getVerbose())
-        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Deliver PerfResponse from sender pos #" << static_cast<uint32_t>(senderPos) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spr.perfMeasureSenderPos) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
+        cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver PerfResponse from sender pos #" << static_cast<uint32_t>(senderPos) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(spr.perfMeasureSenderPos) << " ; perfMeasureMsgNum = " << spr.perfMeasureMsgNum << ")\n";
     measures.addNbBytesDelivered(getArguments().getSizeMsg());
     chrono::duration<double, std::milli> elapsed = std::chrono::system_clock::now() - spr.perfMeasureSendTime;
-    if (spr.perfMeasureSenderPos == getAlgoLayer()->getPosInBroadcasters())
+    if (spr.perfMeasureSenderPos == getAlgoLayer()->getPosInBroadcastersGroup().value())
     {
         if (nbReceivedPerfResponseForSelf >= getArguments().getNbMsg()) {
-            cerr << "WARNING : PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Deliver too many PerfResponse for self\n";
+            cerr << "WARNING : PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver too many PerfResponse for self\n";
             return;
         }
         ++nbReceivedPerfResponseForSelf;
@@ -179,7 +180,7 @@ void PerfMeasures::processPerfResponseMsg(rank_t senderPos, std::string && msg) 
         {
             // Process is done with sending PerfMeasure messages. It tells it is done to all broadcasters
             if (getArguments().getVerbose())
-                cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << " : Broadcast FinishedPerfMeasures by sender pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcasters()) << "\n";
+                cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Broadcast FinishedPerfMeasures by sender pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << "\n";
             auto s {serializeStruct<SessionFinishedPerfMeasures>(SessionFinishedPerfMeasures{SessionMsgId::FinishedPerfMeasures})};
             getAlgoLayer()->totalOrderBroadcast(std::move(s));
         }
