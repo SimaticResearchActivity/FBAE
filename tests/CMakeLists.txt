@@ -70,4 +70,4 @@ if (UNIX)
     target_link_options(tests PUBLIC -pthread)
 endif()
 
-add_test(NAME that-test-I-made COMMAND tests)
+add_test(NAME All_fbae_tests COMMAND tests)
