@@ -45,10 +45,10 @@ namespace fbae_test_serializationOverhead {
                                                                                                                                                     'A')})};
         constexpr auto nbSessionMsgPerBatch = 1;
         std::vector<std::string> v_11{s_sessionMsg};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsg_11 {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsg_11 {
                 '1',
                 v_11};
-        auto s_batchSessionMsg_11 {serializeStruct<fbae_BBOBBAlgoLayer::BatchSessionMsg>(batchSessionMsg_11)};
+        auto s_batchSessionMsg_11 {serializeStruct<fbae_AlgoLayer::BatchSessionMsg>(batchSessionMsg_11)};
 
         constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
         EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch * (sizeof(size_t) + s_sessionMsg.size()),
@@ -62,13 +62,13 @@ namespace fbae_test_serializationOverhead {
                                                                                                                                                     'A')})};
         constexpr auto nbSessionMsgPerBatch = 1;
         std::vector<std::string> v_11{s_sessionMsg};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsg_11 {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsg_11 {
                 '1',
                 v_11};
         constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
 
         constexpr auto nbBatchInStep = 1;
-        std::vector<fbae_BBOBBAlgoLayer::BatchSessionMsg> v_batchSessionMsg_11{batchSessionMsg_11};
+        std::vector<fbae_AlgoLayer::BatchSessionMsg> v_batchSessionMsg_11{batchSessionMsg_11};
         auto s_Step_11 {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
                                                                                                    '3',
                                                                                                    42,

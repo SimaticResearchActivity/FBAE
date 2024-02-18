@@ -5,6 +5,7 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
 #include "../../basicTypes.h"
+#include "../AlgoLayerMsg.h"
 
 namespace fbae_BBOBBAlgoLayer {
 
@@ -16,20 +17,6 @@ namespace fbae_BBOBBAlgoLayer {
     };
 
     /**
-     * @brief Structure containing a batch of SessionMsg and the position of the sender of this batch.
-     */
-    struct BatchSessionMsg {
-        rank_t senderPos{};
-        std::vector<std::string> batchSessionMsg;
-
-        // This method lets cereal know which data members to serialize
-        template<class Archive>
-        void serialize(Archive &archive) {
-            archive(senderPos, batchSessionMsg); // serialize things by passing them to the archive
-        }
-    };
-
-    /**
      * @brief Structure of Step messages.
      */
     struct StepMsg {
@@ -37,7 +24,7 @@ namespace fbae_BBOBBAlgoLayer {
         rank_t senderPos{};
         int wave;
         int step;
-        std::vector<BatchSessionMsg> batchesBroadcast;
+        std::vector<fbae_AlgoLayer::BatchSessionMsg> batchesBroadcast;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>

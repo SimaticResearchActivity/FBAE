@@ -5,7 +5,6 @@
 #ifndef FBAE_BBOBB_H
 #define FBAE_BBOBB_H
 
-#include <condition_variable>
 #include <map>
 
 #include "cereal/archives/binary.hpp"
@@ -21,7 +20,6 @@ public :
     void callbackReceive(std::string && msgString) override;
     void callbackInitDone() override;
     void execute() override;
-    void totalOrderBroadcast(std::string && msg) override;
     void terminate() override;
     std::string toString() override;
 private :
@@ -41,12 +39,6 @@ private :
     bool algoTerminated{false};
 
     /**
-     * @brief Condition variable coupled with @mtxBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
-     * too big
-     */
-    std::condition_variable condVarBatchCtrl;
-
-    /**
      * @brief Received @Step messages which belong to current wave.
      */
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
@@ -55,17 +47,6 @@ private :
      * @brief Last @Step message which has been sent.
      */
     fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
-
-    /**
-     * @brief PerfMeasures messages waiting to be broadcast.
-     */
-    std::vector<std::string> msgsWaitingToBeBroadcast;
-
-    /**
-     * @brief Mutex coupled with @condVarBatchCtrl to control that batch of messages in msgsWaitingToBeBroadcast is not
-     * too big
-     */
-    std::mutex mtxBatchCtrl;
 
     /**
      * @brief The number of steps in each wave is also the number of peers this peer will connect to and also the
@@ -83,11 +64,5 @@ private :
      */
     std::vector<rank_t> peersPos;
 
-    /**
-     * @brief Variable used to shortcut BatchCtrl mechanism (with @mtxBatchCtrl and @condVarBatchCtrl), so that, in
-     * order to avoid deadlocks, we accept that the number of bytes stored in @msgsWaitingToBeBroadcast is greater than
-     * @maxBatchSize of @Param instance.
-     */
-    bool shortcutBatchCtrl{false};
 };
 #endif //FBAE_BBOBB_H

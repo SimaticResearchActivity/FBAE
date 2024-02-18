@@ -1,9 +1,11 @@
 #pragma once
 
+#include <condition_variable>
 #include <memory>
 #include <optional>
-#include "../CommLayer/CommLayer.h"
 #include "../Arguments.h"
+#include "../CommLayer/CommLayer.h"
+#include "AlgoLayerMsg.h"
 class SessionLayer;
 
 class AlgoLayer {
@@ -11,6 +13,27 @@ public:
     virtual ~AlgoLayer() = default;
 
     explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer);
+
+    /**
+     * @brief Returns @batchMsgsWaitingToBeBroadcast encapsulated in a @BatchSessionMsg
+     * @param senderPos position of sender of @batchMsgsWaitingToBeBroadcast
+     * @return @batchMsgsWaitingToBeBroadcast encapsulated in a @BatchSessionMsg
+     */
+    [[nodiscard]] fbae_AlgoLayer::BatchSessionMsg batchGetBatchMsgs(rank_t senderPos);
+
+    /**
+     * @brief Callback to be called by @AlgoLayer when @AlgoLayer is using @batchMsgsWaitingToBeBroadcast.
+     * @param senderPos Position of @msg sender in @AlgoLayer::broadcasters.
+     * @param seqNum Sequence number of @msg.
+     * @param msg Message to be delivered.
+     */
+    void batchNoDeadlockCallbackDeliver(rank_t senderPos, std::string && msg);
+
+    /**
+     * @brief Register that current thread accepts that it is not concerned by value of @batchCtrlShortcut
+     * (it will always wait for @batchMsgsWaitingToBeBroadcast to be small enough; See Issue #37).
+     */
+    void batchRegisterThreadForFullBatchCtrl();
 
     /**
      * @brief Handles message received by @CommLayer
@@ -73,10 +96,11 @@ public:
     void setSessionLayer(SessionLayer *aSessionLayer);
 
     /**
-     * @brief Broadcasts @msg in a total-order manner.
+     * @brief Broadcasts @msg in a total-order manner. Note: If this method is not override, the message is stored in
+     * @batchMsgsWaitingToBeBroadcast
      * @param msg Message to totally-order totalOrderBroadcast.
      */
-    virtual void totalOrderBroadcast(std::string && msg) = 0;
+    virtual void totalOrderBroadcast(std::string && msg);
 
     /**
      * @brief Terminates execution of concrete totalOrderBroadcast algorithm. Eventually this call will lead to the
@@ -91,6 +115,38 @@ public:
     [[nodiscard]] virtual std::string toString() = 0;
 
 private:
+    fbae_AlgoLayer::BatchSessionMsg batchGetBatchMsgsWithLock(rank_t senderPos);
+
+    /**
+     * @brief Condition variable coupled with @batchCtrlMtx to control that batch of messages in
+    * @batchMsgsWaitingToBeBroadcast is not too big
+    */
+    std::condition_variable batchCtrlCondVar;
+
+    /**
+     * @brief Mutex coupled with @batchCtrlCondVar to control that batch of messages in
+    * @batchMsgsWaitingToBeBroadcast is not too big
+     */
+    std::mutex batchCtrlMtx;
+
+    /**
+     * @brief Variable used to shortcut BatchCtrl mechanism (with @batchCtrlMtx and @batchCtrlCondVar), so that, in
+    * order to avoid deadlocks, we accept that the number of bytes stored in @batchMsgsWaitingToBeBroadcast is greater
+    * than @maxBatchSize of @Arguments instance.
+    */
+    bool batchCtrlShortcut{false};
+
+    /**
+     * @brief Vector of threads which registered to accept that they are not concerned by value of @batchCtrlShortcut
+     * (they always wait for @batchMsgsWaitingToBeBroadcast to be small enough; See Issue #37).
+     */
+    std::vector<std::thread::id> batchCtrlThreadsRegisteredForFullBatchCtrl;
+
+    /**
+     * @brief PerfMeasures messages waiting to be broadcast.
+     */
+    std::vector<std::string> batchMsgsWaitingToBeBroadcast;
+
     /**
      * @brief Rank of @sites which are indeed doing broadcasts.
      */

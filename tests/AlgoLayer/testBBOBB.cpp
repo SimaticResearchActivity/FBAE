@@ -172,14 +172,14 @@ namespace fbae_test_BBOBB {
         auto sessionMsgB {serializeStruct<SessionTest>(SessionTest{SessionMsgId::TestMessage,
                                                                    "B"})};
         std::vector<std::string> v{sessionMsgA, sessionMsgB};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsg {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsg {
                 0,
                 v};
         auto sStep {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
                                                                                                    0,
                                                                                                    0,
                                                                                                    0,
-                                                                                                   vector<fbae_BBOBBAlgoLayer::BatchSessionMsg>{batchSessionMsg}})};
+                                                                                                   vector<fbae_AlgoLayer::BatchSessionMsg>{batchSessionMsg}})};
         algoLayerRaw->callbackReceive(std::move(sStep));
 
         // Check all messages are delivered in the correct order
@@ -225,14 +225,14 @@ namespace fbae_test_BBOBB {
         auto sessionMsgD {serializeStruct<SessionTest>(SessionTest{SessionMsgId::TestMessage,
                                                                    "D"})};
         std::vector<std::string> vWave1{sessionMsgC, sessionMsgD};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsgWave1 {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsgWave1 {
                 0,
                 vWave1};
         auto sStepWave1 {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
                                                                                                0,
                                                                                                1,
                                                                                                0,
-                                                                                               vector<fbae_BBOBBAlgoLayer::BatchSessionMsg>{batchSessionMsgWave1}})};
+                                                                                               vector<fbae_AlgoLayer::BatchSessionMsg>{batchSessionMsgWave1}})};
         algoLayerRaw->callbackReceive(std::move(sStepWave1));
 
         // Check that no message was sent, nor delivered
@@ -245,14 +245,14 @@ namespace fbae_test_BBOBB {
         auto sessionMsgB {serializeStruct<SessionTest>(SessionTest{SessionMsgId::TestMessage,
                                                                    "B"})};
         std::vector<std::string> v{sessionMsgA, sessionMsgB};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsg {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsg {
                 0,
                 v};
         auto sStep {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
                                                                                                0,
                                                                                                0,
                                                                                                0,
-                                                                                               vector<fbae_BBOBBAlgoLayer::BatchSessionMsg>{batchSessionMsg}})};
+                                                                                               vector<fbae_AlgoLayer::BatchSessionMsg>{batchSessionMsg}})};
         algoLayerRaw->callbackReceive(std::move(sStep));
 
         // Check all messages are delivered in the correct order
@@ -313,14 +313,14 @@ namespace fbae_test_BBOBB {
         auto sessionMsgF {serializeStruct<SessionTest>(SessionTest{SessionMsgId::TestMessage,
                                                                    "F"})};
         std::vector<std::string> vWave2{sessionMsgE, sessionMsgF};
-        fbae_BBOBBAlgoLayer::BatchSessionMsg batchSessionMsgWave2 {
+        fbae_AlgoLayer::BatchSessionMsg batchSessionMsgWave2 {
                 0,
                 vWave2};
         auto sStepWave2 {serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step,
                                                                                                     0,
                                                                                                     2,
                                                                                                     0,
-                                                                                                    vector<fbae_BBOBBAlgoLayer::BatchSessionMsg>{batchSessionMsgWave2}})};
+                                                                                                    vector<fbae_AlgoLayer::BatchSessionMsg>{batchSessionMsgWave2}})};
         EXPECT_DEATH({algoLayerRaw->callbackReceive(std::move(sStepWave2));},
                      ".*Unexpected wave.*"); // Syntax of matcher is presented at https://google.github.io/googletest/advanced.html#regular-expression-syntax
     }

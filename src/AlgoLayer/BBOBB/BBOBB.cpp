@@ -4,6 +4,7 @@
 
 #include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
+#include "../AlgoLayerMsg.h"
 #include "BBOBB.h"
 #include "BBOBBMsg.h"
 #include "../../msgTemplates.h"
@@ -68,13 +69,7 @@ void BBOBB::beginWave() {
     lastSentStepMsg.wave += 1;
     lastSentStepMsg.step = 0;
     lastSentStepMsg.batchesBroadcast.clear();
-    {
-        lock_guard lck(mtxBatchCtrl);
-        BatchSessionMsg newMessage{senderPos, std::move(msgsWaitingToBeBroadcast)};
-        msgsWaitingToBeBroadcast.clear();
-        lastSentStepMsg.batchesBroadcast.emplace_back(std::move(newMessage));
-    }
-    condVarBatchCtrl.notify_one();
+    lastSentStepMsg.batchesBroadcast.emplace_back(batchGetBatchMsgs(senderPos));
 
     // Send it
     if (getSessionLayer()->getArguments().getVerbose())
@@ -107,7 +102,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
         // Build vector of BatchSessionMsg to deliver
         // Note that to append currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast to batches, we
         // do not use batches.insert() but a for loop in order to be able to use std::move()
-        vector<BatchSessionMsg> batches{std::move(lastSentStepMsg.batchesBroadcast)};
+        vector<fbae_AlgoLayer::BatchSessionMsg> batches{std::move(lastSentStepMsg.batchesBroadcast)};
         for (auto & batch : currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast)
             batches.push_back(std::move(batch));
 
@@ -126,13 +121,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
             if (pos != not_found) {
                 auto senderRank = batches[pos].senderPos;
                 for (auto & msg : batches[pos].batchSessionMsg) {
-                    // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
-                    // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
-                    // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
-                    // because task @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
-                    shortcutBatchCtrl = true;
-                    getSessionLayer()->callbackDeliver(senderRank, std::move(msg));
-                    shortcutBatchCtrl = false;
+                    batchNoDeadlockCallbackDeliver(senderRank, std::move(msg));
                     if (algoTerminated) {
                         return;
                     }
@@ -176,13 +165,4 @@ void BBOBB::terminate() {
 
 std::string BBOBB::toString() {
     return "BBOBB";
-}
-
-void BBOBB::totalOrderBroadcast(std::string && msg) {
-    unique_lock lck(mtxBatchCtrl);
-    condVarBatchCtrl.wait(lck, [this] {
-        return (msgsWaitingToBeBroadcast.size() * getSessionLayer()->getArguments().getSizeMsg() < getSessionLayer()->getArguments().getMaxBatchSize())
-               || shortcutBatchCtrl;
-    });
-    msgsWaitingToBeBroadcast.emplace_back(std::move(msg));
 }

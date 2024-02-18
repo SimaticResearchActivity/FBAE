@@ -2,6 +2,9 @@
 #include "AlgoLayer.h"
 #include "../SessionLayer/SessionLayer.h"
 
+using namespace std;
+using namespace fbae_AlgoLayer;
+
 AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> commLayer)
     : commLayer{std::move(commLayer)}
 {
@@ -47,3 +50,41 @@ void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer)
 {
     sessionLayer = aSessionLayer;
 }
+
+void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::string &&msg) {
+    // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
+    // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
+    // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
+    // because task @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
+    batchCtrlShortcut = true;
+    sessionLayer->callbackDeliver(senderPos, std::move(msg));
+    batchCtrlShortcut = false;
+
+}
+
+fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgsWithLock(rank_t senderPos) {
+    lock_guard lck(batchCtrlMtx);
+    BatchSessionMsg msg{senderPos, std::move(batchMsgsWaitingToBeBroadcast)};
+    batchMsgsWaitingToBeBroadcast.clear();
+    return msg;
+}
+
+fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgs(rank_t senderPos) {
+    BatchSessionMsg msg{batchGetBatchMsgsWithLock(senderPos)};
+    batchCtrlCondVar.notify_one();
+    return msg;
+}
+
+void AlgoLayer::totalOrderBroadcast(std::string && msg) {
+    unique_lock lck(batchCtrlMtx);
+    batchCtrlCondVar.wait(lck, [this] {
+        return (batchMsgsWaitingToBeBroadcast.size() * getSessionLayer()->getArguments().getSizeMsg() < getSessionLayer()->getArguments().getMaxBatchSize())
+               || (batchCtrlShortcut && std::ranges::find(batchCtrlThreadsRegisteredForFullBatchCtrl, std::this_thread::get_id()) != batchCtrlThreadsRegisteredForFullBatchCtrl.end());
+    });
+    batchMsgsWaitingToBeBroadcast.emplace_back(std::move(msg));
+}
+
+void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {
+    batchCtrlThreadsRegisteredForFullBatchCtrl.push_back(std::this_thread::get_id());
+}
+
