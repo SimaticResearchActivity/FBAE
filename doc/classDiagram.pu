@@ -1,0 +1,48 @@
+@startuml
+skinparam classAttributeIconSize 0
+main_as_Facade *--> "+" SessionLayer : relies on >
+main_as_Facade *--> Arguments
+SessionLayer <|-- PerfMeasures
+SessionLayer <|-- SessionStub
+SessionLayer *-- AlgoLayer : relies on >
+SessionLayer "+" --> Arguments
+AlgoLayer <|-- BBOBB
+AlgoLayer <|-- Sequencer
+AlgoLayer <|-- AlgoStub
+AlgoLayer *-- CommLayer : relies on >
+CommLayer <|-- Tcp
+CommLayer <|-- CommStub
+PerfMeasures *-- Measures
+abstract class SessionLayer {
+    - const rank_t 
+    {abstract} + virtual void callbackDeliver()
+    {abstract} + virtual void callbackInitDone()
+    {abstract} + virtual void execute()
+    + virtual const Arguments &getArguments() const
+    {abstract} + virtual rank_t getRankFromRuntimeArgument() const
+}
+abstract class AlgoLayer {
+    - std::vector<rank_t> broadcastersGroup
+    {abstract} + virtual void callbackReceive()
+    {abstract} + virtual void callbackInitDone()
+    {abstract} + virtual void execute()
+    {abstract} + virtual void totalOrderBroadcast()
+    {abstract} + virtual std::string toString()
+    + const std::vector<rank_t> & getBroadcastersGroup() const
+    + rank_t getPosInBroadcastersGroup() const
+    + bool isBroadcastingMessages() const
+    + virtual void terminate()
+    + setBroadcastersGroup()
+}
+abstract class CommLayer {
+    - std::latch initDoneCalled
+    {abstract} + virtual void multicastMsg(const std::string &msg)
+    {abstract} + virtual void openDestAndWaitIncomingMsg()
+    {abstract} + virtual void send()
+    {abstract} + virtual void terminate()
+    {abstract} + virtual std::string toString()
+    + AlgoLayer* getAlgoLayer() const
+    + std::latch &getInitDoneCalled()
+    + void setAlgoLayer()
+}
+@enduml

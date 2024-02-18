@@ -1,0 +1,20 @@
+@startuml
+!pragma teoz true
+actor process_rank_0 as 0 <<Sequencer>>
+actor process_rank_1 as 1 <<Participant_0>>
+actor process_rank_2 as 2 <<Participant_1>>
+1 -> 1 : totalOrderBroadcast(msg_1)
+1 ->(10) 0 : BroadcastRequest[msg_1]
+0 ->(10) 1 : \n
+&0 ->(10) 2 : multicast Broadcast[msg_1]
+1 -> 1 : callbackDeliver(msg_1)\n
+&2 -> 2 : callbackDeliver(msg_1)
+|||
+|||
+2 -> 2 : totalOrderBroadcast(msg_2)
+2 ->(10) 0 : BroadcastRequest[msg_2]
+0 ->(10) 1 : \n
+&0 ->(10) 2 : multicast Broadcast[msg_2]
+1 -> 1 : callbackDeliver(msg_2)\n
+&2 -> 2 : callbackDeliver(msg_2)
+@enduml

@@ -37,7 +37,7 @@ First, write a JSON site file defining the sites which will run instances of *FB
 
 This file example defines 3 sites, each running on localhost, the first site listening for connections on port 4096, the second one on port 4097, and the third one on port 4098.
 
-Note `Resources` directory of *FBAE* repository contains samples of site files.
+Note: `res` directory of *FBAE* repository contains samples of site files.
 
 ### Launch manually *fbae* executable
 Once your site file is ready, you can run `fbae` executable according to the following usage:
@@ -50,7 +50,7 @@ Where:
                                                 S = Sequencer based
   -c|--comm <communicationLayer_identifier>  Communication layer to be used
                                                 t = TCP
-  -f|--frequency <number>                    [optional] Number of PerfMessage session messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
+  -f|--frequency <number>                    [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
   -h|--help                                  Show help message
   -m|--maxBatchSize <size_in_bytes>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
   -n|--nbMsg <number>                        Number of messages to be sent
@@ -58,27 +58,27 @@ Where:
   -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [22,65515])
   -S|--site <siteFile_name>                  Name (including path) of the sites file to be used
   -v|--verbose                               [optional] Verbose display required
-  -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage session messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
+  -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage sessionLayer messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
 ```
 
 For instance, you can open 3 terminals and run:
 
-- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../Resources/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
-- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../Resources/sites_3_local.json` on terminal 1.
-- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_3_local.json` on terminal 2.
+- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
+- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../res/sites_3_local.json` on terminal 1.
+- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../res/sites_3_local.json` on terminal 2.
 
 After a while (depending on the number of messages to be sent you specified), `fbae` displays the statistics (structured in CSV format) observed for this process, e.g.:
 
 ```txt
 algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile,nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)
-Sequencer,TCP,0,2147483647,3,0%,2,1024,../../Resources/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
+Sequencer,TCP,0,2147483647,3,0%,2,1024,../../res/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
 ```
 
-Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../Resources/sites_3_local.json`
+Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../res/sites_3_local.json`
 
 ### Launch *fbae* executable thanks to a script
 
-`Tools` directory contains `launch_fbae.py` Python script. Its usage is:
+`utils` directory contains `launch_fbae.py` Python script. Its usage is:
 
 ``` shell
 python3 launch_fbae.py path_to_fbae_executable path_to_result_directory all_fbae_arguments_except_-r_or_--rank
@@ -125,6 +125,8 @@ This section lists the communication protocols which can be currently invoked fo
 
 ## Extending *FABE*
 
+To extend *FBAE*, take a look at **doc/designDocument.md** and read the following subsections.
+
 ### Global architecture of *FBAE*
 
 *FBAE* is structured into 3 layers :
@@ -166,10 +168,10 @@ The interfaces between these layers are the following:
     - *Communication layer* ==> *Algorithm layer*
 
          - When *CommunicationLayer* is fully initailized, it calls `AlgoLayer::callbackInitDone()`.
-         - When *Communication layer* receives a message, it calls `AlgoLayer::callbackHandleMessage()` method.
+         - When *Communication layer* receives a message, it calls `AlgoLayer::callbackReceive()` method.
          - Note:
-           1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackHandleMessage()` before `AlgoLayer::callbackInitDone()` is done executing.
-           2. Even if it may be multithreaded, *CommunicationLayer* guarantees that there will never be simultaneous calls to `AlgoLayer::callbackHandleMessage()`.
+           1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackReceive()` before `AlgoLayer::callbackInitDone()` is done executing.
+           2. Even if it may be multithreaded, *CommunicationLayer* guarantees that there will never be simultaneous calls to `AlgoLayer::callbackReceive()`.
 
 ### Adding another Total-Order broadcast algorithm
 
@@ -182,29 +184,29 @@ Before presenting the procedure, you need to understand the difference between:
 For instance:
 - In *Sequencer* algorithm
   - Sequencer process always has *rank* 0. Sequencer process has no position, as it does not participate as a broadcaster.
-  - The other processes (ranked 1, 2, 3, etc.) participate as broadcasters. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
+  - The other processes (ranked 1, 2, 3, etc.) participate as broadcastersGroup. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
 - In *BBOBB* algorithm, all processes participate as braodcasters. Each of them has a position (as broadcaster) which corresponds to its rank.
 
 Now we can present the procedure for adding another Total-Order broadcast algorithm:
 
-1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [mscgen](https://www.mcternan.me.uk/mscgen/) or [mscgen_js](https://mscgen.js.org/).
+1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [plantuml](https://plantuml.com/fr/sequence-diagram) (see examples in `doc` directory).
 
-2. Create a subdirectory `AlgoLayer` directory, named after the name of your algorithm. For instance, `AlgoLayer/Foo` directory.
+2. Create a subdirectory of `src/AlgoLayer` directory, named after the name of your algorithm. For instance, `src/AlgoLayer/Foo` directory.
 
-3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `AlgoLayer/Foo/FooMsg.h`, containing:
+3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/AlgoLayer/Foo/FooMsg.h`, containing:
 
    1. Definition of a namespace dedicated to your algorithm.
    2. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
    3. Definition of the structure of the different messages. Note: This definition must include [Cereal](http://uscilab.github.io/cereal/ serialization method (for examples, see implementation of *Sequencer* or *BBOBB* algorithms and [Cereal quick start](http://uscilab.github.io/cereal/quickstart.html)).
 
-4. Create the class which will implement your algorithm, e.g. `AlgoLayer/Foo/Foo.h` (to define your class) and `AlgoLayer/Foo/Foo.cpp` (to implement your class).
+4. Create the class which will implement your algorithm, e.g. `src/AlgoLayer/Foo/Foo.h` (to define your class) and `src/AlgoLayer/Foo/Foo.cpp` (to implement your class).
 
 5. Implement `Foo::toString()` method.
 
 6.  Implement `Foo::execute()` method to handle the different messages your algorithm can receive.
   
-       - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcasters(std::move(thisVzector))`.
-       - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSession()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
+       - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcastersGroup(std::move(thisVzector))`.
+       - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
 
 7.  Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:
        - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm.
@@ -213,13 +215,15 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
        - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
 
-9.  Implement `Foo::callbackHandleMessage()` method to handle all of the messages your algorithm is manipulating. In particular, if a session message can be delivered, call `getSession()->callbackDeliver()`. Note:
+9.  Implement `Foo::callbackReceive()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
         - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `shortcutBatchCtrl = true;` and `shortcutBatchCtrl = false;` instructions.
-        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackHandleMessage()`.
+        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackReceive()`.
 
 10. Implement `Foo::terminate()` method.
 
-11. Implement and run unitary tests to check your implementation works properly.
+11. Implement [GoogleTest](https://google.github.io/googletest/) tests in a dedicated `.cpp` file in `tests/AlgoLayer` directory (e.g. `tests/AlgoLayer/testFoo.cpp`). Run your tests.
+
+        - Note: To compile properly, the required `.h` and `.cpp` files must be mentioned in `tests/CMakeLists.txt`.
 
 12. Modify `main.cpp` to integrate your new class:
 
@@ -234,10 +238,10 @@ If you want to add another communication protocol:
 
 1. Make a new subclass of `CommLayer` by inspiring yourself from `Tcp.h` and `Tcp.cpp`. Note:
 
-    - *FBAE* must guarantee that, when `AlgoLayer::callbackInitDone()` method is called, `AlgoLayer::callbackHandleMessage()` was not previously called. This is the role of:
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackInitDone()` method is called, `AlgoLayer::callbackReceive()` was not previously called. This is the role of:
         - `getInitDoneCalled().wait();` instruction in `Tcp::handleIncomingConn()`
         - `getInitDoneCalled().count_down();` instruction in `Tcp::openDestAndWaitIncomingMsg()`
-    - *FBAE* must guarantee that, when `AlgoLayer::callbackHandleMessage()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackHandleMessage()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackReceive()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackReceive()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
 
 
 2. Modify `main.cpp` to integrate your new class:

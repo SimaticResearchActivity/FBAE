@@ -1,0 +1,94 @@
+@startuml
+title Message Sequence Chart of a perfMeasures SessionLayer using a Sequencer algorithm with only 1 broadcaster
+actor main_curr_process as main
+participant arguments as arguments
+participant measures as measures
+participant perfMeasures as session
+participant sequencer as algo
+participant comm_eg_tcp as comm
+actor remote_process_sequencer as remote
+== Initialization phase ==
+activate main
+main -> session : execute()
+activate session
+activate arguments
+activate measures
+session -> algo : execute()
+activate algo
+algo->session : setBroadcasters()
+algo -> comm : openDestAndWaitIncomingMsg()
+activate comm
+comm -> arguments : getAlgoLayer->getSessionLayer()->getSites()
+comm -> comm : accept comm link from remote
+comm ->(10) remote : Open comm link
+remote ->(10) comm : Open comm link
+comm -> algo : initDone()
+algo -> session : initDone()
+session -> algo : totalOrderBroadcast(FirstBroadcast)
+algo -> comm : send(BraodcastRequest[FirstBroadcast])
+comm ->(10) remote : Message BraodcastRequest[FirstBroadcast]
+remote ->(10) comm : Message Broadcast[FirstBroadcast]
+comm -> algo : callbackReceive(Broadcast[FirstBroadcast])
+algo -> session : callbackDeliver(FirstBroadcast)
+== Performance measures phase ==
+rnote over session
+  Session has received the FirstBroadcast message of
+  all participants: It starts sending PerfMeasure messages.
+endrnote
+session -> measures : setStartTime()
+session -> algo : totalOrderBroadcast(PerfMeasure)
+algo -> comm : send(BraodcastRequest[PerfMeasure])
+comm ->(10) remote : Message BraodcastRequest[PerfMeasure]
+remote ->(10) comm : Message Broadcast[PerfMeasure]
+comm -> algo : callbackReceive(Broadcast[PerfMeasure])
+algo -> session : callbackDeliver(PerfMeasure)
+rnote over session
+  We have only one participant: It is the one who
+  answers to PerfMeasure with PerfResponse (if there
+  had been several participants, only one would have
+  answered to the PerfMeasure of this sender).
+endrnote
+session -> algo : totalOrderBroadcast(PerfResponse)
+algo -> comm : send(BraodcastRequest[PerfResponse])
+comm ->(10) remote : Message BraodcastRequest[PerfResponse]
+remote ->(10) comm : Message Broadcast[PerfResponse]
+comm -> algo : callbackReceive(Broadcast[PerfResponse])
+algo -> session : callbackDeliver(PerfResponse)
+session -> measures : add(elasped)
+== Termination phase ==
+  rnote over session
+  We suppose that argument given to fbae
+  specified only 1 PerfMeasure/PerfResponse.
+endrnote
+session -> measures : setStopTime()
+session -> algo : totalOrderBroadcast(FinishedPerfMeasures)
+algo -> comm : send(BraodcastRequest[FinishedPerfMeasures])
+comm ->(10) remote : Message BraodcastRequest[FinishedPerfMeasures]
+remote ->(10) comm : Message Broadcast[FinishedPerfMeasures]
+comm -> algo : callbackReceive(Broadcast[FinishedPerfMeasures])
+algo -> session : callbackDeliver(FinishedPerfMeasures)
+rnote over session
+  Session received all of the FinishedPerfMeasure:
+  It can terminate.
+endrnote
+session->algo : terminate()
+algo -> comm : terminate()
+comm ->(10) remote : close conn
+remote ->(10) comm : close conn
+comm --> algo : return from openDestAndWaitIncomingMsg()
+deactivate comm
+algo -> session : return from execute()
+deactivate algo
+group  If a participant is a broadcaster, it displays statistics
+   session->arguments : csvHeadline()
+   session->algo : toString()
+   session->comm : getCommLayer()->toString()
+   session->arguments : asCsv()
+   session->measures :  asCsv()
+end   
+session -> main : return from execute()
+deactivate session
+deactivate measures
+deactivate arguments
+deactivate main
+@enduml
