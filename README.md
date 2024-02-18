@@ -125,6 +125,8 @@ This section lists the communication protocols which can be currently invoked fo
 
 ## Extending *FABE*
 
+To extend *FBAE*, take a look at **doc/designDocument.md** and read the following subsections.
+
 ### Global architecture of *FBAE*
 
 *FBAE* is structured into 3 layers :
@@ -187,17 +189,17 @@ For instance:
 
 Now we can present the procedure for adding another Total-Order broadcast algorithm:
 
-1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [mscgen](https://www.mcternan.me.uk/mscgen/) or [mscgen_js](https://mscgen.js.org/).
+1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [plantuml](https://plantuml.com/fr/sequence-diagram) (see examples in `doc` directory).
 
-2. Create a subdirectory `AlgoLayer` directory, named after the name of your algorithm. For instance, `AlgoLayer/Foo` directory.
+2. Create a subdirectory of `src/AlgoLayer` directory, named after the name of your algorithm. For instance, `src/AlgoLayer/Foo` directory.
 
-3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `AlgoLayer/Foo/FooMsg.h`, containing:
+3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/AlgoLayer/Foo/FooMsg.h`, containing:
 
    1. Definition of a namespace dedicated to your algorithm.
    2. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
    3. Definition of the structure of the different messages. Note: This definition must include [Cereal](http://uscilab.github.io/cereal/ serialization method (for examples, see implementation of *Sequencer* or *BBOBB* algorithms and [Cereal quick start](http://uscilab.github.io/cereal/quickstart.html)).
 
-4. Create the class which will implement your algorithm, e.g. `AlgoLayer/Foo/Foo.h` (to define your class) and `AlgoLayer/Foo/Foo.cpp` (to implement your class).
+4. Create the class which will implement your algorithm, e.g. `src/AlgoLayer/Foo/Foo.h` (to define your class) and `src/AlgoLayer/Foo/Foo.cpp` (to implement your class).
 
 5. Implement `Foo::toString()` method.
 
@@ -219,7 +221,9 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 
 10. Implement `Foo::terminate()` method.
 
-11. Implement and run unitary tests to check your implementation works properly.
+11. Implement [GoogleTest](https://google.github.io/googletest/) tests in a dedicated `.cpp` file in `tests/AlgoLayer` directory (e.g. `tests/AlgoLayer/testFoo.cpp`). Run your tests.
+
+        - Note: To compile properly, the required `.h` and `.cpp` files must be mentioned in `tests/CMakeLists.txt`.
 
 12. Modify `main.cpp` to integrate your new class:
 
