@@ -76,7 +76,7 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
         {
             auto s{receiveEvent(ptrSock.get())};
             std::scoped_lock lock(mtxCallbackHandleMessage);
-            getAlgoLayer()->callbackHandleMessage(std::move(s));
+            getAlgoLayer()->callbackReceive(std::move(s));
         }
     }
     catch (boost::system::system_error& e)

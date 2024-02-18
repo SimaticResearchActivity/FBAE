@@ -96,7 +96,7 @@ namespace fbae_test_Sequencer {
         auto msg {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::BroadcastRequest,
                                                                                senderPos,
                                                                                std::move(s)})};
-        algoLayerRaw->callbackHandleMessage(std::move(msg));
+        algoLayerRaw->callbackReceive(std::move(msg));
 
         // Check that 3 messages are sent by Sequencer
         EXPECT_EQ(nbSites-1, commLayerRaw->getSent().size());
@@ -133,7 +133,7 @@ namespace fbae_test_Sequencer {
         auto msg {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
                                                                                                                                    senderPos,
                                                                                                                                    std::move(s)})};
-        algoLayerRaw->callbackHandleMessage(std::move(msg));
+        algoLayerRaw->callbackReceive(std::move(msg));
 
         // Check that 1 message has been delivered
         EXPECT_EQ(1, sessionStub.getDelivered().size());

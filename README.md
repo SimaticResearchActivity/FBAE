@@ -166,10 +166,10 @@ The interfaces between these layers are the following:
     - *Communication layer* ==> *Algorithm layer*
 
          - When *CommunicationLayer* is fully initailized, it calls `AlgoLayer::callbackInitDone()`.
-         - When *Communication layer* receives a message, it calls `AlgoLayer::callbackHandleMessage()` method.
+         - When *Communication layer* receives a message, it calls `AlgoLayer::callbackReceive()` method.
          - Note:
-           1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackHandleMessage()` before `AlgoLayer::callbackInitDone()` is done executing.
-           2. Even if it may be multithreaded, *CommunicationLayer* guarantees that there will never be simultaneous calls to `AlgoLayer::callbackHandleMessage()`.
+           1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackReceive()` before `AlgoLayer::callbackInitDone()` is done executing.
+           2. Even if it may be multithreaded, *CommunicationLayer* guarantees that there will never be simultaneous calls to `AlgoLayer::callbackReceive()`.
 
 ### Adding another Total-Order broadcast algorithm
 
@@ -213,9 +213,9 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
        - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
 
-9.  Implement `Foo::callbackHandleMessage()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
+9.  Implement `Foo::callbackReceive()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
         - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `shortcutBatchCtrl = true;` and `shortcutBatchCtrl = false;` instructions.
-        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackHandleMessage()`.
+        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackReceive()`.
 
 10. Implement `Foo::terminate()` method.
 
@@ -234,10 +234,10 @@ If you want to add another communication protocol:
 
 1. Make a new subclass of `CommLayer` by inspiring yourself from `Tcp.h` and `Tcp.cpp`. Note:
 
-    - *FBAE* must guarantee that, when `AlgoLayer::callbackInitDone()` method is called, `AlgoLayer::callbackHandleMessage()` was not previously called. This is the role of:
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackInitDone()` method is called, `AlgoLayer::callbackReceive()` was not previously called. This is the role of:
         - `getInitDoneCalled().wait();` instruction in `Tcp::handleIncomingConn()`
         - `getInitDoneCalled().count_down();` instruction in `Tcp::openDestAndWaitIncomingMsg()`
-    - *FBAE* must guarantee that, when `AlgoLayer::callbackHandleMessage()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackHandleMessage()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
+    - *FBAE* must guarantee that, when `AlgoLayer::callbackReceive()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackReceive()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
 
 
 2. Modify `main.cpp` to integrate your new class:

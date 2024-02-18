@@ -31,7 +31,7 @@ private:
     boost::asio::io_service ioService;
 
     /**
-     * @brief Mutex used to guarantee that all calls to callbackHandleMessage are done in a critical section.
+     * @brief Mutex used to guarantee that all calls to callbackReceive are done in a critical section.
      */
     std::mutex mtxCallbackHandleMessage;
 

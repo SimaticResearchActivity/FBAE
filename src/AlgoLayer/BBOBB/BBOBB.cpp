@@ -18,7 +18,7 @@ BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
 {
 }
 
-void BBOBB::callbackHandleMessage(std::string && msgString) {
+void BBOBB::callbackReceive(std::string && msgString) {
     auto msgId{static_cast<MsgId>(msgString[0])};
     if (msgId == MsgId::Step) {
         if (!algoTerminated) {

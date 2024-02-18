@@ -18,7 +18,7 @@
 class BBOBB : public AlgoLayer {
 public :
     explicit BBOBB(std::unique_ptr<CommLayer> commLayer);
-    void callbackHandleMessage(std::string && msgString) override;
+    void callbackReceive(std::string && msgString) override;
     void callbackInitDone() override;
     void execute() override;
     void totalOrderBroadcast(std::string && msg) override;

@@ -69,7 +69,7 @@ private:
 
     /**
      * @brief Latch used to guarantee that AlgoLayer::callbackInitDone() has been called before any call to
-     * AlgoLayer::callbackHandleMessage() is done by threads handling communication incoming messages.
+     * AlgoLayer::callbackReceive() is done by threads handling communication incoming messages.
      */
     std::latch initDoneCalled{1};
 };

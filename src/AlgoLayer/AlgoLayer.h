@@ -12,10 +12,10 @@ public:
     explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer);
 
     /**
-     * @brief Handles message received from @an incoming peer.
+     * @brief Handles message received by @CommLayer
      * @param msgString String containing message.
      */
-    virtual void callbackHandleMessage(std::string && msgString) = 0;
+    virtual void callbackReceive(std::string && msgString) = 0;
 
     /**
      * @brief Callback called by @CommLayer when @CommLayer is initialized locally.

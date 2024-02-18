@@ -13,7 +13,7 @@ Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer)
 {
 }
 
-void Sequencer::callbackHandleMessage(std::string && msgString)
+void Sequencer::callbackReceive(std::string && msgString)
 {
     auto msgId{ static_cast<MsgId>(msgString[0]) };
     switch (msgId)
