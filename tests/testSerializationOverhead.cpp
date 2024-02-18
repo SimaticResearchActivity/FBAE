@@ -3,8 +3,7 @@
 //
 #include <gtest/gtest.h>
 #include <vector>
-#include "cereal/types/string.hpp"
-#include "../src/basicTypes.h"
+#include "../src/Arguments.h"
 #include "../src/msgTemplates.h"
 #include "../src/SessionLayer/SessionLayerMsg.h"
 #include "../src/AlgoLayer/Sequencer/SequencerMsg.h"
@@ -78,5 +77,16 @@ namespace fbae_test_serializationOverhead {
         constexpr auto sizeHeaderAndSizeVectorEncodingInStepMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(int) + sizeof(int) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
         EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInStepMsg + nbBatchInStep * (sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch *(sizeof(size_t) + s_sessionMsg.size())),
                   s_Step_11.size());
+    }
+
+    TEST(SerializationOverhead, CheckMinSizeClientMessageToBroadcast) {
+        auto s_sessionMsg {serializeStruct<fbae_SessionLayer::SessionPerfMeasure>(fbae_SessionLayer::SessionPerfMeasure{fbae_SessionLayer::SessionMsgId::PerfMeasure,
+                                                                                                                        0,
+                                                                                                                        0,
+                                                                                                                        std::chrono::system_clock::now(),
+                                                                                                                        ""})};
+        // Serialization overhead is sizeof(size_t) because Cereal need to store the size of the string.
+        EXPECT_EQ(minSizeClientMessageToBroadcast,
+                  s_sessionMsg.size());
     }
 }
