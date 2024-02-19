@@ -22,8 +22,8 @@ namespace fbae_BBOBBAlgoLayer {
     struct StepMsg {
         MsgId msgId{};
         rank_t senderPos{};
-        int wave;
-        int step;
+        uint8_t wave;
+        uint8_t step;
         std::vector<fbae_AlgoLayer::BatchSessionMsg> batchesBroadcast;
 
         // This method lets cereal know which data members to serialize

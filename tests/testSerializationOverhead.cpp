@@ -74,7 +74,7 @@ namespace fbae_test_serializationOverhead {
                                                                                                    42,
                                                                                                    55,
                                                                                                    v_batchSessionMsg_11})};
-        constexpr auto sizeHeaderAndSizeVectorEncodingInStepMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(int) + sizeof(int) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
+        constexpr auto sizeHeaderAndSizeVectorEncodingInStepMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
         EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInStepMsg + nbBatchInStep * (sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch *(sizeof(size_t) + s_sessionMsg.size())),
                   s_Step_11.size());
     }

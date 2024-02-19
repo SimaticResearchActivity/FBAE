@@ -27,8 +27,8 @@ void BBOBB::callbackReceive(std::string && msgString) {
 
             if (getSessionLayer()->getArguments().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " : Receive a Step Message (wave : " << stepMsg.wave << " / step : "
-                     << stepMsg.step << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+                     << " : Receive a Step Message (wave : " << static_cast<uint32_t>(stepMsg.wave) << " / step : "
+                     << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
 
             if (stepMsg.wave == lastSentStepMsg.wave) {
                 currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
@@ -41,8 +41,8 @@ void BBOBB::callbackReceive(std::string && msgString) {
                 nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
             } else {
                 cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
-                     << " (with step = " << stepMsg.step << ") from Broadcaster #"
+                     << " (currentWave = " << static_cast<uint32_t>(lastSentStepMsg.wave) << ") : Unexpected wave = " << static_cast<uint32_t>(stepMsg.wave)
+                     << " (with step = " << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #"
                      << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
                 exit(EXIT_FAILURE);
             }
@@ -74,7 +74,7 @@ void BBOBB::beginWave() {
     // Send it
     if (getSessionLayer()->getArguments().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-             << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
+             << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
              << "\n";
     getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                             serializeStruct(lastSentStepMsg));
@@ -91,7 +91,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
         // Send it
         if (getSessionLayer()->getArguments().getVerbose())
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                 << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
+                 << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : " << static_cast<uint32_t>(lastSentStepMsg.step)
                  << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
         getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                                 serializeStruct(lastSentStepMsg));
