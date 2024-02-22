@@ -43,4 +43,5 @@ void CommStub::terminate() {
 std::string CommStub::toString() {
     // No sense to call this method in the context of tests.
     assert(false);
+    return "CommStub";
 }
