@@ -5,6 +5,7 @@
 #ifndef FBAE_ALGO_LAYER_MSG_H
 #define FBAE_ALGO_LAYER_MSG_H
 
+#include "../adaptCereal.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"

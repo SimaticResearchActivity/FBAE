@@ -20,8 +20,8 @@ namespace fbae_test_serializationOverhead {
                                                                                                           string(
                                                                                                                     sizeStringInSessionMsg,
                                                                                                                     'A')})};
-        // Serialization overhead is sizeof(size_t) because Cereal need to store the size of the string.
-        EXPECT_EQ(sizeof(size_t) + sizeof(fbae_SessionLayer::SessionMsgId)+sizeStringInSessionMsg,
+        // Serialization overhead is sizeof(CEREAL_SIZE_TYPE) because Cereal need to store the size of the string.
+        EXPECT_EQ(sizeof(CEREAL_SIZE_TYPE) + sizeof(fbae_SessionLayer::SessionMsgId)+sizeStringInSessionMsg,
                   s_sessionMsg.size());
     }
 
@@ -33,8 +33,8 @@ namespace fbae_test_serializationOverhead {
         auto s_StructBroadcastMessage {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
                                                                                                                                                         '1',
                                                                                                                                                         s_sessionMsg})};
-        // Serialization overhead is sizeof(fbae_SequencerAlgoLayer::MsgId)+sizeof(senderPos)+sizeof(size_t) (because Cereal need to store the size of the string) + overhead on session message.
-        EXPECT_EQ(sizeof(fbae_SequencerAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(size_t) + (sizeof(size_t) + sizeof(fbae_SessionLayer::SessionMsgId)+sizeStringInSessionMsg),
+        // Serialization overhead is sizeof(fbae_SequencerAlgoLayer::MsgId)+sizeof(senderPos)+sizeof(CEREAL_SIZE_TYPE) (because Cereal need to store the size of the string) + overhead on session message.
+        EXPECT_EQ(sizeof(fbae_SequencerAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(CEREAL_SIZE_TYPE) + (sizeof(CEREAL_SIZE_TYPE) + sizeof(fbae_SessionLayer::SessionMsgId)+sizeStringInSessionMsg),
                   s_StructBroadcastMessage.size());
     }
 
@@ -50,8 +50,8 @@ namespace fbae_test_serializationOverhead {
                 v_11};
         auto s_batchSessionMsg_11 {serializeStruct<fbae_AlgoLayer::BatchSessionMsg>(batchSessionMsg_11)};
 
-        constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
-        EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch * (sizeof(size_t) + s_sessionMsg.size()),
+        constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(CEREAL_SIZE_TYPE); // sizeof(CEREAL_SIZE_TYPE) for the encoding of the size of the vector
+        EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch * (sizeof(CEREAL_SIZE_TYPE) + s_sessionMsg.size()),
                   s_batchSessionMsg_11.size());
     }
 
@@ -65,7 +65,7 @@ namespace fbae_test_serializationOverhead {
         fbae_AlgoLayer::BatchSessionMsg batchSessionMsg_11 {
                 '1',
                 v_11};
-        constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
+        constexpr auto sizeHeaderAndSizeVectorEncodingInBatchSessionMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(CEREAL_SIZE_TYPE); // sizeof(CEREAL_SIZE_TYPE) for the encoding of the size of the vector
 
         constexpr auto nbBatchInStep = 1;
         std::vector<fbae_AlgoLayer::BatchSessionMsg> v_batchSessionMsg_11{batchSessionMsg_11};
@@ -74,8 +74,8 @@ namespace fbae_test_serializationOverhead {
                                                                                                    42,
                                                                                                    55,
                                                                                                    v_batchSessionMsg_11})};
-        constexpr auto sizeHeaderAndSizeVectorEncodingInStepMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(size_t); // sizeof(size_t) for the encoding of the size of the vector
-        EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInStepMsg + nbBatchInStep * (sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch *(sizeof(size_t) + s_sessionMsg.size())),
+        constexpr auto sizeHeaderAndSizeVectorEncodingInStepMsg = sizeof(fbae_BBOBBAlgoLayer::MsgId) + sizeof(rank_t) + sizeof(uint8_t) + sizeof(uint8_t) + sizeof(CEREAL_SIZE_TYPE); // sizeof(CEREAL_SIZE_TYPE) for the encoding of the size of the vector
+        EXPECT_EQ(sizeHeaderAndSizeVectorEncodingInStepMsg + nbBatchInStep * (sizeHeaderAndSizeVectorEncodingInBatchSessionMsg + nbSessionMsgPerBatch *(sizeof(CEREAL_SIZE_TYPE) + s_sessionMsg.size())),
                   s_Step_11.size());
     }
 
@@ -85,7 +85,7 @@ namespace fbae_test_serializationOverhead {
                                                                                                                         0,
                                                                                                                         std::chrono::system_clock::now(),
                                                                                                                         ""})};
-        // Serialization overhead is sizeof(size_t) because Cereal need to store the size of the string.
+        // Serialization overhead is sizeof(CEREAL_SIZE_TYPE) because Cereal need to store the size of the string.
         EXPECT_EQ(minSizeClientMessageToBroadcast,
                   s_sessionMsg.size());
     }

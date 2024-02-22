@@ -7,7 +7,7 @@
 #include "OptParserExtended.h"
 
 // The following value has been found experimentally when filler field of SenderMessageToBroadcast has size 0
-constexpr int minSizeClientMessageToBroadcast{22};
+constexpr int minSizeClientMessageToBroadcast{18};
 
 // Maximum length of a UDP packet
 constexpr size_t maxLength{65515};

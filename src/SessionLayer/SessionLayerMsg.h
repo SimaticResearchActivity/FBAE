@@ -1,9 +1,11 @@
 #pragma once
 
+#include "../adaptCereal.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/chrono.hpp"
 #include "cereal/types/string.hpp"
 #include "../basicTypes.h"
+
 
 namespace fbae_SessionLayer {
     //---------------------------------------------------

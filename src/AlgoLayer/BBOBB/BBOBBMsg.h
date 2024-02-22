@@ -1,6 +1,7 @@
 #ifndef FBAE_BBOBBMSG_H
 #define FBAE_BBOBBMSG_H
 
+#include "../../adaptCereal.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
