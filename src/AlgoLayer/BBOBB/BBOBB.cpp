@@ -19,16 +19,16 @@ BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
 {
 }
 
-void BBOBB::callbackReceive(std::string && msgString) {
-    auto msgId{static_cast<MsgId>(msgString[0])};
+void BBOBB::callbackReceive(std::string && algoMsgAsString) {
+    auto msgId{static_cast<MsgId>(algoMsgAsString[0])};
     if (msgId == MsgId::Step) {
         if (!algoTerminated) {
-            auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
+            auto stepMsg{deserializeStruct<StepMsg>(std::move(algoMsgAsString))};
 
             if (getSessionLayer()->getArguments().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " : Receive a Step Message (wave : " << stepMsg.wave << " / step : "
-                     << stepMsg.step << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+                     << " : Receive a Step Message (wave : " << static_cast<uint32_t>(stepMsg.wave) << " / step : "
+                     << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
 
             if (stepMsg.wave == lastSentStepMsg.wave) {
                 currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
@@ -41,8 +41,8 @@ void BBOBB::callbackReceive(std::string && msgString) {
                 nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
             } else {
                 cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " (currentWave = " << lastSentStepMsg.wave << ") : Unexpected wave = " << stepMsg.wave
-                     << " (with step = " << stepMsg.step << ") from Broadcaster #"
+                     << " (currentWave = " << static_cast<uint32_t>(lastSentStepMsg.wave) << ") : Unexpected wave = " << static_cast<uint32_t>(stepMsg.wave)
+                     << " (with step = " << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #"
                      << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
                 exit(EXIT_FAILURE);
             }
@@ -74,7 +74,7 @@ void BBOBB::beginWave() {
     // Send it
     if (getSessionLayer()->getArguments().getVerbose())
         cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-             << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
+             << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
              << "\n";
     getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                             serializeStruct(lastSentStepMsg));
@@ -91,7 +91,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
         // Send it
         if (getSessionLayer()->getArguments().getVerbose())
             cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                 << " : Send Step Message (wave : " << lastSentStepMsg.wave << " / step : " << lastSentStepMsg.step
+                 << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : " << static_cast<uint32_t>(lastSentStepMsg.step)
                  << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
         getCommLayer()->send(peersPos[lastSentStepMsg.step],
                                                 serializeStruct(lastSentStepMsg));
@@ -121,7 +121,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
             if (pos != not_found) {
                 auto senderRank = batches[pos].senderPos;
                 for (auto & msg : batches[pos].batchSessionMsg) {
-                    batchNoDeadlockCallbackDeliver(senderRank, std::move(msg));
+                    batchNoDeadlockCallbackDeliver(senderRank, msg);
                     if (algoTerminated) {
                         return;
                     }

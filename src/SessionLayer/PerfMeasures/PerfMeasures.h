@@ -15,7 +15,7 @@ class PerfMeasures : public SessionLayer {
 public:
     PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
 
-    void callbackDeliver(rank_t senderPos, std::string && msg) override;
+    void callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) override;
     void callbackInitDone() override;
     void execute() override;
 
@@ -47,16 +47,16 @@ private:
     /**
      * @brief Called by @callbackDeliver to process @PerfMeasure message
      * @param senderPos Rank of message sender.
-     * @param msg Message to process.
+     * @param sessionMsg Message to process.
      */
-    void processPerfMeasureMsg(rank_t senderPos, std::string && msg);
+    void processPerfMeasureMsg(rank_t senderPos, const fbaeSL::SessionMsg &sessionMsg);
 
     /**
      * @brief Called by @callbackDeliver to process @PerfMeasure message
      * @param senderPos Rank of message sender.
-     * @param msg Message to process.
+     * @param sessionMsg Message to process.
      */
-    void processPerfResponseMsg(rank_t senderPos, std::string && msg);
+    void processPerfResponseMsg(rank_t senderPos, const fbaeSL::SessionMsg &sessionMsg);
 
     /**
      * @brief Thread to send PerfMessage at @Param::frequency per second.

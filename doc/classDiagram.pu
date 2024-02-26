@@ -22,7 +22,7 @@ abstract class SessionLayer {
     {abstract} + virtual rank_t getRankFromRuntimeArgument() const
 }
 abstract class AlgoLayer {
-    - std::vector<std::string> batchMsgsWaitingToBeBroadcast
+    - std::vector<std::string> batchWaitingSessionMsg
     - std::vector<rank_t> broadcastersGroup
     {abstract} + virtual void callbackReceive()
     {abstract} + virtual void callbackInitDone()

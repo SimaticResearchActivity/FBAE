@@ -15,31 +15,30 @@ public:
     explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer);
 
     /**
-     * @brief Returns @batchMsgsWaitingToBeBroadcast encapsulated in a @BatchSessionMsg
-     * @param senderPos position of sender of @batchMsgsWaitingToBeBroadcast
-     * @return @batchMsgsWaitingToBeBroadcast encapsulated in a @BatchSessionMsg
+     * @brief Returns @batchWaitingSessionMsg encapsulated in a @BatchSessionMsg
+     * @param senderPos position of sender of @batchWaitingSessionMsg
+     * @return @batchWaitingSessionMsg encapsulated in a @BatchSessionMsg
      */
     [[nodiscard]] fbae_AlgoLayer::BatchSessionMsg batchGetBatchMsgs(rank_t senderPos);
 
     /**
-     * @brief Callback to be called by @AlgoLayer when @AlgoLayer is using @batchMsgsWaitingToBeBroadcast.
+     * @brief Callback to be called by @AlgoLayer when @AlgoLayer is using @batchWaitingSessionMsg.
      * @param senderPos Position of @msg sender in @AlgoLayer::broadcasters.
-     * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    void batchNoDeadlockCallbackDeliver(rank_t senderPos, std::string && msg);
+    void batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbaeSL::SessionBaseClass> const& msg);
 
     /**
      * @brief Register that current thread accepts that it is not concerned by value of @batchCtrlShortcut
-     * (it will always wait for @batchMsgsWaitingToBeBroadcast to be small enough; See Issue #37).
+     * (it will always wait for @batchWaitingSessionMsg to be small enough; See Issue #37).
      */
     void batchRegisterThreadForFullBatchCtrl();
 
     /**
      * @brief Handles message received by @CommLayer
-     * @param msgString String containing message.
+     * @param algoMsgAsString String containing message.
      */
-    virtual void callbackReceive(std::string && msgString) = 0;
+    virtual void callbackReceive(std::string && algoMsgAsString) = 0;
 
     /**
      * @brief Callback called by @CommLayer when @CommLayer is initialized locally.
@@ -96,11 +95,11 @@ public:
     void setSessionLayer(SessionLayer *aSessionLayer);
 
     /**
-     * @brief Broadcasts @msg in a total-order manner. Note: If this method is not override, the message is stored in
-     * @batchMsgsWaitingToBeBroadcast
-     * @param msg Message to totally-order totalOrderBroadcast.
+     * @brief Broadcasts message in a total-order manner. Note: If this method is not override, the message is stored in
+     * @batchWaitingSessionMsg
+     * @param sessionMsg Message to totally-order totalOrderBroadcast.
      */
-    virtual void totalOrderBroadcast(std::string && msg);
+    virtual void totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg);
 
     /**
      * @brief Terminates execution of concrete totalOrderBroadcast algorithm. Eventually this call will lead to the
@@ -119,33 +118,33 @@ private:
 
     /**
      * @brief Condition variable coupled with @batchCtrlMtx to control that batch of messages in
-    * @batchMsgsWaitingToBeBroadcast is not too big
+    * @batchWaitingSessionMsg is not too big
     */
     std::condition_variable batchCtrlCondVar;
 
     /**
      * @brief Mutex coupled with @batchCtrlCondVar to control that batch of messages in
-    * @batchMsgsWaitingToBeBroadcast is not too big
+    * @batchWaitingSessionMsg is not too big
      */
     std::mutex batchCtrlMtx;
 
     /**
      * @brief Variable used to shortcut BatchCtrl mechanism (with @batchCtrlMtx and @batchCtrlCondVar), so that, in
-    * order to avoid deadlocks, we accept that the number of bytes stored in @batchMsgsWaitingToBeBroadcast is greater
+    * order to avoid deadlocks, we accept that the number of bytes stored in @batchWaitingSessionMsg is greater
     * than @maxBatchSize of @Arguments instance.
     */
     bool batchCtrlShortcut{false};
 
     /**
      * @brief Vector of threads which registered to accept that they are not concerned by value of @batchCtrlShortcut
-     * (they always wait for @batchMsgsWaitingToBeBroadcast to be small enough; See Issue #37).
+     * (they always wait for @batchWaitingSessionMsg to be small enough; See Issue #37).
      */
     std::vector<std::thread::id> batchCtrlThreadsRegisteredForFullBatchCtrl;
 
     /**
      * @brief PerfMeasures messages waiting to be broadcast.
      */
-    std::vector<std::string> batchMsgsWaitingToBeBroadcast;
+    std::vector<fbaeSL::SessionMsg> batchWaitingSessionMsg;
 
     /**
      * @brief Rank of @sites which are indeed doing broadcasts.

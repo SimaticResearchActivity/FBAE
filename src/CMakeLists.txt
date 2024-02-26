@@ -28,6 +28,7 @@ add_executable(fbae
         SessionLayer/PerfMeasures/PerfMeasures.cpp
         SessionLayer/PerfMeasures/PerfMeasures.h
         AlgoLayer/AlgoLayerMsg.h
+        adaptCereal.h
 )
 if (WIN32)
   target_link_libraries(fbae PUBLIC ws2_32.lib winmm.lib)

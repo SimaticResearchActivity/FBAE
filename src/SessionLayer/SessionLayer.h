@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../basicTypes.h"
-#include "../CommLayer/CommLayer.h"
 #include "../Arguments.h"
+#include "../CommLayer/CommLayer.h"
+#include "SessionLayerMsg.h"
 class AlgoLayer;
 
 class SessionLayer {
@@ -23,7 +24,7 @@ public:
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    virtual void callbackDeliver(rank_t senderPos, std::string && msg) = 0;
+    virtual void callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) = 0;
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
