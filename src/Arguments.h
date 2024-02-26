@@ -6,8 +6,9 @@
 #include "basicTypes.h"
 #include "OptParserExtended.h"
 
-// The following value has been found experimentally when filler field of SenderMessageToBroadcast has size 0
-constexpr int minSizeClientMessageToBroadcast{18};
+// The following value has been found experimentally when filler field of SessionPerf has size 0
+// (See TEST(SerializationOverhead, CheckMinSizeClientMessageToBroadcast) in @testSerializationOverhead.cpp
+constexpr int minSizeClientMessageToBroadcast{40};
 
 // Maximum length of a UDP packet
 constexpr size_t maxLength{65515};

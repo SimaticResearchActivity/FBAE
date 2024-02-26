@@ -100,10 +100,10 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     }
 }
 
-void Tcp::multicastMsg(const std::string &msg)
+void Tcp::multicastMsg(const std::string &algoMsgAsString)
 {
     for (auto const& [r, sock]: rank2sock) {
-        send(r, msg);
+        send(r, algoMsgAsString);
     }
 }
 
@@ -156,9 +156,9 @@ struct ForLength
     }
 };
 
-void Tcp::send(rank_t r, const std::string &msg) {
+void Tcp::send(rank_t r, const std::string &algoMsgAsString) {
     assert(rank2sock.contains(r));
-    ForLength forLength{msg.length()};
+    ForLength forLength{algoMsgAsString.length()};
     std::stringstream oStream;
     {
         cereal::BinaryOutputArchive oarchive(oStream); // Create an output archive
@@ -166,7 +166,7 @@ void Tcp::send(rank_t r, const std::string &msg) {
     } // archive goes out of scope, ensuring all contents are flushed
 
     auto sWithLength = oStream.str();
-    sWithLength.append(msg);
+    sWithLength.append(algoMsgAsString);
 
     boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
 }

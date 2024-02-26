@@ -15,9 +15,9 @@
 class Tcp : public CommLayer{
 public:
     Tcp() = default;
-    void multicastMsg(const std::string &msg) override;
+    void multicastMsg(const std::string &algoMsgAsString) override;
     void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
-    void send(rank_t r, const std::string &msg) override;
+    void send(rank_t r, const std::string &algoMsgAsString) override;
     void terminate() override;
     std::string toString() override;
 

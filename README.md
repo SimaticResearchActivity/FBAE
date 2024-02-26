@@ -43,7 +43,7 @@ Note: `res` directory of *FBAE* repository contains samples of site files.
 Once your site file is ready, you can run `fbae` executable according to the following usage:
 
 ```txt
-fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <size_in_bytes> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -v|--verbose -w|--warmupCooldown <number>
+fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <number_of_messages> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -v|--verbose -w|--warmupCooldown <number>
 Where:
   -a|--algo <algo_identifier>                Broadcast Algorithm
                                                 B = BBOBB
@@ -52,7 +52,7 @@ Where:
                                                 t = TCP
   -f|--frequency <number>                    [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
   -h|--help                                  Show help message
-  -m|--maxBatchSize <size_in_bytes>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
+  -m|--maxBatchSize <number_of_messages>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
   -n|--nbMsg <number>                        Number of messages to be sent
   -r|--rank <rank_number>                    Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)
   -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [22,65515])
@@ -195,7 +195,8 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 
 3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/AlgoLayer/Foo/FooMsg.h`, containing:
 
-   1. Definition of a namespace dedicated to your algorithm.
+   1. A first include which **must** be `#include "../adaptCereal.h"` followed by `#include "cereal/archives/binary.hpp"`. 
+   2. Definition of a namespace dedicated to your algorithm.
    2. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
    3. Definition of the structure of the different messages. Note: This definition must include [Cereal](http://uscilab.github.io/cereal/ serialization method (for examples, see implementation of *Sequencer* or *BBOBB* algorithms and [Cereal quick start](http://uscilab.github.io/cereal/quickstart.html)).
 
@@ -215,15 +216,13 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 8.  If your algorithm works with "batch" of messages, it is very likely that you need to implement `Foo::callbackInitDone()` method to override `AlgoLayer::callbackInitDone()` in order to send one or several messages to initiate execution of your algorithm (e.g. `BBOBB::callbackInitDone()` sends an initial `Step` message).
        - Note: *FBAE* guarantees that you will not receive any message from other processes before the call to `Foo::callbackInitDone()` is done.
 
-9.  Implement `Foo::callbackReceive()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getSessionLayer()->callbackDeliver()`. Note:
-        - If your algorithm works with "batch" of messages, you must pay attention to surround your call to `callbackDeliver()` with `batchCtrlShortcut = true;` and `batchCtrlShortcut = false;` instructions.
-        - Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackReceive()`.
+9.  Implement `Foo::callbackReceive()` method to handle all of the messages your algorithm is manipulating. In particular, if a sessionLayer message can be delivered, call `getAlgoLayer()->batchNoDeadlockCallbackDeliver()` if your algorithm is using "batch" of messages and `getSessionLayer()->callbackDeliver()` otherwise.
+       - Note: Even if it may be multithreaded, *Communication Layer* guarantees that there will never be simultaneous calls to `Foo::callbackReceive()`.
 
 10. Implement `Foo::terminate()` method.
 
 11. Implement [GoogleTest](https://google.github.io/googletest/) tests in a dedicated `.cpp` file in `tests/AlgoLayer` directory (e.g. `tests/AlgoLayer/testFoo.cpp`). Run your tests.
-
-        - Note: To compile properly, the required `.h` and `.cpp` files must be mentioned in `tests/CMakeLists.txt`.
+       - Note: To compile properly, the required `.h` and `.cpp` files must be mentioned in `tests/CMakeLists.txt`.
 
 12. Modify `main.cpp` to integrate your new class:
 

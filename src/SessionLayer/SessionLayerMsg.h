@@ -1,13 +1,17 @@
 #pragma once
 
 #include "../adaptCereal.h"
+#include "cereal/types/polymorphic.hpp"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/chrono.hpp"
 #include "cereal/types/string.hpp"
 #include "../basicTypes.h"
 
-
-namespace fbae_SessionLayer {
+/**
+ * @brief Namespace for SessionLayer. It should be called fbae_SessionLayer, but there is an encoding
+ * bug related to Cereal ==> For the moment, we use short names.
+ */
+namespace fbaeSL {
     //---------------------------------------------------
     // Messages totalOrderBroadcast between any instances of SessionLayer (or subclasses)
     //---------------------------------------------------
@@ -26,17 +30,38 @@ namespace fbae_SessionLayer {
     };
 
     /**
+     * @brief Session Base class
+     */
+     struct SessionBaseClass
+     {
+         SessionBaseClass() = default;
+         explicit SessionBaseClass(SessionMsgId msgId) : msgId{msgId} {}
+         virtual ~SessionBaseClass() = default;
+
+         SessionMsgId msgId{};
+
+         // This method lets cereal know which data members to serialize
+         template<class Archive>
+         void serialize(Archive& archive)
+         {
+             archive(msgId);
+         }
+     };
+
+    /**
      * @brief Generic message structure containing only a msgId.
      */
-    struct GenericSessionMsgWithId
+    struct GenericSessionMsgWithId : SessionBaseClass
     {
-        SessionMsgId msgId{};
-
+        GenericSessionMsgWithId() = default;
+        explicit GenericSessionMsgWithId(SessionMsgId msgId)
+        : SessionBaseClass{msgId}
+        {}
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId); // serialize things by passing them to the archive
+            archive( cereal::base_class<SessionBaseClass>(this) );
         }
     };
 
@@ -51,11 +76,20 @@ namespace fbae_SessionLayer {
     using SessionFirstBroadcast = GenericSessionMsgWithId;
 
     /**
-     * @brief Structure of @PerfMeasure message.
+     * @brief Structure of @PerfMeasure and @PerfResponse messages. Note: This structure should be called
+     * SessionPerf, but there is an encoding bug related to Cereal ==> For the moment, we use short names.
      */
-    struct SessionPerfMeasure
+    struct SP : SessionBaseClass
     {
-        SessionMsgId msgId{};
+        SP() = default;
+        SP(SessionMsgId msgId, rank_t senderPos, int32_t msgNum, std::chrono::time_point<std::chrono::system_clock> sendTime, std::string filler)
+        : SessionBaseClass{msgId}
+        , senderPos{senderPos}
+        , msgNum{msgNum}
+        , sendTime{sendTime}
+        , filler{std::move(filler)}
+        {}
+
         rank_t senderPos{};
         int32_t msgNum{};
         std::chrono::time_point<std::chrono::system_clock> sendTime;
@@ -65,43 +99,43 @@ namespace fbae_SessionLayer {
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId, senderPos, msgNum, sendTime, filler); // serialize things by passing them to the archive
+            archive(cereal::base_class<SessionBaseClass>(this), senderPos, msgNum, sendTime, filler);
         }
     };
 
     /**
-     * @brief Structure of @PerfResponse message.
+     * @brief Structure of messages used for tests? Note: This structure should be called
+     * SessionTest, but there is an encoding bug related to Cereal ==> For the moment, we use short names.
      */
-    struct SessionPerfResponse
+    struct ST : SessionBaseClass
     {
-        SessionMsgId msgId{};
-        rank_t perfMeasureSenderPos{};
-        int32_t perfMeasureMsgNum{};
-        std::chrono::time_point<std::chrono::system_clock> perfMeasureSendTime;
-        std::string perfMeasureFiller;
-
-        // This method lets cereal know which data members to serialize
-        template<class Archive>
-        void serialize(Archive& archive)
-        {
-            archive(msgId, perfMeasureSenderPos, perfMeasureMsgNum, perfMeasureSendTime, perfMeasureFiller); // serialize things by passing them to the archive
-        }
-    };
-
-    /**
-     * @brief Structure of messages used for tests
-     */
-    struct SessionTest
-    {
-        fbae_SessionLayer::SessionMsgId msgId{};
+        ST() = default;
+        ST(SessionMsgId msgId, std::string payload)
+        : SessionBaseClass{msgId}
+        , payload{std::move(payload)}
+        {}
         std::string payload;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
         void serialize(Archive& archive)
         {
-            archive(msgId, payload); // serialize things by passing them to the archive
+            archive(cereal::base_class<SessionBaseClass>(this), payload);
         }
     };
 
+    /**
+     * @brief Shortcut for std::shared_ptr<fbae_SessionLayer::SessionBase>
+     */
+    using SessionMsg = std::shared_ptr<fbaeSL::SessionBaseClass>;
 }
+
+// Cereal polymorphic registration must be done outside fbae_SessionLayer namespace scope
+CEREAL_REGISTER_TYPE(fbaeSL::GenericSessionMsgWithId);
+CEREAL_REGISTER_TYPE(fbaeSL::SP);
+CEREAL_REGISTER_TYPE(fbaeSL::ST);
+
+// We do not need to call CEREAL_REGISTER_POLYMORPHIC_RELATION() macro because
+// we call cereal::base_class in the different subclasses (see documentation of
+// CEREAL_REGISTER_POLYMORPHIC_RELATION at
+// http://uscilab.github.io/cereal/assets/doxygen/polymorphic_8hpp.html#a5d730928a52a379ad0d6f2dcdee07953)

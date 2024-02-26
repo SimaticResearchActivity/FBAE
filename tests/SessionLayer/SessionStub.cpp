@@ -5,23 +5,22 @@
 #include <cassert>
 #include "SessionStub.h"
 #include "../../src/msgTemplates.h"
-#include "../../src/SessionLayer/SessionLayerMsg.h"
 
 SessionStub::SessionStub(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
         : SessionLayer(arguments, rank, std::move(algoLayer))
 {
 }
 
-void SessionStub::callbackDeliver(rank_t senderPos, std::string &&msg) {
-    delivered.emplace_back(senderPos, std::move(msg));
+void SessionStub::callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) {
+    delivered.emplace_back(senderPos, msg);
 }
 
 void SessionStub::callbackInitDone() {
     callbackInitDoneCalled = true;
     // We simulate the sending fo FirstBroadcast as done in @PerfMeasures class.
     if (getAlgoLayer()->isBroadcastingMessages()) {
-        auto s {serializeStruct<fbae_SessionLayer::SessionFirstBroadcast>(fbae_SessionLayer::SessionFirstBroadcast{fbae_SessionLayer::SessionMsgId::FirstBroadcast})};
-        getAlgoLayer()->totalOrderBroadcast(std::move(s));
+        auto sessionMsg = std::make_shared<fbaeSL::SessionFirstBroadcast>(fbaeSL::SessionMsgId::FirstBroadcast);
+        getAlgoLayer()->totalOrderBroadcast(sessionMsg);
     }
 }
 
@@ -30,10 +29,10 @@ void SessionStub::execute() {
     assert(false);
 }
 
-std::vector<std::pair<rank_t, std::string>> &SessionStub::getDelivered() {
+std::vector<std::pair<rank_t, fbaeSL::SessionMsg>> & SessionStub::getDelivered() {
     return delivered;
 }
 
-bool SessionStub::isCallbackInitdoneCalled() const {
+bool SessionStub::isCallbackInitDoneCalled() const {
     return callbackInitDoneCalled;
 }

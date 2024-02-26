@@ -51,21 +51,21 @@ void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer)
     sessionLayer = aSessionLayer;
 }
 
-void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::string &&msg) {
+void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbaeSL::SessionBaseClass> const& msg) {
     // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
     // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
     // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
     // because task @SessionLayer::sendPeriodicPerfMessage may have filled up @msgsWaitingToBeBroadcast
     batchCtrlShortcut = true;
-    sessionLayer->callbackDeliver(senderPos, std::move(msg));
+    sessionLayer->callbackDeliver(senderPos, msg);
     batchCtrlShortcut = false;
 
 }
 
 fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgsWithLock(rank_t senderPos) {
     lock_guard lck(batchCtrlMtx);
-    BatchSessionMsg msg{senderPos, std::move(batchMsgsWaitingToBeBroadcast)};
-    batchMsgsWaitingToBeBroadcast.clear();
+    BatchSessionMsg msg{senderPos, std::move(batchWaitingSessionMsg)};
+    batchWaitingSessionMsg.clear();
     return msg;
 }
 
@@ -75,13 +75,13 @@ fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgs(rank_t senderPos) {
     return msg;
 }
 
-void AlgoLayer::totalOrderBroadcast(std::string && msg) {
+void AlgoLayer::totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg) {
     unique_lock lck(batchCtrlMtx);
     batchCtrlCondVar.wait(lck, [this] {
-        return (batchMsgsWaitingToBeBroadcast.size() * getSessionLayer()->getArguments().getSizeMsg() < getSessionLayer()->getArguments().getMaxBatchSize())
+        return (batchWaitingSessionMsg.size() < getSessionLayer()->getArguments().getMaxBatchSize())
                || (batchCtrlShortcut && std::ranges::find(batchCtrlThreadsRegisteredForFullBatchCtrl, std::this_thread::get_id()) != batchCtrlThreadsRegisteredForFullBatchCtrl.end());
     });
-    batchMsgsWaitingToBeBroadcast.emplace_back(std::move(msg));
+    batchWaitingSessionMsg.push_back(sessionMsg);
 }
 
 void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {

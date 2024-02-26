@@ -11,9 +11,9 @@ public:
     [[nodiscard]] std::vector<rank_t> &getConnectedDest();
     [[nodiscard]] size_t getNbAwaitedConnections() const;
     [[nodiscard]] std::vector<std::pair<rank_t, std::string>> &getSent();
-    void multicastMsg(const std::string &msg) override;
+    void multicastMsg(const std::string &algoMsgAsString) override;
     void openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t aNbAwaitedConnections, AlgoLayer *aAlgoLayer) override;
-    void send(rank_t r, const std::string &msg) override;
+    void send(rank_t r, const std::string &algoMsgAsString) override;
     void terminate() override;
     std::string toString() override;
 private:

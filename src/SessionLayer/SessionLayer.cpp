@@ -3,8 +3,8 @@
 
 SessionLayer::SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
     : arguments{arguments}
-    , rank{rank}
     , algoLayer{std::move(algoLayer)}
+    , rank{rank}
 {
     this->algoLayer->setSessionLayer(this);
 }

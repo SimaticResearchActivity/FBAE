@@ -18,9 +18,9 @@ std::vector<std::pair<rank_t, std::string>> &CommStub::getSent() {
     return sent;
 }
 
-void CommStub::multicastMsg(const std::string &msg) {
+void CommStub::multicastMsg(const std::string &algoMsgAsString) {
     for (auto const rank: connectedDest) {
-        send(rank, msg);
+        send(rank, algoMsgAsString);
     }
 }
 
@@ -31,8 +31,8 @@ void CommStub::openDestAndWaitIncomingMsg(const std::vector<rank_t> &dest, size_
     getAlgoLayer()->callbackInitDone();
 }
 
-void CommStub::send(rank_t r, const std::string &msg) {
-    sent.emplace_back(r, msg);
+void CommStub::send(rank_t r, const std::string &algoMsgAsString) {
+    sent.emplace_back(r, algoMsgAsString);
 }
 
 void CommStub::terminate() {

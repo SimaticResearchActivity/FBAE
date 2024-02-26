@@ -9,12 +9,12 @@
     @copyright GNU Affero General Public License
 
 **/
-#ifndef FBAE_ADAPTCEREAL_H
-#define FBAE_ADAPTCEREAL_H
+#ifndef FBAE_ADAPT_CEREAL_H
+#define FBAE_ADAPT_CEREAL_H
 
 /**
  * @brief By default, Cereal serializes size_t as uint64_t (in include/cereal/macros.hpp) ==> We define it as uint32_t
  * in order to prevent bytes waste in serialization.
  */
 #define CEREAL_SIZE_TYPE uint32_t
-#endif //FBAE_ADAPTCEREAL_H
+#endif //FBAE_ADAPT_CEREAL_H

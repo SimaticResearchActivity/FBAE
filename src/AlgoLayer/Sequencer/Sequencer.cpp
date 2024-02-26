@@ -13,9 +13,9 @@ Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer)
 {
 }
 
-void Sequencer::callbackReceive(std::string && msgString)
+void Sequencer::callbackReceive(std::string && algoMsgAsString)
 {
-    auto msgId{ static_cast<MsgId>(msgString[0]) };
+    auto msgId{ static_cast<MsgId>(algoMsgAsString[0]) };
     switch (msgId)
     {
         using enum MsgId;
@@ -24,7 +24,7 @@ void Sequencer::callbackReceive(std::string && msgString)
         //
         case BroadcastRequest :
         {
-            auto msgToBroadcast{deserializeStruct<StructBroadcastMessage>(std::move(msgString))};
+            auto msgToBroadcast{deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString))};
             auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::Broadcast,
                                                                                    msgToBroadcast.senderPos,
                                                                                    msgToBroadcast.sessionMsg})};
@@ -36,7 +36,7 @@ void Sequencer::callbackReceive(std::string && msgString)
         //
         case Broadcast :
         {
-            auto sbm {deserializeStruct<StructBroadcastMessage>(std::move(msgString))};
+            auto sbm {deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString))};
             getSessionLayer()->callbackDeliver(sbm.senderPos, std::move(sbm.sessionMsg));
             break;
         }
@@ -86,10 +86,10 @@ std::string Sequencer::toString() {
     return "Sequencer";
 }
 
-void Sequencer::totalOrderBroadcast(std::string && msg) {
+void Sequencer::totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg) {
     // Send BroadcastRequest to sequencer
     auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastRequest,
                                                                            getPosInBroadcastersGroup().value(),
-                                                                           std::move(msg)})};
+                                                                           sessionMsg})};
     getCommLayer()->send(sequencerRank, s);
 }

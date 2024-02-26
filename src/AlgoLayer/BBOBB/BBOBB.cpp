@@ -19,11 +19,11 @@ BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
 {
 }
 
-void BBOBB::callbackReceive(std::string && msgString) {
-    auto msgId{static_cast<MsgId>(msgString[0])};
+void BBOBB::callbackReceive(std::string && algoMsgAsString) {
+    auto msgId{static_cast<MsgId>(algoMsgAsString[0])};
     if (msgId == MsgId::Step) {
         if (!algoTerminated) {
-            auto stepMsg{deserializeStruct<StepMsg>(std::move(msgString))};
+            auto stepMsg{deserializeStruct<StepMsg>(std::move(algoMsgAsString))};
 
             if (getSessionLayer()->getArguments().getVerbose())
                 cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
@@ -121,7 +121,7 @@ void BBOBB::catchUpIfLateInMessageSending() {
             if (pos != not_found) {
                 auto senderRank = batches[pos].senderPos;
                 for (auto & msg : batches[pos].batchSessionMsg) {
-                    batchNoDeadlockCallbackDeliver(senderRank, std::move(msg));
+                    batchNoDeadlockCallbackDeliver(senderRank, msg);
                     if (algoTerminated) {
                         return;
                     }
