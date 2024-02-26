@@ -51,7 +51,7 @@ void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer)
     sessionLayer = aSessionLayer;
 }
 
-void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbaeSL::SessionBaseClass> const& msg) {
+void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbae_SessionLayer::SessionBaseClass> const& msg) {
     // We surround the call to @callbackDeliver method with shortcutBatchCtrl = true; and
     // shortcutBatchCtrl = false; This is because callbackDeliver() may lead to a call to
     // @totalOrderBroadcast method which could get stuck in condVarBatchCtrl.wait() instruction
@@ -75,7 +75,7 @@ fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgs(rank_t senderPos) {
     return msg;
 }
 
-void AlgoLayer::totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg) {
+void AlgoLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) {
     unique_lock lck(batchCtrlMtx);
     batchCtrlCondVar.wait(lck, [this] {
         return (batchWaitingSessionMsg.size() < getSessionLayer()->getArguments().getMaxBatchSize())

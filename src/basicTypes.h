@@ -2,8 +2,8 @@
 // Created by simatic on 1/31/24.
 //
 
-#ifndef FBAE_BASICTYPES_H
-#define FBAE_BASICTYPES_H
+#ifndef FBAE_BASIC_TYPES_H
+#define FBAE_BASIC_TYPES_H
 
 #include <cstdint>
 
@@ -17,4 +17,4 @@ using rank_t = uint8_t;
  */
 using MsgId_t = uint8_t;
 
-#endif //FBAE_BASICTYPES_H
+#endif //FBAE_BASIC_TYPES_H

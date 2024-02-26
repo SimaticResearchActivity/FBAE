@@ -26,7 +26,7 @@ public:
      * @param senderPos Position of @msg sender in @AlgoLayer::broadcasters.
      * @param msg Message to be delivered.
      */
-    void batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbaeSL::SessionBaseClass> const& msg);
+    void batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr<fbae_SessionLayer::SessionBaseClass> const& msg);
 
     /**
      * @brief Register that current thread accepts that it is not concerned by value of @batchCtrlShortcut
@@ -99,7 +99,7 @@ public:
      * @batchWaitingSessionMsg
      * @param sessionMsg Message to totally-order totalOrderBroadcast.
      */
-    virtual void totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg);
+    virtual void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg);
 
     /**
      * @brief Terminates execution of concrete totalOrderBroadcast algorithm. Eventually this call will lead to the
@@ -144,7 +144,7 @@ private:
     /**
      * @brief PerfMeasures messages waiting to be broadcast.
      */
-    std::vector<fbaeSL::SessionMsg> batchWaitingSessionMsg;
+    std::vector<fbae_SessionLayer::SessionMsg> batchWaitingSessionMsg;
 
     /**
      * @brief Rank of @sites which are indeed doing broadcasts.

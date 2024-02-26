@@ -8,7 +8,7 @@
 #include "PerfMeasures.h"
 
 using namespace std;
-using namespace fbaeSL;
+using namespace fbae_SessionLayer;
 
 PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
         : SessionLayer{arguments, rank, std::move(algoLayer)}
@@ -21,17 +21,17 @@ void PerfMeasures::broadcastPerfMeasure() {
         cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Broadcast PerfMeasure (senderPos = " << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " ; msgNum = " << numPerfMeasure << ")\n";
     if (numPerfMeasure == getArguments().getNbMsg()*getArguments().getWarmupCooldown()/100/2)
         measures.setStartTime();
-    auto sessionMsg = make_shared<SP>(SessionMsgId::PerfMeasure,
-                                      getAlgoLayer()->getPosInBroadcastersGroup().value(),
-                                      numPerfMeasure,
-                                      std::chrono::system_clock::now(),
-                                      std::string( getArguments().getSizeMsg() - minSizeClientMessageToBroadcast,
+    auto sessionMsg = make_shared<SessionPerf>(SessionMsgId::PerfMeasure,
+                                               getAlgoLayer()->getPosInBroadcastersGroup().value(),
+                                               numPerfMeasure,
+                                               std::chrono::system_clock::now(),
+                                               std::string( getArguments().getSizeMsg() - minSizeClientMessageToBroadcast,
                                             0));
     getAlgoLayer()->totalOrderBroadcast(sessionMsg);
     ++numPerfMeasure;
 }
 
-void PerfMeasures::callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) {
+void PerfMeasures::callbackDeliver(rank_t senderPos, fbae_SessionLayer::SessionMsg msg) {
     switch (msg->msgId)
     {
         using enum SessionMsgId;
@@ -125,8 +125,8 @@ void PerfMeasures::processFirstBroadcastMsg(rank_t senderPos) {
     }
 }
 
-void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, const fbaeSL::SessionMsg &sessionMsg) {
-    auto nakedSessionMsg = dynamic_cast<SP*>(sessionMsg.get());
+void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    auto nakedSessionMsg = dynamic_cast<SessionPerf*>(sessionMsg.get());
     if (getArguments().getVerbose())
         cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver PerfMeasure from sender pos #" << static_cast<uint32_t>(senderPos) << " (senderPos = " << static_cast<uint32_t>(nakedSessionMsg->senderPos) << " ; msgNum = " << nakedSessionMsg->msgNum << ")\n";
     measures.addNbBytesDelivered(getArguments().getSizeMsg());
@@ -144,8 +144,8 @@ void PerfMeasures::processPerfMeasureMsg(rank_t senderPos, const fbaeSL::Session
     }
 }
 
-void PerfMeasures::processPerfResponseMsg(rank_t senderPos, const fbaeSL::SessionMsg &sessionMsg) {
-    auto nakedSessionMsg = dynamic_cast<SP*>(sessionMsg.get());
+void PerfMeasures::processPerfResponseMsg(rank_t senderPos, const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    auto nakedSessionMsg = dynamic_cast<SessionPerf*>(sessionMsg.get());
     if (getArguments().getVerbose())
         cout << "PerfMeasures pos #" << static_cast<uint32_t>(getAlgoLayer()->getPosInBroadcastersGroup().value()) << " : Deliver PerfResponse from sender pos #" << static_cast<uint32_t>(senderPos) << " (perfMeasureSenderPos = " << static_cast<uint32_t>(nakedSessionMsg->senderPos) << " ; perfMeasureMsgNum = " << nakedSessionMsg->msgNum << ")\n";
     measures.addNbBytesDelivered(getArguments().getSizeMsg());

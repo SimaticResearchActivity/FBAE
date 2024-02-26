@@ -2,7 +2,6 @@
 
 #include "../../adaptCereal.h"
 #include "cereal/archives/binary.hpp"
-#include "cereal/types/string.hpp"
 #include "../../basicTypes.h"
 #include "../../SessionLayer/SessionLayerMsg.h"
 
@@ -24,7 +23,7 @@ namespace fbae_SequencerAlgoLayer
     {
         MsgId msgId{};
         rank_t senderPos{};
-        std::shared_ptr<fbaeSL::SessionBaseClass> sessionMsg;
+        fbae_SessionLayer::SessionMsg sessionMsg;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -33,6 +32,4 @@ namespace fbae_SequencerAlgoLayer
             archive(msgId, senderPos, sessionMsg); // serialize things by passing them to the archive
         }
     };
-
-
 }

@@ -24,7 +24,7 @@ public:
      * @param seqNum Sequence number of @msg.
      * @param msg Message to be delivered.
      */
-    virtual void callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) = 0;
+    virtual void callbackDeliver(rank_t senderPos, fbae_SessionLayer::SessionMsg msg) = 0;
 
     /**
      * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized locally.
