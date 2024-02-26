@@ -12,7 +12,7 @@ public:
     explicit Sequencer(std::unique_ptr<CommLayer> commLayer);
     void callbackReceive(std::string && algoMsgAsString) override;
     void execute() override;
-    void totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg) override;
+    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) override;
     void terminate() override;
     std::string toString() override;
 };

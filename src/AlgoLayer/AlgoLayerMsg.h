@@ -7,7 +7,6 @@
 
 #include "../adaptCereal.h"
 #include "cereal/archives/binary.hpp"
-#include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
 #include "../basicTypes.h"
 #include "../SessionLayer/SessionLayerMsg.h"
@@ -19,7 +18,7 @@ namespace fbae_AlgoLayer {
     */
     struct BatchSessionMsg {
         rank_t senderPos{};
-        std::vector<std::shared_ptr<fbaeSL::SessionBaseClass>> batchSessionMsg;
+        std::vector<fbae_SessionLayer::SessionMsg> batchSessionMsg;
 
         // This method lets cereal know which data members to serialize
         template<class Archive>

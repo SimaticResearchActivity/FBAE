@@ -2,7 +2,6 @@
 
 #include "adaptCereal.h"
 #include <cereal/archives/binary.hpp>
-#include <cereal/types/string.hpp>
 
 /**
  * @brief Returns structure @S deserialized from @msgString

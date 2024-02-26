@@ -13,7 +13,7 @@
 namespace fbae_test_Sequencer {
 
     using namespace std;
-    using namespace fbaeSL;
+    using namespace fbae_SessionLayer;
 
     TEST(Sequencer, SequencerExecute) {
         constexpr auto nbSites = 4;
@@ -84,7 +84,7 @@ namespace fbae_test_Sequencer {
         auto broadcastMsg{deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
         EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest, broadcastMsg.msgId);
         EXPECT_EQ(myRank-1, broadcastMsg.senderPos); // myRank-1 because senderPos is 1 less than senderRank
-        EXPECT_EQ(fbaeSL::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMsg->msgId);
+        EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMsg->msgId);
 
         // Check @AlgoLayer:broadcastersGroup is correct
         EXPECT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
@@ -115,8 +115,8 @@ namespace fbae_test_Sequencer {
 
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
-        auto sessionMsg = make_shared<ST>(SessionMsgId::TestMessage,
-                                          "A");
+        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
+                                                   "A");
         algoLayerRaw->totalOrderBroadcast(sessionMsg);
 
         // Check that 1 message was sent
@@ -128,7 +128,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest, broadcastRequestMsg.msgId);
         EXPECT_EQ(myRank-1, broadcastRequestMsg.senderPos); // myRank-1 because senderPos is 1 less than senderRank
         EXPECT_EQ(sessionMsg->msgId, broadcastRequestMsg.sessionMsg->msgId);
-        auto naked = dynamic_cast<ST*>(broadcastRequestMsg.sessionMsg.get());
+        auto naked = dynamic_cast<SessionTest*>(broadcastRequestMsg.sessionMsg.get());
         EXPECT_EQ(sessionMsg->payload, naked->payload);
 
         // Check that no message is delivered
@@ -148,8 +148,8 @@ namespace fbae_test_Sequencer {
 
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
-        auto sessionMsg = make_shared<ST>(SessionMsgId::TestMessage,
-                                          "A");
+        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
+                                                   "A");
         constexpr rank_t senderPos = 42;
         auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{
             fbae_SequencerAlgoLayer::MsgId::BroadcastRequest,
@@ -171,7 +171,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::Broadcast, broadcastMsg.msgId);
         EXPECT_EQ(senderPos, broadcastMsg.senderPos);
         EXPECT_EQ(sessionMsg->msgId, broadcastMsg.sessionMsg->msgId);
-        auto naked = dynamic_cast<ST*>(broadcastMsg.sessionMsg.get());
+        auto naked = dynamic_cast<SessionTest*>(broadcastMsg.sessionMsg.get());
         EXPECT_EQ(sessionMsg->payload, naked->payload);
 
         // Check that no message is delivered
@@ -191,8 +191,8 @@ namespace fbae_test_Sequencer {
 
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
-        auto sessionMsg = make_shared<ST>(SessionMsgId::TestMessage,
-                                          "A");
+        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
+                                                   "A");
         constexpr rank_t senderPos = 42;
         auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{
             fbae_SequencerAlgoLayer::MsgId::Broadcast,
@@ -209,7 +209,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(senderPos, sessionStub.getDelivered()[0].first);
         // Check contents of this message
         EXPECT_EQ(sessionMsg->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto naked = dynamic_cast<ST*>(sessionStub.getDelivered()[0].second.get());
+        auto naked = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
         EXPECT_EQ(sessionMsg->payload, naked->payload);
     }
 

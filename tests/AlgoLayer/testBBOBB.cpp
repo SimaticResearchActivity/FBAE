@@ -12,7 +12,7 @@
 namespace fbae_test_BBOBB {
 
     using namespace std;
-    using namespace fbaeSL;
+    using namespace fbae_SessionLayer;
 
     TEST(BBOBB, ExecuteWith4SitesAndRank0) {
         constexpr auto nbSites = 4;
@@ -47,7 +47,7 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(0, stepMsg.step);
         EXPECT_EQ(1, stepMsg.batchesBroadcast.size()); // Just 1 batch message
         EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0].senderPos); // Sender of this batch messages is 0
-        EXPECT_EQ(fbaeSL::SessionMsgId::FirstBroadcast, stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
+        EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
 
         // Check @AlgoLayer:broadcastersGroup is correct
         EXPECT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
@@ -101,7 +101,7 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(0, stepMsg.step);
         EXPECT_EQ(1, stepMsg.batchesBroadcast.size()); // Just 1 batch message
         EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0].senderPos); // Sender of this batch messages is 0
-        EXPECT_EQ(fbaeSL::SessionMsgId::FirstBroadcast, stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
+        EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
 
         // Check @AlgoLayer:broadcastersGroup is correct
         EXPECT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
@@ -138,8 +138,8 @@ namespace fbae_test_BBOBB {
 
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
-        auto sessionMsg = make_shared<ST>(SessionMsgId::TestMessage,
-                                          "A");
+        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
+                                                   "A");
         algoLayerRaw->totalOrderBroadcast(sessionMsg);
 
         // Check that no message was sent as message is stored in @AlgoLayer::batchWaitingSessionMsg
@@ -163,10 +163,10 @@ namespace fbae_test_BBOBB {
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         // Prepare Step message to be received in current wave from sender 0
-        auto sessionMsgA = make_shared<ST>(
+        auto sessionMsgA = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "A");
-        auto sessionMsgB = make_shared<ST>(
+        auto sessionMsgB = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "B");
         std::vector<SessionMsg > v{sessionMsgA, sessionMsgB};
@@ -184,14 +184,14 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(3, sessionStub.getDelivered().size());
         EXPECT_EQ(0, sessionStub.getDelivered()[0].first);
         EXPECT_EQ(sessionMsgA->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto nakedA = dynamic_cast<ST*>(sessionStub.getDelivered()[0].second.get());
+        auto nakedA = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
         EXPECT_EQ(sessionMsgA->payload, nakedA->payload);
         EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
         EXPECT_EQ(sessionMsgB->msgId, sessionStub.getDelivered()[1].second->msgId);
-        auto nakedB = dynamic_cast<ST*>(sessionStub.getDelivered()[1].second.get());
+        auto nakedB = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[1].second.get());
         EXPECT_EQ(sessionMsgB->payload, nakedB->payload);
         EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
-        EXPECT_EQ(fbaeSL::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
+        EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
 
         // Check a new Step message has been sent
         EXPECT_EQ(1, commLayerRaw->getSent().size());
@@ -221,10 +221,10 @@ namespace fbae_test_BBOBB {
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         // Prepare Step message to be received in current wave from sender 0
-        auto sessionMsgC = make_shared<ST>(
+        auto sessionMsgC = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "C");
-        auto sessionMsgD = make_shared<ST>(
+        auto sessionMsgD = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "D");
         std::vector<SessionMsg> vWave1{sessionMsgC, sessionMsgD};
@@ -243,10 +243,10 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(0, sessionStub.getDelivered().size());
 
         // Now prepare Step message to be received in current wave from sender 0
-        auto sessionMsgA = make_shared<ST>(
+        auto sessionMsgA = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "A");
-        auto sessionMsgB = make_shared<ST>(
+        auto sessionMsgB = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "B");
         std::vector<SessionMsg > v{sessionMsgA, sessionMsgB};
@@ -264,21 +264,21 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(5, sessionStub.getDelivered().size());
         EXPECT_EQ(0, sessionStub.getDelivered()[0].first);
         EXPECT_EQ(sessionMsgA->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto nakedA = dynamic_cast<ST*>(sessionStub.getDelivered()[0].second.get());
+        auto nakedA = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
         EXPECT_EQ(sessionMsgA->payload, nakedA->payload);
         EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
         EXPECT_EQ(sessionMsgB->msgId, sessionStub.getDelivered()[1].second->msgId);
-        auto nakedB = dynamic_cast<ST*>(sessionStub.getDelivered()[1].second.get());
+        auto nakedB = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[1].second.get());
         EXPECT_EQ(sessionMsgB->payload, nakedB->payload);
         EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
-        EXPECT_EQ(fbaeSL::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
+        EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
         EXPECT_EQ(0, sessionStub.getDelivered()[3].first);
         EXPECT_EQ(sessionMsgC->msgId, sessionStub.getDelivered()[3].second->msgId);
-        auto nakedC = dynamic_cast<ST*>(sessionStub.getDelivered()[3].second.get());
+        auto nakedC = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[3].second.get());
         EXPECT_EQ(sessionMsgC->payload, nakedC->payload);
         EXPECT_EQ(0, sessionStub.getDelivered()[4].first);
         EXPECT_EQ(sessionMsgD->msgId, sessionStub.getDelivered()[4].second->msgId);
-        auto nakedD = dynamic_cast<ST*>(sessionStub.getDelivered()[4].second.get());
+        auto nakedD = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[4].second.get());
         EXPECT_EQ(sessionMsgD->payload, nakedD->payload);
 
         // Check two new Step messages have been sent
@@ -320,10 +320,10 @@ namespace fbae_test_BBOBB {
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         // Prepare Step message to be received in incorrect wave from sender 0
-        auto sessionMsgE = make_shared<ST>(
+        auto sessionMsgE = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "E");
-        auto sessionMsgF = make_shared<ST>(
+        auto sessionMsgF = make_shared<SessionTest>(
                 SessionMsgId::TestMessage,
                 "E");
         std::vector<SessionMsg> vWave2{sessionMsgE, sessionMsgF};

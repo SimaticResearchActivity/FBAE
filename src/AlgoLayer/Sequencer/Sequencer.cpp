@@ -86,7 +86,7 @@ std::string Sequencer::toString() {
     return "Sequencer";
 }
 
-void Sequencer::totalOrderBroadcast(const fbaeSL::SessionMsg &sessionMsg) {
+void Sequencer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) {
     // Send BroadcastRequest to sequencer
     auto s {serializeStruct<StructBroadcastMessage>(StructBroadcastMessage{MsgId::BroadcastRequest,
                                                                            getPosInBroadcastersGroup().value(),

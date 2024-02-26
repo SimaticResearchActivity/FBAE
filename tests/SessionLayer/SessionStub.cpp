@@ -11,7 +11,7 @@ SessionStub::SessionStub(const Arguments &arguments, rank_t rank, std::unique_pt
 {
 }
 
-void SessionStub::callbackDeliver(rank_t senderPos, fbaeSL::SessionMsg msg) {
+void SessionStub::callbackDeliver(rank_t senderPos, fbae_SessionLayer::SessionMsg msg) {
     delivered.emplace_back(senderPos, msg);
 }
 
@@ -19,7 +19,7 @@ void SessionStub::callbackInitDone() {
     callbackInitDoneCalled = true;
     // We simulate the sending fo FirstBroadcast as done in @PerfMeasures class.
     if (getAlgoLayer()->isBroadcastingMessages()) {
-        auto sessionMsg = std::make_shared<fbaeSL::SessionFirstBroadcast>(fbaeSL::SessionMsgId::FirstBroadcast);
+        auto sessionMsg = std::make_shared<fbae_SessionLayer::SessionFirstBroadcast>(fbae_SessionLayer::SessionMsgId::FirstBroadcast);
         getAlgoLayer()->totalOrderBroadcast(sessionMsg);
     }
 }
@@ -29,7 +29,7 @@ void SessionStub::execute() {
     assert(false);
 }
 
-std::vector<std::pair<rank_t, fbaeSL::SessionMsg>> & SessionStub::getDelivered() {
+std::vector<std::pair<rank_t, fbae_SessionLayer::SessionMsg>> & SessionStub::getDelivered() {
     return delivered;
 }
 
