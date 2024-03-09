@@ -3,8 +3,8 @@
 //
 
 #include <cassert>
-#include "../../src/AlgoLayer/AlgoLayer.h"
 #include "CommStub.h"
+#include "AlgoLayer/AlgoLayer.h"
 
 std::vector<rank_t> &CommStub::getConnectedDest() {
     return connectedDest;

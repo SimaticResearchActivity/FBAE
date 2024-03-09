@@ -38,27 +38,6 @@ endif()
 #   enable_testing()  already done in top CMakeLists.txt
 add_executable(tests
         testSerializationOverhead.cpp
-        ../src/Arguments.h
-        ../src/Arguments.cpp
-        ../src/basicTypes.h
-        ../src/msgTemplates.h
-        ../src/options.cpp
-        ../src/options.h
-        ../src/OptParserExtended.cpp
-        ../src/OptParserExtended.h
-        ../src/AlgoLayer/AlgoLayer.cpp
-        ../src/AlgoLayer/AlgoLayer.h
-        ../src/AlgoLayer/BBOBB/BBOBB.cpp
-        ../src/AlgoLayer/BBOBB/BBOBB.h
-        ../src/AlgoLayer/BBOBB/BBOBBMsg.h
-        ../src/AlgoLayer/Sequencer/Sequencer.cpp
-        ../src/AlgoLayer/Sequencer/Sequencer.h
-        ../src/AlgoLayer/Sequencer/SequencerMsg.h
-        ../src/CommLayer/CommLayer.cpp
-        ../src/CommLayer/CommLayer.h
-        ../src/SessionLayer/SessionLayer.cpp
-        ../src/SessionLayer/SessionLayer.h
-        ../src/SessionLayer/SessionLayerMsg.h
         SessionLayer/SessionStub.cpp
         SessionLayer/SessionStub.h
         CommLayer/CommStub.cpp
@@ -66,9 +45,12 @@ add_executable(tests
         AlgoLayer/testSequencer.cpp
         AlgoLayer/testBBOBB.cpp
 )
-target_link_libraries(tests gtest_main)
-if (UNIX)
-    target_link_options(tests PUBLIC -pthread)
+
+target_link_libraries(tests gtest_main lib_fbae)
+if (WIN32)
+  target_link_libraries(tests ws2_32.lib winmm.lib)
+else() # We are under UNIX
+    target_link_options(tests PRIVATE -pthread)
 endif()
 
 add_test(NAME All_fbae_tests COMMAND tests)

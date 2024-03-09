@@ -10,11 +10,11 @@
 **/
 #include <gtest/gtest.h>
 #include <vector>
-#include "../src/Arguments.h"
-#include "../src/msgTemplates.h"
-#include "../src/SessionLayer/SessionLayerMsg.h"
-#include "../src/AlgoLayer/Sequencer/SequencerMsg.h"
-#include "../src/AlgoLayer/BBOBB/BBOBBMsg.h"
+#include "Arguments.h"
+#include "msgTemplates.h"
+#include "SessionLayer/SessionLayerMsg.h"
+#include "AlgoLayer/Sequencer/SequencerMsg.h"
+#include "AlgoLayer/BBOBB/BBOBBMsg.h"
 
 namespace fbae_test_serializationOverhead {
 
