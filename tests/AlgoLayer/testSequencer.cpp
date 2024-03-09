@@ -7,7 +7,6 @@
 #include "msgTemplates.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "AlgoLayer/Sequencer/SequencerMsg.h"
-#include "SessionLayer/SessionLayerMsg.h"
 
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"
@@ -130,8 +129,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest, broadcastRequestMsg.msgId);
         EXPECT_EQ(myRank-1, broadcastRequestMsg.senderPos); // myRank-1 because senderPos is 1 less than senderRank
         EXPECT_EQ(sessionMsg->msgId, broadcastRequestMsg.sessionMsg->msgId);
-        auto naked = dynamic_cast<SessionTest*>(broadcastRequestMsg.sessionMsg.get());
-        EXPECT_EQ(sessionMsg->payload, naked->payload);
+        EXPECT_EQ(sessionMsg->getPayload(), broadcastRequestMsg.sessionMsg->getPayload());
 
         // Check that no message is delivered
         EXPECT_EQ(0, sessionStub.getDelivered().size());
@@ -173,8 +171,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::Broadcast, broadcastMsg.msgId);
         EXPECT_EQ(senderPos, broadcastMsg.senderPos);
         EXPECT_EQ(sessionMsg->msgId, broadcastMsg.sessionMsg->msgId);
-        auto naked = dynamic_cast<SessionTest*>(broadcastMsg.sessionMsg.get());
-        EXPECT_EQ(sessionMsg->payload, naked->payload);
+        EXPECT_EQ(sessionMsg->getPayload(), broadcastMsg.sessionMsg->getPayload());
 
         // Check that no message is delivered
         EXPECT_EQ(0, sessionStub.getDelivered().size());
@@ -211,8 +208,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(senderPos, sessionStub.getDelivered()[0].first);
         // Check contents of this message
         EXPECT_EQ(sessionMsg->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto naked = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
-        EXPECT_EQ(sessionMsg->payload, naked->payload);
+        EXPECT_EQ(sessionMsg->getPayload(), sessionStub.getDelivered()[0].second->getPayload());
     }
 
     TEST(Sequencer, ParticipantReceivesUnknownMessage) {

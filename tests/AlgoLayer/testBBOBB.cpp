@@ -6,7 +6,6 @@
 
 #include "msgTemplates.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
-#include "SessionLayer/SessionLayerMsg.h"
 
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"
@@ -186,12 +185,10 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(3, sessionStub.getDelivered().size());
         EXPECT_EQ(0, sessionStub.getDelivered()[0].first);
         EXPECT_EQ(sessionMsgA->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto nakedA = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
-        EXPECT_EQ(sessionMsgA->payload, nakedA->payload);
+        EXPECT_EQ(sessionMsgA->getPayload(), sessionStub.getDelivered()[0].second->getPayload());
         EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
         EXPECT_EQ(sessionMsgB->msgId, sessionStub.getDelivered()[1].second->msgId);
-        auto nakedB = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[1].second.get());
-        EXPECT_EQ(sessionMsgB->payload, nakedB->payload);
+        EXPECT_EQ(sessionMsgB->getPayload(), sessionStub.getDelivered()[1].second->getPayload());
         EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
         EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
 
@@ -266,22 +263,18 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(5, sessionStub.getDelivered().size());
         EXPECT_EQ(0, sessionStub.getDelivered()[0].first);
         EXPECT_EQ(sessionMsgA->msgId, sessionStub.getDelivered()[0].second->msgId);
-        auto nakedA = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[0].second.get());
-        EXPECT_EQ(sessionMsgA->payload, nakedA->payload);
+        EXPECT_EQ(sessionMsgA->getPayload(), sessionStub.getDelivered()[0].second->getPayload());
         EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
         EXPECT_EQ(sessionMsgB->msgId, sessionStub.getDelivered()[1].second->msgId);
-        auto nakedB = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[1].second.get());
-        EXPECT_EQ(sessionMsgB->payload, nakedB->payload);
+        EXPECT_EQ(sessionMsgB->getPayload(), sessionStub.getDelivered()[1].second->getPayload());
         EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
         EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, sessionStub.getDelivered()[2].second->msgId);
         EXPECT_EQ(0, sessionStub.getDelivered()[3].first);
         EXPECT_EQ(sessionMsgC->msgId, sessionStub.getDelivered()[3].second->msgId);
-        auto nakedC = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[3].second.get());
-        EXPECT_EQ(sessionMsgC->payload, nakedC->payload);
+        EXPECT_EQ(sessionMsgC->getPayload(), sessionStub.getDelivered()[3].second->getPayload());
         EXPECT_EQ(0, sessionStub.getDelivered()[4].first);
         EXPECT_EQ(sessionMsgD->msgId, sessionStub.getDelivered()[4].second->msgId);
-        auto nakedD = dynamic_cast<SessionTest*>(sessionStub.getDelivered()[4].second.get());
-        EXPECT_EQ(sessionMsgD->payload, nakedD->payload);
+        EXPECT_EQ(sessionMsgD->getPayload(), sessionStub.getDelivered()[4].second->getPayload());
 
         // Check two new Step messages have been sent
         EXPECT_EQ(2, commLayerRaw->getSent().size());
