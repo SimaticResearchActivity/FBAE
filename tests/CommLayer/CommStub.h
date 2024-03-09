@@ -4,7 +4,7 @@
 
 #ifndef FBAE_COMM_STUB_H
 #define FBAE_COMM_STUB_H
-#include "../../src/CommLayer/CommLayer.h"
+#include "CommLayer/CommLayer.h"
 
 class CommStub : public CommLayer {
 public:

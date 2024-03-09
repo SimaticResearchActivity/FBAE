@@ -5,8 +5,8 @@
 #ifndef FBAE_SESSION_STUB_H
 #define FBAE_SESSION_STUB_H
 
-#include "../../src/SessionLayer/SessionLayer.h"
-#include "../../src/AlgoLayer/AlgoLayer.h"
+#include "SessionLayer/SessionLayer.h"
+#include "AlgoLayer/AlgoLayer.h"
 
 class SessionStub : public SessionLayer {
 public:

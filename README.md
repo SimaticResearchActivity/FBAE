@@ -63,9 +63,9 @@ Where:
 
 For instance, you can open 3 terminals and run:
 
-- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
-- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../res/sites_3_local.json` on terminal 1.
-- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../res/sites_3_local.json` on terminal 2.
+- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../../res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
+- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../../res/sites_3_local.json` on terminal 1.
+- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../../res/sites_3_local.json` on terminal 2.
 
 After a while (depending on the number of messages to be sent you specified), `fbae` displays the statistics (structured in CSV format) observed for this process, e.g.:
 
@@ -74,7 +74,7 @@ algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,sit
 Sequencer,TCP,0,2147483647,3,0%,2,1024,../../res/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
 ```
 
-Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../res/sites_3_local.json`
+Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../../res/sites_3_local.json`
 
 ### Launch *fbae* executable thanks to a script
 
@@ -191,16 +191,17 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 
 1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [plantuml](https://plantuml.com/fr/sequence-diagram) (see examples in `doc` directory).
 
-2. Create a subdirectory of `src/AlgoLayer` directory, named after the name of your algorithm. For instance, `src/AlgoLayer/Foo` directory.
+2. Create a subdirectory of `src/lib/AlgoLayer` directory, named after the name of your algorithm. For instance, `src/lib/AlgoLayer/Foo` directory.
 
-3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/AlgoLayer/Foo/FooMsg.h`, containing:
+3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/lib/AlgoLayer/Foo/FooMsg.h`, containing:
 
    1. A first include which **must** be `#include "../adaptCereal.h"` followed by `#include "cereal/archives/binary.hpp"`. 
    2. Definition of a namespace dedicated to your algorithm.
    2. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
    3. Definition of the structure of the different messages. Note: This definition must include [Cereal](http://uscilab.github.io/cereal/ serialization method (for examples, see implementation of *Sequencer* or *BBOBB* algorithms and [Cereal quick start](http://uscilab.github.io/cereal/quickstart.html)).
 
-4. Create the class which will implement your algorithm, e.g. `src/AlgoLayer/Foo/Foo.h` (to define your class) and `src/AlgoLayer/Foo/Foo.cpp` (to implement your class).
+4. Create the class which will implement your algorithm, e.g. `src/lib/AlgoLayer/Foo/Foo.h` (to define your class) and `src/lib/AlgoLayer/Foo/Foo.cpp` (to implement your class).
+   - Note: `src/lib/CMakeLists.txt` must be modified to contain `AlgoLayer/Foo/Foo.cpp` and `AlgoLayer/Foo/Foo.h` lines.
 
 5. Implement `Foo::toString()` method.
 

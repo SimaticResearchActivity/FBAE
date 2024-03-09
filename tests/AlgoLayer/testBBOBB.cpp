@@ -3,9 +3,11 @@
 //
 
 #include <gtest/gtest.h>
-#include "../../src/msgTemplates.h"
-#include "../../src/AlgoLayer/BBOBB/BBOBB.h"
-#include "../../src/SessionLayer/SessionLayerMsg.h"
+
+#include "msgTemplates.h"
+#include "AlgoLayer/BBOBB/BBOBB.h"
+#include "SessionLayer/SessionLayerMsg.h"
+
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"
 

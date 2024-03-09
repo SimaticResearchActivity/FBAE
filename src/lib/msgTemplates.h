@@ -1,7 +1,7 @@
 #pragma once
 
 #include "adaptCereal.h"
-#include <cereal/archives/binary.hpp>
+#include "cereal/archives/binary.hpp"
 
 /**
  * @brief Returns structure @S deserialized from @msgString

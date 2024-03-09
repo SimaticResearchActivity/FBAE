@@ -1,9 +1,9 @@
 #include "Arguments.h"
 #include <fstream>
 #include <iostream>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/tuple.hpp>
-#include <cereal/types/vector.hpp>
+#include "cereal/archives/json.hpp"
+#include "cereal/types/tuple.hpp"
+#include "cereal/types/vector.hpp"
 
 Arguments::Arguments(std::vector<HostTuple> const& sites)
     : sites{sites}

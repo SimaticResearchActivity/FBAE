@@ -3,10 +3,12 @@
 //
 
 #include <gtest/gtest.h>
-#include "../../src/msgTemplates.h"
-#include "../../src/AlgoLayer/Sequencer/Sequencer.h"
-#include "../../src/AlgoLayer/Sequencer/SequencerMsg.h"
-#include "../../src/SessionLayer/SessionLayerMsg.h"
+
+#include "msgTemplates.h"
+#include "AlgoLayer/Sequencer/Sequencer.h"
+#include "AlgoLayer/Sequencer/SequencerMsg.h"
+#include "SessionLayer/SessionLayerMsg.h"
+
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"
 
