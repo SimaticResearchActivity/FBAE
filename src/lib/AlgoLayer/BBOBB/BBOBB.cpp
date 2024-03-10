@@ -23,29 +23,7 @@ void BBOBB::callbackReceive(std::string && algoMsgAsString) {
     auto msgId{static_cast<MsgId>(algoMsgAsString[0])};
     if (msgId == MsgId::Step) {
         if (!algoTerminated) {
-            auto stepMsg{deserializeStruct<StepMsg>(std::move(algoMsgAsString))};
-
-            if (getSessionLayer()->getArguments().getVerbose())
-                cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " : Receive a Step Message (wave : " << static_cast<uint32_t>(stepMsg.wave) << " / step : "
-                     << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
-
-            if (stepMsg.wave == lastSentStepMsg.wave) {
-                currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
-                catchUpIfLateInMessageSending();
-                if (!algoTerminated) {
-                    catchUpIfLateInMessageSending();
-                }
-            } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
-                // Message is early and needs to be treated in the next wave
-                nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
-            } else {
-                cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                     << " (currentWave = " << static_cast<uint32_t>(lastSentStepMsg.wave) << ") : Unexpected wave = " << static_cast<uint32_t>(stepMsg.wave)
-                     << " (with step = " << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #"
-                     << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
-                exit(EXIT_FAILURE);
-            }
+            processStepMsg(std::move(algoMsgAsString));
         }
     } else {
         cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
@@ -99,40 +77,40 @@ void BBOBB::catchUpIfLateInMessageSending() {
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
     if (currentWaveReceivedStepMsg.size() == nbStepsInWave) {
-        // Build vector of BatchSessionMsg to deliver
-        // Note that to append currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast to batches, we
-        // do not use batches.insert() but a for loop in order to be able to use std::move()
-        vector<fbae_AlgoLayer::BatchSessionMsg> batches{std::move(lastSentStepMsg.batchesBroadcast)};
-        for (auto & batch : currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast)
-            batches.push_back(std::move(batch));
-
-        // Compute the position in batches vector of participant rank 0, then participant rank 1, etc.
-        // For example, positions[0] represents position of BatchSessionMsg of participant 0 in batches vector.
-        // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
-        //       (thus, afterward, we will not deliver twice this BatchSessionMsg).
-        constexpr int not_found = -1;
-        vector<int> positions(getBroadcastersGroup().size(), not_found);
-        for (int pos = 0 ; pos < batches.size() ; ++pos) {
-            positions[batches[pos].senderPos] = pos;
-        }
-
-        // Deliver the different BatchSessionMsg
-        for (auto const& pos: positions) {
-            if (pos != not_found) {
-                auto senderRank = batches[pos].senderPos;
-                for (auto & msg : batches[pos].batchSessionMsg) {
-                    batchNoDeadlockCallbackDeliver(senderRank, msg);
-                    if (algoTerminated) {
-                        return;
-                    }
-                }
-            }
-        }
+        deliverBatchSessionMsg();
 
         // Prepare new wave
         currentWaveReceivedStepMsg = nextWaveReceivedStepMsg;
         nextWaveReceivedStepMsg.clear();
         beginWave();
+    }
+}
+
+void BBOBB::deliverBatchSessionMsg() {
+    // Build vector of BatchSessionMsg to deliver
+    // Note that to append currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast to batches, we
+    // do not use batches.insert() but a for loop in order to be able to use std::move()
+    vector<fbae_AlgoLayer::BatchSessionMsg> batches{std::move(lastSentStepMsg.batchesBroadcast)};
+    for (auto & batch : currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast)
+        batches.push_back(std::move(batch));
+
+    // Compute the position in batches vector of participant rank 0, then participant rank 1, etc.
+    // For example, positions[0] represents position of BatchSessionMsg of participant 0 in batches vector.
+    // Note: If BatchSessionMsg of a participant appears twice, we memorize only one position
+    //       (thus, afterward, we will not deliver twice this BatchSessionMsg).
+    map<rank_t, size_t> positions;
+    for (int pos = 0 ; pos < batches.size() ; ++pos) {
+        positions[batches[pos].senderPos] = pos;
+    }
+
+    // Deliver the different BatchSessionMsg
+    for (auto const& [senderRank, posInBatches]: positions) {
+        for (auto const& msg : batches[posInBatches].batchSessionMsg) {
+            batchNoDeadlockCallbackDeliver(senderRank, msg);
+            if (algoTerminated) {
+                return;
+            }
+        }
     }
 }
 
@@ -158,6 +136,32 @@ void BBOBB::execute() {
              << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
 }
 
+void BBOBB::processStepMsg(string &&algoMsgAsString) {
+    auto stepMsg{deserializeStruct<StepMsg>(std::move(algoMsgAsString))};
+
+    if (getSessionLayer()->getArguments().getVerbose())
+        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
+             << " : Receive a Step Message (wave : " << static_cast<uint32_t>(stepMsg.wave) << " / step : "
+             << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+
+    if (stepMsg.wave == lastSentStepMsg.wave) {
+        currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
+        catchUpIfLateInMessageSending();
+        if (!algoTerminated) {
+            catchUpIfLateInMessageSending();
+        }
+    } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
+        // Message is early and needs to be treated in the next wave
+        nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
+    } else {
+        cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
+             << " (currentWave = " << static_cast<uint32_t>(lastSentStepMsg.wave) << ") : Unexpected wave = " << static_cast<uint32_t>(stepMsg.wave)
+             << " (with step = " << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #"
+             << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
 void BBOBB::terminate() {
     algoTerminated = true;
     getCommLayer()->terminate();
@@ -166,3 +170,4 @@ void BBOBB::terminate() {
 std::string BBOBB::toString() {
     return "BBOBB";
 }
+
