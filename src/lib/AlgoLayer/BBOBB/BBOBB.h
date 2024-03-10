@@ -44,6 +44,11 @@ private :
     std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
 
     /**
+     * @brief Delivers all SessionMsg contained in the different batches of messages received
+     */
+    void deliverBatchSessionMsg();
+
+    /**
      * @brief Last @Step message which has been sent.
      */
     fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
@@ -64,5 +69,10 @@ private :
      */
     std::vector<rank_t> peersPos;
 
+    /**
+     * @brief Process Step message contained in @algoMsgAsString
+     * @param algoMsgAsString
+     */
+    void processStepMsg(std::string && algoMsgAsString);
 };
 #endif //FBAE_BBOBB_H

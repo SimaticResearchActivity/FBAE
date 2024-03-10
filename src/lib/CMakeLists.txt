@@ -24,9 +24,10 @@ add_library(lib_fbae
         CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
+		SessionLayer/SessionLayerMsg.cpp
         SessionLayer/SessionLayerMsg.h
         SessionLayer/PerfMeasures/Measures.cpp
-	SessionLayer/PerfMeasures/Measures.h
+	    SessionLayer/PerfMeasures/Measures.h
         SessionLayer/PerfMeasures/PerfMeasures.cpp
         SessionLayer/PerfMeasures/PerfMeasures.h
         SessionLayer/PerfMeasures/get_cpu_time.cpp

@@ -38,6 +38,12 @@ namespace fbae_SessionLayer {
 
          SessionMsgId msgId{0};
 
+         /**
+          * @brief Method to facilitate unit tests where it is required to get payload field of @Sessiontest messages. It should never be calles for other types od Session messages.
+          * @return "SessionBaseClass::getPayload() should never be called"
+          */
+         virtual std::string getPayload();
+
      private:
          friend class cereal::access;
          // This method lets cereal know which data members to serialize
@@ -96,9 +102,15 @@ namespace fbae_SessionLayer {
         : SessionBaseClass{msgId}
         , payload{std::move(payload)}
         {}
-        std::string payload;
+
+        /**
+         * @brief Accessor to @payload field
+         * @return @payload
+         */
+        std::string getPayload() override;
 
     private:
+        std::string payload;
         friend class cereal::access;
         SessionTest() = default;
         // This method lets cereal know which data members to serialize
