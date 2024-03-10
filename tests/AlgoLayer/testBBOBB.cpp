@@ -284,9 +284,7 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(myRank, stepMsg.senderPos);
         EXPECT_EQ(1, stepMsg.wave);
         EXPECT_EQ(0, stepMsg.step);
-        EXPECT_EQ(1, stepMsg.batchesBroadcast.size()); // In current BBOBB implementation, we store batches of messages even though batches of messages is empty
-        EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(0, stepMsg.batchesBroadcast.size());
     }
 
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveStepInNextWaveThenStepInWave) {
@@ -337,9 +335,7 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(myRank, stepMsg0.senderPos);
         EXPECT_EQ(1, stepMsg0.wave);
         EXPECT_EQ(0, stepMsg0.step);
-        EXPECT_EQ(1, stepMsg0.batchesBroadcast.size()); // In current BBOBB implementation, we store batches of messages even though batches of messages is empty
-        EXPECT_EQ(myRank, stepMsg0.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg0.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(0, stepMsg0.batchesBroadcast.size());
         // Check message 1, i.e. second sent message3
         EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[1].first);
         // Check contents of message 1
@@ -348,9 +344,7 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(myRank, stepMsg1.senderPos);
         EXPECT_EQ(2, stepMsg1.wave);
         EXPECT_EQ(0, stepMsg1.step);
-        EXPECT_EQ(1, stepMsg1.batchesBroadcast.size()); // In current BBOBB implementation, we store batches of messages even though batches of messages is empty
-        EXPECT_EQ(myRank, stepMsg1.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg1.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(0, stepMsg1.batchesBroadcast.size());
     }
 
     TEST(BBOBB, ExecuteWith8SitesAndRank1ReceiveStepsWhichDoNotTriggerImmediatlySendingOfmessages) {
@@ -359,7 +353,7 @@ namespace fbae_test_BBOBB {
          *   0. because of initialization, has sent step 0 message to 2 in wave 0 (with SessionMsg FirstBroadcast from 1)
          *      Note: This was already verified in previous scenario.
          *   1. receives step 2 message from 5 in wave 0 (with SessionMsg 'A' and 'B' from sender 0 & SessionMsg 'D' from sender 5 & SessionMsg 'C' from sender 3)
-         *      ==> No reaction of site with rank 1
+        *      ==> No reaction of site with rank 1
          *   2. receives step 0 message from 0 in wave 1 (with SessionMsg 'E' from sender 0)
          *      ==> No reaction of site with rank 1
          *   3. receives step 1 message for 7 in wave 1 (with SessionMsg 'F' from sender 7)
@@ -445,9 +439,9 @@ namespace fbae_test_BBOBB {
         //          a. sends step 2 message in wave 0 to 5 (with SessionMsg FirstBroadcast from 1 & SessionMsg 'G' from 1 & SessionMsg 'A' and 'B' from 0 & SessionMsg 'A' and 'B' from sender 0 & SessionMsg 'G' from sender 7 & SessionMsg 'D' from sender 3)
         //          b. calls deliver for wave 0
         //             ==> SessionMsg 'A' and 'B' from 0, SessionMsg FirstBroadcast from 1, SessionMsg 'C' from sender 3, SessionMsg 'D' from sender 5, SessionMsg 'G' from sender 7
-        //          c. sends step 0 message to 2 in wave 1 (empty batch from sender 1)
-        //          d. sends step 1 message to 3 in wave 1 (empty batch from sender 1 & SessionMsg 'E' from sender 0)
-        //          e. sends step 2 message to 5 in wave 1 (empty batch from sender 1 & SessionMsg 'E' from sender 0 & SessionMsg 'F' from sender 7)
+        //          c. sends step 0 message to 2 in wave 1 (empty)
+        //          d. sends step 1 message to 3 in wave 1 (SessionMsg 'E' from sender 0)
+        //          e. sends step 2 message to 5 in wave 1 (SessionMsg 'E' from sender 0 & SessionMsg 'F' from sender 7)
         //          f. does not call deliver for wave 1 (as it is missing step 2 message of wave 1)
         auto constexpr payloadG{"G"};
         algoLayerRaw->callbackReceive( buildStepMsg( 7, 0, 1,
@@ -510,37 +504,29 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(7, sessionStub.getDelivered()[5].first);
         EXPECT_EQ(payloadG, sessionStub.getDelivered()[5].second->getPayload());
 
-        // Check c. sends step 0 message to 2 in wave 1 (empty batch from 1)
+        // Check c. sends step 0 message to 2 in wave 1 (empty)
         EXPECT_EQ(2, commLayerRaw->getSent()[2].first);
         auto stepMsg10{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(std::move(commLayerRaw->getSent()[2].second))};
         EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg10.msgId);
         EXPECT_EQ(myRank, stepMsg10.senderPos);
         EXPECT_EQ(1, stepMsg10.wave);
         EXPECT_EQ(0, stepMsg10.step);
-        EXPECT_EQ(1, stepMsg10.batchesBroadcast.size()); // In current BBOBB implementation, we store batches of messages even though batches of messages is empty
+        EXPECT_EQ(0, stepMsg10.batchesBroadcast.size());
 
-        EXPECT_EQ(myRank, stepMsg10.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg10.batchesBroadcast[0].batchSessionMsg.size());
-
-        // Check d. sends step 1 message to 3 in wave 1 (empty batch from sender 1
-        //                                               & SessionMsg 'E' from sender 0)
+        // Check d. sends step 1 message to 3 in wave 1 (SessionMsg 'E' from sender 0)
         EXPECT_EQ(3, commLayerRaw->getSent()[3].first);
         auto stepMsg11{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(std::move(commLayerRaw->getSent()[3].second))};
         EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg11.msgId);
         EXPECT_EQ(myRank, stepMsg11.senderPos);
         EXPECT_EQ(1, stepMsg11.wave);
         EXPECT_EQ(1, stepMsg11.step);
-        EXPECT_EQ(2, stepMsg11.batchesBroadcast.size());
+        EXPECT_EQ(1, stepMsg11.batchesBroadcast.size());
 
-        EXPECT_EQ(myRank, stepMsg10.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg10.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(0, stepMsg11.batchesBroadcast[0].senderPos);
+        EXPECT_EQ(1, stepMsg11.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(payloadE, stepMsg11.batchesBroadcast[0].batchSessionMsg[0]->getPayload());
 
-        EXPECT_EQ(0, stepMsg11.batchesBroadcast[1].senderPos);
-        EXPECT_EQ(1, stepMsg11.batchesBroadcast[1].batchSessionMsg.size());
-        EXPECT_EQ(payloadE, stepMsg11.batchesBroadcast[1].batchSessionMsg[0]->getPayload());
-
-        // Check e. sends step 2 message to 5 in wave 1 (empty batch from sender 1
-        //                                               & SessionMsg 'E' from sender 0
+        // Check e. sends step 2 message to 5 in wave 1 (SessionMsg 'E' from sender 0
         //                                               & SessionMsg 'F' from sender 7)
         EXPECT_EQ(5, commLayerRaw->getSent()[4].first);
         auto stepMsg12{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(std::move(commLayerRaw->getSent()[4].second))};
@@ -548,18 +534,15 @@ namespace fbae_test_BBOBB {
         EXPECT_EQ(myRank, stepMsg12.senderPos);
         EXPECT_EQ(1, stepMsg12.wave);
         EXPECT_EQ(2, stepMsg12.step);
-        EXPECT_EQ(3, stepMsg12.batchesBroadcast.size());
+        EXPECT_EQ(2, stepMsg12.batchesBroadcast.size());
 
-        EXPECT_EQ(myRank, stepMsg10.batchesBroadcast[0].senderPos);
-        EXPECT_EQ(0, stepMsg10.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(0, stepMsg12.batchesBroadcast[0].senderPos);
+        EXPECT_EQ(1, stepMsg12.batchesBroadcast[0].batchSessionMsg.size());
+        EXPECT_EQ(payloadE, stepMsg12.batchesBroadcast[0].batchSessionMsg[0]->getPayload());
 
-        EXPECT_EQ(0, stepMsg12.batchesBroadcast[1].senderPos);
+        EXPECT_EQ(7, stepMsg12.batchesBroadcast[1].senderPos);
         EXPECT_EQ(1, stepMsg12.batchesBroadcast[1].batchSessionMsg.size());
-        EXPECT_EQ(payloadE, stepMsg12.batchesBroadcast[1].batchSessionMsg[0]->getPayload());
-
-        EXPECT_EQ(7, stepMsg12.batchesBroadcast[2].senderPos);
-        EXPECT_EQ(1, stepMsg12.batchesBroadcast[2].batchSessionMsg.size());
-        EXPECT_EQ(payloadF, stepMsg12.batchesBroadcast[2].batchSessionMsg[0]->getPayload());
+        EXPECT_EQ(payloadF, stepMsg12.batchesBroadcast[1].batchSessionMsg[0]->getPayload());
     }
 
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveStepInIncorrectWave) {

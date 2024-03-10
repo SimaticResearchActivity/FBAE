@@ -62,15 +62,19 @@ void AlgoLayer::batchNoDeadlockCallbackDeliver(rank_t senderPos, std::shared_ptr
 
 }
 
-fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgsWithLock(rank_t senderPos) {
+std::optional<fbae_AlgoLayer::BatchSessionMsg> AlgoLayer::batchGetBatchMsgsWithLock(rank_t senderPos) {
     lock_guard lck(batchCtrlMtx);
-    BatchSessionMsg msg{senderPos, std::move(batchWaitingSessionMsg)};
-    batchWaitingSessionMsg.clear();
-    return msg;
+    if (batchWaitingSessionMsg.empty()) {
+        return std::nullopt;
+    } else {
+        auto msg = std::make_optional<fbae_AlgoLayer::BatchSessionMsg>(senderPos, std::move(batchWaitingSessionMsg));
+        batchWaitingSessionMsg.clear();
+        return msg;
+    }
 }
 
-fbae_AlgoLayer::BatchSessionMsg AlgoLayer::batchGetBatchMsgs(rank_t senderPos) {
-    BatchSessionMsg msg{batchGetBatchMsgsWithLock(senderPos)};
+std::optional<fbae_AlgoLayer::BatchSessionMsg> AlgoLayer::batchGetBatchMsgs(rank_t senderPos) {
+    auto msg{batchGetBatchMsgsWithLock(senderPos)};
     batchCtrlCondVar.notify_one();
     return msg;
 }

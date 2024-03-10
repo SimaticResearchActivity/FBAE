@@ -47,7 +47,9 @@ void BBOBB::beginWave() {
     lastSentStepMsg.wave += 1;
     lastSentStepMsg.step = 0;
     lastSentStepMsg.batchesBroadcast.clear();
-    lastSentStepMsg.batchesBroadcast.emplace_back(batchGetBatchMsgs(senderPos));
+    if (auto batch{batchGetBatchMsgs(senderPos)} ; batch.has_value()) {
+        lastSentStepMsg.batchesBroadcast.emplace_back(batch.value());
+    }
 
     // Send it
     if (getSessionLayer()->getArguments().getVerbose())

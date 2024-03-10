@@ -19,7 +19,7 @@ public:
      * @param senderPos position of sender of @batchWaitingSessionMsg
      * @return @batchWaitingSessionMsg encapsulated in a @BatchSessionMsg
      */
-    [[nodiscard]] fbae_AlgoLayer::BatchSessionMsg batchGetBatchMsgs(rank_t senderPos);
+    [[nodiscard]] std::optional<fbae_AlgoLayer::BatchSessionMsg> batchGetBatchMsgs(rank_t senderPos);
 
     /**
      * @brief Callback to be called by @AlgoLayer when @AlgoLayer is using @batchWaitingSessionMsg.
@@ -114,7 +114,7 @@ public:
     [[nodiscard]] virtual std::string toString() = 0;
 
 private:
-    fbae_AlgoLayer::BatchSessionMsg batchGetBatchMsgsWithLock(rank_t senderPos);
+    std::optional<fbae_AlgoLayer::BatchSessionMsg> batchGetBatchMsgsWithLock(rank_t senderPos);
 
     /**
      * @brief Condition variable coupled with @batchCtrlMtx to control that batch of messages in
