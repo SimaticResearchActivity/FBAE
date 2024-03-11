@@ -32,6 +32,9 @@ add_library(lib_fbae
         SessionLayer/PerfMeasures/PerfMeasures.h
         SessionLayer/PerfMeasures/get_cpu_time.cpp
         SessionLayer/PerfMeasures/get_cpu_time.h
+        AlgoLayer/LCR/LCR.cpp
+        AlgoLayer/LCR/LCR.h
+		AlgoLayer/LCR/LCRMessage.h
 )
 
 target_include_directories(lib_fbae PUBLIC ./)
