@@ -11,7 +11,6 @@ namespace fbae_LCRAlgoLayer {
     struct StructBroadcastMessage {
         MessageId messageId {};
         rank_t senderRank {};
-        rank_t currentRank {};
         bool isStable = false;
         std::vector<uint32_t> vectorClock;
         fbae_SessionLayer::SessionMsg sessionMessage;

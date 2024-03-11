@@ -7,45 +7,39 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-LCRLayer::ProcessData::ProcessData(rank_t processCount) :
-        vectorClock(std::vector<uint32_t>(processCount)),
-        pending(std::vector<StructBroadcastMessage>(0)) {
-
-    // Initialize to zero all elements of the process's vector clock.
-    // TODO: Does the vector constructor initializes the memory of each element?
-    for (rank_t i = 0; i < processCount; i++)
-        this->vectorClock[i] = 0;
-}
-
 LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
-        :  processData(), AlgoLayer(std::move(commLayer)) {
+        :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
 
-    // Get the process count.
-    const uint32_t processCount = getSessionLayer()->getArguments().getSites().size();
+    // Initialize the vector clock.
 
-    // Call the constructor on each process data block by specifying the amount of
-    // processes in the algorithm.
-    for (uint32_t i = 0; i < processCount; i++)
-        processData.emplace_back(processCount);
+    // Get the sites count.
+    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+
+    // Preallocate the capacity of the vector.
+    vectorClock.reserve(sitesCount);
+
+    // The vector clock is initially filled with 0s.
+    for (uint32_t i = 0; i < sitesCount; i++)
+        vectorClock.push_back(0);
 }
 
 void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
     // Get the total process count.
-    const uint32_t processCount = getSessionLayer()->getArguments().getSites().size();
+    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     // Deserialize the message.
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
 
-    // Get the rank of the current and next processes.
-    const rank_t currentProcessRank = message.currentRank;
-    const rank_t nextProcessRank = (currentProcessRank + 1) % processCount;
+    // Get the rank of the current and next sites.
+    const rank_t currentSiteRank = getSessionLayer()->getRank();
+    const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
 
     // Differentiate between if the message is being delivered or being acknowledged.
     switch (message.messageId) {
         case MessageId::Message: {
             // Get the sender's time on the message and the current process's clocks.
             const uint32_t messageClock = message.vectorClock[message.senderRank];
-            const uint32_t currentClock = processData[currentProcessRank].vectorClock[message.senderRank];
+            const uint32_t currentClock = vectorClock[message.senderRank];
 
             // TODO: I did not understand what this was supposed to do.
             if (messageClock <= currentClock)
@@ -53,14 +47,14 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
 
             // If the next process is the same as the one who initiated the message,
             // then all processes have had the message...
-            const bool cycleFinished = nextProcessRank == message.senderRank;
+            const bool cycleFinished = nextSiteRank == message.senderRank;
             // ... and if so, the message becomes stable.
             message.isStable = cycleFinished;
 
             // Increment the clock of the current process.
-            processData[currentProcessRank].vectorClock[message.senderRank] += 1;
+            vectorClock[message.senderRank] += 1;
             // Append the message to the list of messages of the current process.
-            processData[currentProcessRank].pending.push_back(message);
+            pending.push_back(message);
 
             // If the cycle is finished, the message should become an acknowledgment message.
             // if not, it should stay as-is.
@@ -71,13 +65,14 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
         case MessageId::Acknowledgement: {
             // Get the rank of the process after the next process, and check whether it
             // is equal to the sender, if so abort.
-            const rank_t nextNextProcessRank = (nextProcessRank + 1) % processCount;
-            if (nextNextProcessRank == message.senderRank)
+            const rank_t nextNextSiteRank = (nextSiteRank + 1) % sitesCount;
+            if (nextNextSiteRank == message.senderRank)
                 return;
 
             // Iterate through all pending messages of the current process and
             // if the vector clocks are aligned, mark them as stable.
-            for (auto pendingMessage : processData[currentProcessRank].pending)
+            for (auto pendingMessage : pending)
+                // TODO: Understand this part.
                 if (pendingMessage.vectorClock == message.vectorClock)
                     pendingMessage.isStable = true;
 
@@ -89,28 +84,29 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
         }
     }
 
-    // The message must then pass to the next process.
-    message.currentRank = nextProcessRank;
-
     // Serialize the process and send int to the next process.
     const auto serialized = serializeStruct<StructBroadcastMessage>(message);
-    getCommLayer().send(nextProcessRank, serialized);
+    getCommLayer().multicastMsg(serialized);
 
     // Try to deliver the message (if we should).
     if (message.messageId == MessageId::Acknowledgement) {
-        while (processData[currentProcessRank].pending[0].isStable) {
+        while (pending[0].isStable) {
             // TODO, I don't know what to do here.
             std::cout << "We delivered a message!\n";
-            processData.erase(processData.begin());
+            pending.erase(pending.begin());
         }
     }
 }
 
 void LCRLayer::execute() {
-    std::vector<rank_t> broadcast_sites(getSessionLayer()->getArguments().getSites().size());
-    std::iota(broadcast_sites.begin(), broadcast_sites.end(), 0);
+    const rank_t rank = getSessionLayer()->getRank();
+    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
-    setBroadcastersGroup(std::move(broadcast_sites));
+    std::vector<rank_t> broadcastDestination { (rank + 1) % sitesCount };
+
+    setBroadcastersGroup(std::move(broadcastDestination));
+
+    getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersGroup(), 1, this);
 }
 
 void LCRLayer::terminate() {
@@ -123,31 +119,31 @@ std::string LCRLayer::toString() {
 
 void LCRLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) {
     // Get the number of processes.
-    const uint32_t processCount = getSessionLayer()->getArguments().getSites().size();
+    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     // Get the rank of the sender and the receiver (which is the sender's successor).
-    const rank_t sender = 0;
-    const rank_t receiver = (sender + 1) % processCount;
+    const rank_t currentRank = getSessionLayer()->getRank();
+    const rank_t receiverRank = (currentRank + 1) % sitesCount;
 
     // Increase the vector clock of the sender process (broadcasting is an action).
-    processData[sender].vectorClock[sender] += 1;
+    vectorClock[currentRank] += 1;
 
     // Construct the message struct.
     const StructBroadcastMessage message = {
             .messageId = MessageId::Message,
-            .senderRank = sender,
-            .currentRank = receiver,
+            .senderRank = currentRank,
+            .currentRank = receiverRank,
             .isStable = false,
-            .vectorClock = processData[sender].vectorClock,
+            .vectorClock = vectorClock,
             .sessionMessage = sessionMessage,
     };
 
     // Append the message to the list of pending messages to be delivered by the
     // sender process.
-    processData[sender].pending.push_back(message);
+    pending.push_back(message);
 
     // Serialize the message...
     auto serialized = serializeStruct<StructBroadcastMessage>(message);
     // ... and send it to its successor.
-    getCommLayer()->send(receiver, serialized);
+    getCommLayer()->send(receiverRank, serialized);
 }
