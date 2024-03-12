@@ -1,11 +1,13 @@
 #include <iostream>
 #include <numeric>
-#include "../../SessionLayer/SessionLayer.h"
+#include "../../sessionLayer/sessionLayer.h"
 #include "LCR.h"
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
 
 using namespace fbae_LCRAlgoLayer;
+
+// issue: https://stackoverflow.com/questions/55856187/cannot-initialize-object-parameter-of-type-parent-with-an-expression-of-type
 
 LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
         :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
@@ -78,6 +80,7 @@ std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(Stru
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     // Get the rank of the current site and its successor's successor.
+
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextNextSiteRank = (currentSiteRank + 2) % sitesCount;
 
@@ -124,7 +127,7 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
     // Serialize the process and send int to the next process.
     if (messageToForward.has_value()) {
         const auto serialized = serializeStruct<StructBroadcastMessage>(messageToForward.value());
-        getCommLayer().multicastMsg(serialized);
+        getCommLayer()->multicastMsg(serialized);
     }
 }
 
@@ -132,11 +135,12 @@ void LCRLayer::execute() {
     const rank_t rank = getSessionLayer()->getRank();
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
-    std::vector<rank_t> broadcastDestination { (rank + 1) % sitesCount };
+    // The broadcast destination is the next site in the ring of sites.
+    std::vector<rank_t> broadcastDestination { static_cast<rank_t>((rank + 1) % sitesCount) };
 
     setBroadcastersGroup(std::move(broadcastDestination));
 
-    getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersGroup(), 1, this);
+    getCommLayer()->openDestAndWaitIncomingMsg(broadcastersGroup, 1, this);
 }
 
 void LCRLayer::terminate() {
