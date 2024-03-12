@@ -26,7 +26,7 @@ private:
             fbae_LCRAlgoLayer::StructBroadcastMessage message);
 
     /** Internal function for handling trying to deliver the message to the particular site. */
-    void tryDeliver(void);
+    void tryDeliver();
 
     /** The internal vector clock of the site. */
     std::vector<uint32_t> vectorClock;

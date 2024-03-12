@@ -23,7 +23,7 @@ LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
         vectorClock.push_back(0);
 }
 
-void LCRLayer::tryDeliver(void) {
+void LCRLayer::tryDeliver() {
     while (pending[0].isStable) {
         // TODO, I don't know what to do here.
         std::cout << "We delivered a message!\n";
@@ -69,6 +69,7 @@ std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroad
     if (cycleFinished)
         tryDeliver();
 
+    // The message to be forwarded to the next site.
     return std::move(message);
 }
 
@@ -80,7 +81,8 @@ std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(Stru
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextNextSiteRank = (currentSiteRank + 2) % sitesCount;
 
-    // If the successor's successor's rank is that of the sender, abort.
+    // If the successor's successor's rank is that of the sender, abort and do not
+    // forward any message.
     if (nextNextSiteRank == message.senderRank)
         return {};
 
@@ -93,7 +95,9 @@ std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(Stru
 
     // Try and deliver pending messages.
     tryDeliver();
-    return message;
+
+    // The message to be forwarded to the next site.
+    return std::move(message);
 }
 
 void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
@@ -170,5 +174,5 @@ void LCRLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionM
     // Serialize the message...
     auto serialized = serializeStruct<StructBroadcastMessage>(message);
     // ... and send it to its successor.
-    getCommLayer()->send(receiverRank, serialized);
+    getCommLayer()->multicastMsg(serialized);
 }
