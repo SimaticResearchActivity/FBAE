@@ -17,21 +17,35 @@ public:
 
 private:
 
-    /** Internal function for handling when we receive a message from another site. */
+    /**
+     * @brief Internal function for handling reception of a message from another site.
+     * @param message: The message we received that want to handle.
+     * @return Optionally returns the message to send to the successor in the ring of sites.
+    */
     std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleMessageReceive(
             fbae_LCRAlgoLayer::StructBroadcastMessage message);
 
-    /** Internal function for handling when we receive an acknowledgement from another site. */
+    /**
+     * @brief Internal function for handling reception of an acknowledgement from another site.
+     * @param message: The acknowledgment message we received that want to handle.
+     * @return Optionally returns the acknowledgement message to send to the successor in the ring of sites.
+    */
     std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleAcknowledgmentReceive(
             fbae_LCRAlgoLayer::StructBroadcastMessage message);
 
-    /** Internal function for handling trying to deliver the message to the particular site. */
+    /**
+     * @brief Internal function for handling trying to deliver the message to the particular site.
+    */
     void tryDeliver();
 
-    /** The internal vector clock of the site. */
+    /**
+     * @brief The internal vector clock of the site.
+    */
     std::vector<uint32_t> vectorClock;
 
-    /** The pending list of messages of the site. */
+    /**
+     * @brief The pending list of messages of the site.
+    */
     std::vector<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
 };
 
