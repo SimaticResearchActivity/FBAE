@@ -140,7 +140,7 @@ void LCRLayer::execute() {
 
     setBroadcastersGroup(std::move(broadcastDestination));
 
-    getCommLayer()->openDestAndWaitIncomingMsg(broadcastersGroup, 1, this);
+    getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersGroup(), 1, this);
 }
 
 void LCRLayer::terminate() {
