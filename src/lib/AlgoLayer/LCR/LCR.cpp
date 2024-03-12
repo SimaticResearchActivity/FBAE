@@ -152,14 +152,10 @@ std::string LCRLayer::toString() {
 }
 
 void LCRLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) {
-    // Get the number of processes.
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
-
-    // Get the rank of the sender and the receiver (which is the sender's successor).
+    // Get the rank of the current site.
     const rank_t currentRank = getSessionLayer()->getRank();
-    const rank_t receiverRank = (currentRank + 1) % sitesCount;
 
-    // Increase the vector clock of the sender process (broadcasting is an action).
+    // Increase the vector clock of the current site (broadcasting is an action).
     vectorClock[currentRank] += 1;
 
     // Construct the message struct.
@@ -172,11 +168,11 @@ void LCRLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionM
     };
 
     // Append the message to the list of pending messages to be delivered by the
-    // sender process.
+    // current site.
     pending.push_back(message);
 
     // Serialize the message...
     auto serialized = serializeStruct<StructBroadcastMessage>(message);
-    // ... and send it to its successor.
+    // ... and send it to the current site's successor.
     getCommLayer()->multicastMsg(serialized);
 }
