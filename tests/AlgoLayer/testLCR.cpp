@@ -15,6 +15,7 @@ namespace fbae_test_LCR {
 
     using namespace std;
     using namespace fbae_SessionLayer;
+    using namespace fbae_LCRAlgoLayer;
 
     TEST(LCRLayer, LCRLayerExecute) {
         constexpr auto nbSites = 4;
@@ -51,12 +52,12 @@ namespace fbae_test_LCR {
         // Check that this message was sent to process 0
         ASSERT_EQ(0, commLayerRaw->getSent()[0].first);
         // Check contents of this message
-        auto broadcastMsg{deserializeStruct<fbae_LCRAlgoLayer::StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
-        ASSERT_EQ(fbae_LCRAlgoLayer::MessageId::Message, broadcastMsg.messageId);
-        ASSERT_EQ(3, broadcastMsg.senderRank);
+        auto broadcastMsg{deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
+        ASSERT_EQ(myRank, broadcastMsg.senderRank);
         ASSERT_EQ(std::vector<uint32_t>({ 0, 0, 0, 1 }), broadcastMsg.vectorClock);
         ASSERT_FALSE(broadcastMsg.isStable);
-        ASSERT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
+        ASSERT_EQ(SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
 
         // Check plain Participant is broadcasting messages
 //        ASSERT_TRUE(algoLayerRaw->isBroadcastingMessages());
@@ -68,6 +69,42 @@ namespace fbae_test_LCR {
         ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
+    TEST(LCRLayer, MessageToAcknowledgement) {
+        constexpr auto nbSites = 4;
+        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
+        Arguments arguments{sites};
+        auto commLayer = make_unique<CommStub>();
+        auto commLayerRaw = commLayer.get();
+        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayerRaw = algoLayer.get();
+        rank_t myRank = 3;
+        SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
+
+        algoLayerRaw->execute();
+
+        // The original message that was sent (tested before).
+        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+
+        auto message = StructBroadcastMessage {
+            .messageId = MessageId::Message,
+            .senderRank = 0,
+            .isStable = false,
+            .vectorClock = std::vector<uint32_t>({1, 0, 0, 0}),
+            .sessionMessage = firstIncomingMessage.sessionMessage
+        };
+
+        // Send the message to the current site.
+        algoLayerRaw->callbackReceive(serializeStruct(message));
+
+        ASSERT_EQ(2, commLayerRaw->getSent().size());
+
+        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
+        ASSERT_EQ(0, secondIncomingMessage.senderRank);
+        ASSERT_EQ(std::vector<uint32_t>({ 1, 0, 0, 0 }), secondIncomingMessage.vectorClock);
+        ASSERT_TRUE(secondIncomingMessage.isStable);
+        ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
+    }
 //    TEST(Sequencer, TotalOrderBroadcast) {
 //        constexpr auto nbSites = 4;
 //        vector<HostTuple> sites(nbSites, HostTuple{"", 0});

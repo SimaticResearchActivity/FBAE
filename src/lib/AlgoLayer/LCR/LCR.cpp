@@ -39,15 +39,6 @@ std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroad
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
 
-    // Get the sender's time on the message and the current process's clocks.
-    const uint32_t messageClock = message.vectorClock[message.senderRank];
-    const uint32_t currentClock = vectorClock[message.senderRank];
-
-    // If the message clock is earlier than the current clock, do nothing and
-    // do not forward any message.
-    if (messageClock <= currentClock)
-        return {};
-
     // Increment the clock of the current process.
     vectorClock[message.senderRank] += 1;
 
@@ -63,7 +54,6 @@ std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroad
     // If the cycle is finished, the message should become an acknowledgment message.
     // if not, it should stay as-is.
     message.messageId = cycleFinished ? MessageId::Acknowledgement : MessageId::Message;
-
     // Try and deliver pending messages if the cycle is complete.
     if (cycleFinished)
         tryDeliver();
