@@ -16,6 +16,10 @@ public:
     std::string toString() override;
 
 private:
+    /**
+     * @brief Internal function used to initialize the vector clock.
+     */
+    void initializeVectorClock();
 
     /**
      * @brief Internal function for handling reception of a message from another site.

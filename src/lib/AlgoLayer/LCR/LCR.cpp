@@ -14,6 +14,16 @@ LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
     // access to the session layer which is not yet initialized.
 }
 
+void LCRLayer::initializeVectorClock() {
+    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    // Preallocate the capacity of the vector.
+    vectorClock.reserve(sitesCount);
+
+    // The vector clock is initially filled with 0s.
+    for (uint32_t i = 0; i < sitesCount; i++)
+        vectorClock.push_back(0);
+}
+
 void LCRLayer::tryDeliver() {
     while (pending[0].isStable) {
         getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
@@ -118,17 +128,12 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
 }
 
 void LCRLayer::execute() {
+    // This initialization is done now because at this point in time
+    // we have access to the session layer.
+    initializeVectorClock();
+
     const rank_t rank = getSessionLayer()->getRank();
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
-
-    // We initialize the vector clock in this function as we now have access to the session layer.
-
-    // Preallocate the capacity of the vector.
-    vectorClock.reserve(sitesCount);
-
-    // The vector clock is initially filled with 0s.
-    for (uint32_t i = 0; i < sitesCount; i++)
-        vectorClock.push_back(0);
 
     // Get the list of all broadcasters (which corresponds to all processes).
     std::vector<rank_t> broadcasters(sitesCount);
