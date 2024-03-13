@@ -36,9 +36,6 @@ namespace fbae_test_LCR {
         // Check nbAwaitedConnections
         ASSERT_EQ(1, commLayerRaw->getNbAwaitedConnections());
 
-        // Check no message was broadcast and thus sent.
-        ASSERT_EQ(0, commLayerRaw->getSent().size());
-
         // Check @AlgoLayer:broadcastersGroup is correct
         ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
         ASSERT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
@@ -56,23 +53,19 @@ namespace fbae_test_LCR {
         // Check contents of this message
         auto broadcastMsg{deserializeStruct<fbae_LCRAlgoLayer::StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
         ASSERT_EQ(fbae_LCRAlgoLayer::MessageId::Message, broadcastMsg.messageId);
-//        ASSERT_EQ(myRank-1, broadcastMsg.senderPos); // myRank-1 because senderPos is 1 less than senderRank
-//        ASSERT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMsg->msgId);
-
-        // Check @AlgoLayer:broadcastersGroup is correct
-//        ASSERT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
-//        ASSERT_EQ(1, algoLayerRaw->getBroadcastersGroup()[0]);
-//        ASSERT_EQ(2, algoLayerRaw->getBroadcastersGroup()[1]);
-//        ASSERT_EQ(3, algoLayerRaw->getBroadcastersGroup()[2]);
+        ASSERT_EQ(3, broadcastMsg.senderRank);
+        ASSERT_EQ(std::vector<uint32_t>({ 0, 0, 0, 1 }), broadcastMsg.vectorClock);
+        ASSERT_FALSE(broadcastMsg.isStable);
+        ASSERT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
 
         // Check plain Participant is broadcasting messages
 //        ASSERT_TRUE(algoLayerRaw->isBroadcastingMessages());
 
         // Check @SessionLayer::callbackInitDone() was called
-//        ASSERT_TRUE(sessionStub.isCallbackInitDoneCalled());
+        ASSERT_TRUE(sessionStub.isCallbackInitDoneCalled());
 
         // Check no message was delivered
-//        ASSERT_EQ(0, sessionStub.getDelivered().size());
+        ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
 //    TEST(Sequencer, TotalOrderBroadcast) {
