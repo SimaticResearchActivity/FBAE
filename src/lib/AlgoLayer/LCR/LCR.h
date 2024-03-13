@@ -4,7 +4,7 @@
 #include "LCRMessage.h"
 
 /** @brief The LCR Algorithm layer. */
-class LCRLayer: AlgoLayer {
+class LCRLayer: public AlgoLayer {
 public:
     explicit LCRLayer(std::unique_ptr<CommLayer> commLayer);
 

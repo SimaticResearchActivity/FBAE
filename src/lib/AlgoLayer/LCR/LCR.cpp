@@ -7,28 +7,16 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-// issue: https://stackoverflow.com/questions/55856187/cannot-initialize-object-parameter-of-type-parent-with-an-expression-of-type
 
 LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
         :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
-
-    // Initialize the vector clock.
-
-    // Get the sites count.
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
-
-    // Preallocate the capacity of the vector.
-    vectorClock.reserve(sitesCount);
-
-    // The vector clock is initially filled with 0s.
-    for (uint32_t i = 0; i < sitesCount; i++)
-        vectorClock.push_back(0);
+    // We cannot initialize the vector clock at this point in time, as we need
+    // access to the session layer which is not yet initialized.
 }
 
 void LCRLayer::tryDeliver() {
     while (pending[0].isStable) {
-        // TODO, I don't know what to do here.
-        std::cout << "We delivered a message!\n";
+        getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
         pending.erase(pending.begin());
     }
 }
@@ -45,7 +33,6 @@ std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroad
     const uint32_t messageClock = message.vectorClock[message.senderRank];
     const uint32_t currentClock = vectorClock[message.senderRank];
 
-    // TODO: I did not understand what this was supposed to do.
     // If the message clock is earlier than the current clock, do nothing and
     // do not forward any message.
     if (messageClock <= currentClock)
@@ -92,7 +79,6 @@ std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(Stru
     // Iterate through all pending messages of the current process and
     // if the vector clocks are aligned, mark them as stable.
     for (auto pendingMessage : pending)
-        // TODO: Understand this part.
         if (pendingMessage.vectorClock == message.vectorClock)
             pendingMessage.isStable = true;
 
@@ -135,12 +121,26 @@ void LCRLayer::execute() {
     const rank_t rank = getSessionLayer()->getRank();
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
-    // The broadcast destination is the next site in the ring of sites.
-    std::vector<rank_t> broadcastDestination { static_cast<rank_t>((rank + 1) % sitesCount) };
+    // We initialize the vector clock in this function as we now have access to the session layer.
 
-    setBroadcastersGroup(std::move(broadcastDestination));
+    // Preallocate the capacity of the vector.
+    vectorClock.reserve(sitesCount);
 
-    getCommLayer()->openDestAndWaitIncomingMsg(getBroadcastersGroup(), 1, this);
+    // The vector clock is initially filled with 0s.
+    for (uint32_t i = 0; i < sitesCount; i++)
+        vectorClock.push_back(0);
+
+    // Get the list of all broadcasters (which corresponds to all processes).
+    std::vector<rank_t> broadcasters(sitesCount);
+    std::iota(broadcasters.begin(), broadcasters.end(), 0);
+
+    // Assign these broadcasters to the broadcaster group in the AlgoLayer class.
+    setBroadcastersGroup(std::move(broadcasters));
+
+    // The only destination this site has is its successor, and it only
+    // expects a single other site to access this current site, hence the
+    // parameters.
+    getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount) }, 1, this);
 }
 
 void LCRLayer::terminate() {

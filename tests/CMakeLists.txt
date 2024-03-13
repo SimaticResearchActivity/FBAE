@@ -44,6 +44,7 @@ add_executable(tests
         CommLayer/CommStub.h
         AlgoLayer/testSequencer.cpp
         AlgoLayer/testBBOBB.cpp
+        AlgoLayer/testLCR.cpp
 )
 
 target_link_libraries(tests gtest_main lib_fbae)

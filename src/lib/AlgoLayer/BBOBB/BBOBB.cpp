@@ -80,6 +80,8 @@ void BBOBB::catchUpIfLateInMessageSending() {
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
     if (currentWaveReceivedStepMsg.size() == nbStepsInWave) {
         deliverBatchSessionMsg();
+        if (algoTerminated)
+            return;
 
         // Prepare new wave
         currentWaveReceivedStepMsg = nextWaveReceivedStepMsg;
