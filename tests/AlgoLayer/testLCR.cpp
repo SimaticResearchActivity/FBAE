@@ -17,6 +17,7 @@ namespace fbae_test_LCR {
     using namespace fbae_SessionLayer;
     using namespace fbae_LCRAlgoLayer;
 
+    // This test tests all the setup of the LCR layer.
     TEST(LCRLayer, LCRLayerExecute) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
@@ -69,6 +70,8 @@ namespace fbae_test_LCR {
         ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
+    // This tests the behavior of the LCR when a site receives a message and is expected
+    // to return a message.
     TEST(LCRLayer, MessageToMessage) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
@@ -108,6 +111,8 @@ namespace fbae_test_LCR {
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
+    // This tests the behavior of the LCR when a site receives a message and is expected
+    // to return an acknowledgement.
     TEST(LCRLayer, MessageToAcknowledgement) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
@@ -147,6 +152,8 @@ namespace fbae_test_LCR {
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
+    // This tests the behavior of the LCR when a site receives an acknowledgement and is expected
+    // to return an acknowledgement.
     TEST(LCRLayer, AcknowledgementToAcknowledgement) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
@@ -186,6 +193,8 @@ namespace fbae_test_LCR {
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
+    // This tests the behavior of the LCR when a site receives an acknowledgement and is expected
+    // to return nothing (end of the total order broadcast).
     TEST(LCRLayer, AcknowledgmentToNothing) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
