@@ -23,7 +23,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith4SitesAndRank0) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -75,7 +75,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith9SitesAndRank8) {
         constexpr auto nbSites = 9;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -134,7 +134,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, TotalOrderBroadcast) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -250,7 +250,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveStepInWave) {
         constexpr auto nbSites = 2;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -290,7 +290,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveStepInNextWaveThenStepInWave) {
         constexpr auto nbSites = 2;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -372,7 +372,7 @@ namespace fbae_test_BBOBB {
          */
         constexpr auto nbSites = 8;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -548,7 +548,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveStepInIncorrectWave) {
         constexpr auto nbSites = 2;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));
@@ -581,7 +581,7 @@ namespace fbae_test_BBOBB {
     TEST(BBOBB, ExecuteWith2SitesAndRank1ReceiveUnknownMessage) {
         constexpr auto nbSites = 2;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<BBOBB>(std::move(commLayer));

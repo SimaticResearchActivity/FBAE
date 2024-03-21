@@ -19,7 +19,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, SequencerExecute) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
@@ -60,7 +60,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, BroadcasterExecute) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
@@ -106,7 +106,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, TotalOrderBroadcast) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
@@ -138,7 +138,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, SequencerReceivesBroadcastRequest) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw= commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
@@ -180,7 +180,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, ParticipantReceivesBroadcast) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
@@ -214,7 +214,7 @@ namespace fbae_test_Sequencer {
     TEST(Sequencer, ParticipantReceivesUnknownMessage) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites};
+        Arguments arguments{sites, false};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
         auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
