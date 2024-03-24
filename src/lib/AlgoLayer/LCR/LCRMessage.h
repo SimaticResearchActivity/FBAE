@@ -39,8 +39,7 @@ namespace fbae_LCRAlgoLayer {
          */
         bool isStable = false;
         /**
-         * @brief The `scalar` clock of the current site (ie the value of the vector
-         * clock of the current site at the position of the current site).
+         * @brief The value of the sender's vector clock indexed at its own rank.
          */
         lcr_clock_t clock;
         /**
