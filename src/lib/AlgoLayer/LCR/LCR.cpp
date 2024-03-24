@@ -1,6 +1,6 @@
 #include <iostream>
 #include <numeric>
-#include "../../sessionLayer/sessionLayer.h"
+#include "../../SessionLayer/SessionLayer.h"
 #include "LCR.h"
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
@@ -20,7 +20,7 @@ void LCR::initializeVectorClock() {
     vectorClock.reserve(sitesCount);
 
     // The vector clock is initially filled with 0s.
-    for (uint32_t i = 0; i < sitesCount; i++)
+    for (lcr_clock_t i = 0; i < sitesCount; i++)
         vectorClock.push_back(0);
 }
 
@@ -79,7 +79,7 @@ std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBro
     // Iterate through all pending messages of the current process and
     // if the vector clocks are aligned, mark them as stable.
     for (auto pendingMessage : pending)
-        if (pendingMessage.vectorClock == message.vectorClock)
+        if (pendingMessage.clock == message.clock && pendingMessage.senderRank == message.senderRank)
             pendingMessage.isStable = true;
 
     // Try and deliver pending messages.
@@ -158,7 +158,7 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
             .messageId = MessageId::Message,
             .senderRank = currentRank,
             .isStable = false,
-            .vectorClock = vectorClock,
+            .clock = vectorClock[currentRank],
             .sessionMessage = sessionMessage,
     };
 

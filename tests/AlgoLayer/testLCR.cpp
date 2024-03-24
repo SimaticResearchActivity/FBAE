@@ -56,7 +56,7 @@ namespace fbae_test_LCR {
         auto broadcastMsg{deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
         ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
         ASSERT_EQ(myRank, broadcastMsg.senderRank);
-        ASSERT_EQ(std::vector<uint32_t>({ 0, 0, 0, 1 }), broadcastMsg.vectorClock);
+        ASSERT_EQ(1, broadcastMsg.clock);
         ASSERT_FALSE(broadcastMsg.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
 
@@ -92,7 +92,7 @@ namespace fbae_test_LCR {
                 .messageId = MessageId::Message,
                 .senderRank = 2,
                 .isStable = false,
-                .vectorClock = std::vector<uint32_t>({0, 0, 1, 0}),
+                .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
 
@@ -106,7 +106,7 @@ namespace fbae_test_LCR {
         auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Message, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
-        ASSERT_EQ(std::vector<uint32_t>({ 0, 0, 1, 0 }), secondIncomingMessage.vectorClock);
+        ASSERT_EQ(1, secondIncomingMessage.clock);
         ASSERT_FALSE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
@@ -133,7 +133,7 @@ namespace fbae_test_LCR {
             .messageId = MessageId::Message,
             .senderRank = 0,
             .isStable = false,
-            .vectorClock = std::vector<uint32_t>({1, 0, 0, 0}),
+            .clock = 1,
             .sessionMessage = firstIncomingMessage.sessionMessage
         };
 
@@ -147,7 +147,7 @@ namespace fbae_test_LCR {
         auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(0, secondIncomingMessage.senderRank);
-        ASSERT_EQ(std::vector<uint32_t>({ 1, 0, 0, 0 }), secondIncomingMessage.vectorClock);
+        ASSERT_EQ(1, secondIncomingMessage.clock);
         ASSERT_TRUE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
@@ -174,7 +174,7 @@ namespace fbae_test_LCR {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 2,
                 .isStable = true,
-                .vectorClock = std::vector<uint32_t>({0, 0, 1, 0}),
+                .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
 
@@ -188,7 +188,7 @@ namespace fbae_test_LCR {
         auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
-        ASSERT_EQ(std::vector<uint32_t>({ 0, 0, 1, 0 }), secondIncomingMessage.vectorClock);
+        ASSERT_EQ(1, secondIncomingMessage.clock);
         ASSERT_TRUE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
@@ -215,7 +215,7 @@ namespace fbae_test_LCR {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 1,
                 .isStable = true,
-                .vectorClock = std::vector<uint32_t>({0, 1, 0, 0}),
+                .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
 

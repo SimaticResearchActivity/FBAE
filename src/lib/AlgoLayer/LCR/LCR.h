@@ -2,6 +2,8 @@
 
 #include "../AlgoLayer.h"
 #include "LCRMessage.h"
+#include "LCRTypedefs.h"
+
 
 /** @brief The LCR Algorithm layer. */
 class LCR: public AlgoLayer {
@@ -45,7 +47,7 @@ private:
     /**
      * @brief The internal vector clock of the site.
     */
-    std::vector<uint32_t> vectorClock;
+    std::vector<lcr_clock_t> vectorClock;
 
     /**
      * @brief The pending list of messages of the site.

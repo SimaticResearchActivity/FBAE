@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../SessionLayer/SessionLayerMsg.h"
+#include "LCRTypedefs.h"
 
 namespace fbae_LCRAlgoLayer {
     /**
@@ -38,9 +39,10 @@ namespace fbae_LCRAlgoLayer {
          */
         bool isStable = false;
         /**
-         * @brief The vector clock of the current site.
+         * @brief The `scalar` clock of the current site (ie the value of the vector
+         * clock of the current site at the position of the current site).
          */
-        std::vector<uint32_t> vectorClock;
+        lcr_clock_t clock;
         /**
          * @brief The actual message that was sent.
          */
@@ -48,7 +50,7 @@ namespace fbae_LCRAlgoLayer {
 
         template<class Archive> void serialize(Archive& archive) {
             // serialize things by passing them to the archive
-            archive(messageId, senderRank, vectorClock, sessionMessage, isStable);
+            archive(messageId, senderRank, clock, sessionMessage, isStable);
         }
     };
 }
