@@ -18,13 +18,13 @@ namespace fbae_test_LCR {
     using namespace fbae_LCRAlgoLayer;
 
     // This test tests all the setup of the LCR layer.
-    TEST(LCRLayer, LCRLayerExecute) {
+    TEST(LCR, LCRExecute) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayer = make_unique<LCR>(std::move(commLayer));
         auto algoLayerRaw = algoLayer.get();
         rank_t myRank = 3;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
@@ -72,13 +72,13 @@ namespace fbae_test_LCR {
 
     // This tests the behavior of the LCR when a site receives a message and is expected
     // to return a message.
-    TEST(LCRLayer, MessageToMessage) {
+    TEST(LCR, MessageToMessage) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayer = make_unique<LCR>(std::move(commLayer));
         auto algoLayerRaw = algoLayer.get();
         rank_t myRank = 3;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
@@ -113,13 +113,13 @@ namespace fbae_test_LCR {
 
     // This tests the behavior of the LCR when a site receives a message and is expected
     // to return an acknowledgement.
-    TEST(LCRLayer, MessageToAcknowledgement) {
+    TEST(LCR, MessageToAcknowledgement) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayer = make_unique<LCR>(std::move(commLayer));
         auto algoLayerRaw = algoLayer.get();
         rank_t myRank = 3;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
@@ -154,13 +154,13 @@ namespace fbae_test_LCR {
 
     // This tests the behavior of the LCR when a site receives an acknowledgement and is expected
     // to return an acknowledgement.
-    TEST(LCRLayer, AcknowledgementToAcknowledgement) {
+    TEST(LCR, AcknowledgementToAcknowledgement) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayer = make_unique<LCR>(std::move(commLayer));
         auto algoLayerRaw = algoLayer.get();
         rank_t myRank = 3;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
@@ -195,13 +195,13 @@ namespace fbae_test_LCR {
 
     // This tests the behavior of the LCR when a site receives an acknowledgement and is expected
     // to return nothing (end of the total order broadcast).
-    TEST(LCRLayer, AcknowledgmentToNothing) {
+    TEST(LCR, AcknowledgmentToNothing) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
         auto commLayer = make_unique<CommStub>();
         auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<LCRLayer>(std::move(commLayer));
+        auto algoLayer = make_unique<LCR>(std::move(commLayer));
         auto algoLayerRaw = algoLayer.get();
         rank_t myRank = 3;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};

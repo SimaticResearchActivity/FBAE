@@ -8,13 +8,13 @@
 using namespace fbae_LCRAlgoLayer;
 
 
-LCRLayer::LCRLayer(std::unique_ptr<CommLayer> commLayer)
+LCR::LCR(std::unique_ptr<CommLayer> commLayer)
         :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
     // We cannot initialize the vector clock at this point in time, as we need
     // access to the session layer which is not yet initialized.
 }
 
-void LCRLayer::initializeVectorClock() {
+void LCR::initializeVectorClock() {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
     // Preallocate the capacity of the vector.
     vectorClock.reserve(sitesCount);
@@ -24,14 +24,14 @@ void LCRLayer::initializeVectorClock() {
         vectorClock.push_back(0);
 }
 
-void LCRLayer::tryDeliver() {
+void LCR::tryDeliver() {
     while (pending[0].isStable) {
         getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
         pending.erase(pending.begin());
     }
 }
 
-std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroadcastMessage message) {
+std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) {
     // Get the total process count.
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
@@ -62,7 +62,7 @@ std::optional<StructBroadcastMessage> LCRLayer::handleMessageReceive(StructBroad
     return std::move(message);
 }
 
-std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(StructBroadcastMessage message) {
+std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) {
     // Get the total process count.
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
@@ -89,7 +89,7 @@ std::optional<StructBroadcastMessage> LCRLayer::handleAcknowledgmentReceive(Stru
     return std::move(message);
 }
 
-void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
+void LCR::callbackReceive(std::string &&algoMsgAsString) {
 
     // Deserialize the message.
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
@@ -117,7 +117,7 @@ void LCRLayer::callbackReceive(std::string &&algoMsgAsString) {
     }
 }
 
-void LCRLayer::execute() {
+void LCR::execute() {
     // This initialization is done now because at this point in time
     // we have access to the session layer.
     initializeVectorClock();
@@ -138,15 +138,15 @@ void LCRLayer::execute() {
     getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount) }, 1, this);
 }
 
-void LCRLayer::terminate() {
+void LCR::terminate() {
     getCommLayer()->terminate();
 }
 
-std::string LCRLayer::toString() {
+std::string LCR::toString() {
     return "LCR";
 }
 
-void LCRLayer::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) {
+void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) {
     // Get the rank of the current site.
     const rank_t currentRank = getSessionLayer()->getRank();
 

@@ -32,7 +32,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
     {
         case 'S': return make_unique<Sequencer>(concreteCommLayer(parser));
         case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser));
-        case 'L' : return make_unique<LCRLayer>(concreteCommLayer(parser));
+        case 'L' : return make_unique<LCR>(concreteCommLayer(parser));
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is " << algoId
                       << " which is not the identifier of a defined algorithm"
