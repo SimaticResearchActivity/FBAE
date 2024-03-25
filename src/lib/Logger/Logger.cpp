@@ -4,83 +4,83 @@
 
 Logger::Logger() = default;
 
-void Logger::logTrace(const std::string && caller, const std::string && message) const {
+inline void Logger::logTrace(const std::string && caller, const std::string && message) const {
+    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
+    // LOG4CXX_TRACE(loggerInternal, message);
+}
+
+inline void Logger::logInfo(const std::string && caller, const std::string && message) const {
     // auto loggerInternal = log4cxx::Logger::getLogger(caller);
     // LOG4CXX_INFO(loggerInternal, message);
 }
 
-void Logger::logInfo(const std::string && caller, const std::string && message) const {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_INFO(loggerInternal, message);
-}
-
-void Logger::logError(const std::string && caller, const std::string && message) const {
+inline void Logger::logError(const std::string && caller, const std::string && message) const {
     // auto loggerInternal = log4cxx::Logger::getLogger(caller);
     // LOG4CXX_ERROR(loggerInternal, message);
 }
 
-void Logger::logDebug(const std::string && caller, const std::string && message) const {
+inline void Logger::logDebug(const std::string && caller, const std::string && message) const {
     // auto loggerInternal = log4cxx::Logger::getLogger(caller);
     // LOG4CXX_DEBUG(loggerInternal, message);
 }
 
-void Logger::logWarn(const std::string && caller, const std::string && message) const {
+inline void Logger::logWarn(const std::string && caller, const std::string && message) const {
     // auto loggerInternal = log4cxx::Logger::getLogger(caller);
     // LOG4CXX_WARN(loggerInternal, message);
 }
 
-void Logger::logFatal(const std::string && caller, const std::string && message) const {
+inline void Logger::logFatal(const std::string && caller, const std::string && message) const {
     // auto loggerInternal = log4cxx::Logger::getLogger(caller);
     // LOG4CXX_FATAL(loggerInternal, message);
 }
 
-LoggerInstance Logger::instance(std::string caller) {
+inline LoggerInstance Logger::instance(std::string caller) {
     return LoggerInstance(std::move(caller));
 }
 
 
 static Logger logger;
 
-void initializeLogger() {
+inline void initializeLogger() {
     logger = Logger();
 }
-const Logger &getLogger() {
+inline const Logger &getLogger() {
     return logger;
 }
 
-LoggerInstance::LoggerInstance(std::string callerName) : callerName(std::move(callerName)) {}
+inline LoggerInstance::LoggerInstance(std::string callerName) : callerName(std::move(callerName)) {}
 
-void LoggerInstance::logTrace(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logTrace(const std::string && message) const {
     getLogger().logTrace(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
-void LoggerInstance::logInfo(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logInfo(const std::string && message) const {
     getLogger().logInfo(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
-void LoggerInstance::logError(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logError(const std::string && message) const {
     getLogger().logError(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
-void LoggerInstance::logDebug(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logDebug(const std::string && message) const {
     getLogger().logDebug(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
-void LoggerInstance::logWarn(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logWarn(const std::string && message) const {
     getLogger().logWarn(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
-void LoggerInstance::logFatal(const std::string && message) const {
+[[maybe_unused]] inline void LoggerInstance::logFatal(const std::string && message) const {
     getLogger().logFatal(
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));

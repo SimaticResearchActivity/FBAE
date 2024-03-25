@@ -21,10 +21,6 @@ public:
 void initializeLogger();
 const Logger &getLogger();
 
-//                          |
-//                          v annoying to call each time....
-// getLogger().logInfo("myFunction", "We are running my function!");
-
 class LoggerInstance {
 public:
     explicit LoggerInstance(std::string callerName);
@@ -39,6 +35,12 @@ private:
     std::string callerName;
 };
 
+//                          |
+//                          v annoying to call each time....
+// getLogger().logInfo("myFunction", "We are running my function!");
+//
+// Or we can do:
+//
 // auto logger = getLogger().instance("myFunction");
 // logger.logInfo("We are running my function!");
 
