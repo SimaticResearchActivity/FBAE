@@ -48,40 +48,40 @@ const Logger &getLogger() {
     return logger;
 }
 
-LoggerInstance::LoggerInstance(std::string name) : instanceName(std::move(name)) {}
+LoggerInstance::LoggerInstance(std::string callerName) : callerName(std::move(callerName)) {}
 
 void LoggerInstance::logTrace(const std::string && message) const {
     getLogger().logTrace(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
 void LoggerInstance::logInfo(const std::string && message) const {
     getLogger().logInfo(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
 void LoggerInstance::logError(const std::string && message) const {
     getLogger().logError(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
 void LoggerInstance::logDebug(const std::string && message) const {
     getLogger().logDebug(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
 void LoggerInstance::logWarn(const std::string && message) const {
     getLogger().logWarn(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
 
 void LoggerInstance::logFatal(const std::string && message) const {
     getLogger().logFatal(
-            static_cast<const std::string &&>(instanceName),
+            static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }

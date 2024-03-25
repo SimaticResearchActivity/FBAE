@@ -26,7 +26,7 @@ const Logger &getLogger();
 
 class LoggerInstance {
 public:
-    explicit LoggerInstance(std::string name);
+    explicit LoggerInstance(std::string callerName);
 
     void logTrace(const std::string && message) const;
     void logInfo(const std::string && message) const;
@@ -35,9 +35,8 @@ public:
     void logWarn(const std::string && message) const;
     void logFatal(const std::string && message) const;
 private:
-    std::string instanceName;
+    std::string callerName;
 };
-
 
 // auto logger = getLogger().instance("myFunction");
 // logger.logInfo("We are running my function!");
