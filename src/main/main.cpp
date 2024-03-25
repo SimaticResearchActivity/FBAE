@@ -6,6 +6,7 @@
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
+#include "Logger/Logger.h"
 
 using namespace std;
 using namespace mlib;
@@ -44,6 +45,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
 
 int main(int argc, char* argv[])
 {
+    initializeLogger();
     //
     // Take care of program arguments
     //
