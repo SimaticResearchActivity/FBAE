@@ -195,7 +195,7 @@ public:
      *
      * @example
      * auto logger = getLogger().instance("myFunction");
-     * logger.logWarning("This is my warning message.");
+     * logger.logWarn("This is my warning message.");
      * */
     [[maybe_unused]] void logWarn(const std::string && message) const;
 

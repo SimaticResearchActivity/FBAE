@@ -45,7 +45,6 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
 
 int main(int argc, char* argv[])
 {
-//    initializeLogger();
     //
     // Take care of program arguments
     //
