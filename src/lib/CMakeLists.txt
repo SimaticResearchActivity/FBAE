@@ -36,6 +36,8 @@ add_library(lib_fbae
         AlgoLayer/LCR/LCR.h
 		AlgoLayer/LCR/LCRMessage.h
         AlgoLayer/LCR/LCRTypedefs.h
+		Logger/Logger.cpp
+		Logger/Logger.h
 )
 
 target_include_directories(lib_fbae PUBLIC ./)

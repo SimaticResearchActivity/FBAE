@@ -7,7 +7,6 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-
 LCR::LCR(std::unique_ptr<CommLayer> commLayer)
         :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
     // We cannot initialize the vector clock at this point in time, as we need
