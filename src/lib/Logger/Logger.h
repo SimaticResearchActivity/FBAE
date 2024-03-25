@@ -191,7 +191,7 @@ private:
      * @brief the name of the function who initiated the log.
      */
     std::string callerName;
-};
+};  
 
 //                          |
 //                          v annoying to call each time....
