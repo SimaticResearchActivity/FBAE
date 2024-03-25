@@ -4,6 +4,28 @@
 
 #include <string>
 
+// How to use the logger:
+// We either call the getter and call one of the available log methods
+// by passing in the caller (usually just the function) as well as the
+// message:
+//
+// getLogger().logInfo("myFunction", "We are running my function!");
+//
+//
+// Or we can bind the caller to a intermediate object called a LoggerInstance,
+// and call these functions onto this state directly to avoid typing the caller
+// multiple times:
+//
+// auto logger = getLogger().instance("myFunction");
+// logger.logInfo("We are running my function!");
+// logger.logInfo("Here too!");
+//
+// When dealing with sites, we could also bind the site's rank to the caller
+// using the following function:
+//
+// auto logger = getLogger().instanceOnSite(myRank, "MyFunction");
+// logger.logInfo("We are running my function on my rank!");
+
 class LoggerInstance;
 
 /**
@@ -191,18 +213,5 @@ private:
      * @brief the name of the function who initiated the log.
      */
     std::string callerName;
-};  
-
-//                          |
-//                          v annoying to call each time....
-// getLogger().logInfo("myFunction", "We are running my function!");
-//
-// Or we can do:
-//
-// auto logger = getLogger().instance("myFunction");
-// logger.logInfo("We are running my function!");
-//
-// Or we can do:
-// auto logger = getLogger().instanceOnSite(myRank, "MyFunction");
-// logger.logInfo("We are running my function on my rank!");
+};
 
