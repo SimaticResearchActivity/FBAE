@@ -4,8 +4,15 @@
 
 class Logger {
 public:
-    void LogInfo(std::string &caller, std::string &message);
-    void LogError(std::string &caller, std::string &message);
-    void LogDebug(std::string &caller, std::string &message);
+    explicit Logger();
+
+    void logTrace(const std::string && caller, const std::string && message);
+    void logInfo(const std::string && caller, const std::string && message);
+    void logError(const std::string && caller, const std::string && message);
+    void logDebug(const std::string && caller, const std::string && message);
+    void logWarn(const std::string && caller, const std::string && message);
+    void logFatal(const std::string && caller, const std::string && message);
 };
 
+void initializeLogger();
+const Logger &getLogger();
