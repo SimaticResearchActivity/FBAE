@@ -220,7 +220,7 @@ namespace fbae_test_LCR {
         // Send the message to the current site.
         algoLayerRaw->callbackReceive(serializeStruct(message));
 
-        ASSERT_EQ(1, commLayerRaw->getSent().size());
+        ASSERT_EQ(2, commLayerRaw->getSent().size());
     }
 
 

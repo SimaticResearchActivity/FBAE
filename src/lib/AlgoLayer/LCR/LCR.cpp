@@ -29,9 +29,7 @@ std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastM
 
     vectorClock[message.senderRank] += 1;
 
-    const bool cycleFinished = nextSiteRank == message.senderRank;
-
-    if (cycleFinished) {
+    if (nextSiteRank == message.senderRank) {
         getSessionLayer()->callbackDeliver(message.senderRank, message.sessionMessage);
         message.messageId = MessageId::Acknowledgement;
     } else {
@@ -45,9 +43,10 @@ std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBro
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
+    const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
     const rank_t nextNextSiteRank = (currentSiteRank + 2) % sitesCount;
 
-    if (nextNextSiteRank == message.senderRank)
+    if (nextSiteRank == message.senderRank)
         return {};
 
     for (uint32_t i = 0; i < pending.size(); i++) {
