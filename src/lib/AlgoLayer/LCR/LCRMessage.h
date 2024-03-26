@@ -51,5 +51,13 @@ namespace fbae_LCRAlgoLayer {
             // serialize things by passing them to the archive
             archive(messageId, senderRank, clock, sessionMessage, isStable);
         }
+
+        friend std::ostream &operator<<(std::ostream &os, const StructBroadcastMessage &message) {
+            return os <<(static_cast<bool>(message.messageId) ? "Message" : "Acknowledgement")
+                      << " from "
+                      << static_cast<uint32_t>(message.senderRank)
+                      << " that is " << (message.isStable ? "" : "not ") << "stable";
+        }
     };
 }
+

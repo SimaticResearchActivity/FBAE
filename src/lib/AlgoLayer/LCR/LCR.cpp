@@ -14,7 +14,7 @@ LCR::LCR(std::unique_ptr<CommLayer> commLayer)
     // access to the session layer which is not yet initialized.
 }
 
-void LCR::initializeVectorClock() {
+void LCR::initializeVectorClock() noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
     // Preallocate the capacity of the vector.
     vectorClock.reserve(sitesCount);
@@ -24,14 +24,19 @@ void LCR::initializeVectorClock() {
         vectorClock.push_back(0);
 }
 
-void LCR::tryDeliver() {
+void LCR::tryDeliver() noexcept {
+    std::cout << std::endl;
     while (pending[0].isStable) {
         getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
         pending.erase(pending.begin());
     }
 }
 
-std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) {
+std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+    // Don't handle messages that are outdated.
+    if (message.clock <= vectorClock[message.senderRank])
+        return {};
+
     // Get the total process count.
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
@@ -45,29 +50,28 @@ std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastM
     // If the next process is the same as the one who initiated the message,
     // then all processes have had the message...
     const bool cycleFinished = nextSiteRank == message.senderRank;
+
     // ... and if so, the message becomes stable.
     message.isStable = cycleFinished;
 
     // Append the message to the list of messages of the current process.
-    pending.push_back(message);
+    pending.push_front(message);
 
-    // If the cycle is finished, the message should become an acknowledgment message.
-    // if not, it should stay as-is.
-    message.messageId = cycleFinished ? MessageId::Acknowledgement : MessageId::Message;
-    // Try and deliver pending messages if the cycle is complete.
-    if (cycleFinished)
+    // If the cycle is finished, mark the message to be sent as an acknowledgement, and
+    // to deliver pending messages.
+    if (cycleFinished) {
+        message.messageId = MessageId::Acknowledgement;
         tryDeliver();
+    }
 
-    // The message to be forwarded to the next site.
+    // forward the message to the next site.
     return std::move(message);
 }
 
-std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) {
-    // Get the total process count.
+std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     // Get the rank of the current site and its successor's successor.
-
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextNextSiteRank = (currentSiteRank + 2) % sitesCount;
 
@@ -78,9 +82,15 @@ std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBro
 
     // Iterate through all pending messages of the current process and
     // if the vector clocks are aligned, mark them as stable.
-    for (auto pendingMessage : pending)
-        if (pendingMessage.clock == message.clock && pendingMessage.senderRank == message.senderRank)
+    for (auto pendingMessage : pending) {
+        if (pendingMessage.clock == message.clock && pendingMessage.senderRank == message.senderRank) {
             pendingMessage.isStable = true;
+            // only a single message can have both checks be true, no
+            // need to iterate anymore.
+            break;
+        }
+
+    }
 
     // Try and deliver pending messages.
     tryDeliver();
@@ -90,9 +100,10 @@ std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBro
 }
 
 void LCR::callbackReceive(std::string &&algoMsgAsString) {
-
     // Deserialize the message.
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
+
+    std::cout << "Site: " << static_cast<uint32_t>(getSessionLayer()->getRank()) << " " << message << std::endl;
 
     std::optional<StructBroadcastMessage> messageToForward {};
     // Differentiate between if the message is being delivered or being acknowledged.
@@ -164,7 +175,7 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
 
     // Append the message to the list of pending messages to be delivered by the
     // current site.
-    pending.push_back(message);
+    pending.push_front(message);
 
     // Serialize the message...
     auto serialized = serializeStruct<StructBroadcastMessage>(message);

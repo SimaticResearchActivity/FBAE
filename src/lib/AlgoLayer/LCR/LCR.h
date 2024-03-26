@@ -25,7 +25,7 @@ private:
     /**
      * @brief Internal function used to initialize the vector clock.
      */
-    void initializeVectorClock();
+    void initializeVectorClock() noexcept;
 
     /**
      * @brief Internal function for handling reception of a message from another site.
@@ -33,7 +33,7 @@ private:
      * @return Optionally returns the message to send to the successor in the ring of sites.
     */
     std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleMessageReceive(
-            fbae_LCRAlgoLayer::StructBroadcastMessage message);
+            fbae_LCRAlgoLayer::StructBroadcastMessage message) noexcept;
 
     /**
      * @brief Internal function for handling reception of an acknowledgement from another site.
@@ -41,12 +41,12 @@ private:
      * @return Optionally returns the acknowledgement message to send to the successor in the ring of sites.
     */
     std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleAcknowledgmentReceive(
-            fbae_LCRAlgoLayer::StructBroadcastMessage message);
+            fbae_LCRAlgoLayer::StructBroadcastMessage message) noexcept;
 
     /**
      * @brief Internal function for handling trying to deliver the message to the particular site.
     */
-    void tryDeliver();
+    void tryDeliver() noexcept;
 
     /**
      * @brief The internal vector clock of the site.
@@ -56,6 +56,6 @@ private:
     /**
      * @brief The pending list of messages of the site.
     */
-    std::vector<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
+    std::deque<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
 };
 
