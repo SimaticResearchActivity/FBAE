@@ -46,7 +46,7 @@ private:
     /**
      * @brief Internal function for handling trying to deliver the message to the particular site.
     */
-    void tryDeliver() noexcept;
+//    void tryDeliver() noexcept;
 
     /**
      * @brief The internal vector clock of the site.
@@ -56,6 +56,6 @@ private:
     /**
      * @brief The pending list of messages of the site.
     */
-    std::deque<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
+    std::vector<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
 };
 
