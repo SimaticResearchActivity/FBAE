@@ -25,6 +25,8 @@
 //
 // auto logger = getLogger().instanceOnSite(myRank, "MyFunction");
 // logger.logInfo("We are running my function on my rank!");
+//
+// The list of all the logging types are: logTrace, logInfo, logError, logDebug, logWarn and logFatal.
 
 class LoggerInstance;
 
