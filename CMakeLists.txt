@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 20)
 #
 # We include the subset of Boost we will be using.
 #
-include_directories(boost_1_82_0_subset)
+include_directories(boost_subset)
 if(WIN32)
     # Compilation of some of the boost sources requires the following definition
     # (which is appropriate for Windows 7 target)
