@@ -21,7 +21,7 @@ void LCR::initializeVectorClock() noexcept {
         vectorClock.push_back(0);
 }
 
-std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
@@ -39,12 +39,11 @@ std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastM
     return std::move(message);
 }
 
-std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
-    const rank_t nextNextSiteRank = (currentSiteRank + 2) % sitesCount;
 
     if (nextSiteRank == message.senderRank)
         return {};
@@ -63,7 +62,7 @@ std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBro
 void LCR::callbackReceive(std::string &&algoMsgAsString) {
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
 
-    std::optional<StructBroadcastMessage> messageToForward {};
+    std::optional<StructBroadcastMessage> messageToForward = {};
     switch (message.messageId) {
         case MessageId::Message:
             messageToForward = handleMessageReceive(std::move(message));
@@ -119,6 +118,6 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
 
     pending.push_back(message);
 
-    auto serialized = serializeStruct<StructBroadcastMessage>(message);
+    const auto serialized = serializeStruct<StructBroadcastMessage>(message);
     getCommLayer()->multicastMsg(serialized);
 }

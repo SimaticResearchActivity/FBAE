@@ -6,7 +6,6 @@
 
 #include "msgTemplates.h"
 #include "AlgoLayer/LCR/LCR.h"
-#include "AlgoLayer/LCR/LCRMessage.h"
 
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"

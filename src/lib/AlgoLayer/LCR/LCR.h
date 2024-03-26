@@ -44,11 +44,6 @@ private:
             fbae_LCRAlgoLayer::StructBroadcastMessage message) noexcept;
 
     /**
-     * @brief Internal function for handling trying to deliver the message to the particular site.
-    */
-//    void tryDeliver() noexcept;
-
-    /**
      * @brief The internal vector clock of the site.
     */
     std::vector<lcr_clock_t> vectorClock;
