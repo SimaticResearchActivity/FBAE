@@ -24,8 +24,9 @@ public:
         [[nodiscard]] std::latch &getInitDoneCalled();
 
     /**
-     * @brief Multicast @algoMsgAsString to all peer which the process connected to (Note: The peers which
-     * connected to the process are not concerned by this multicast)
+     * @brief Multicast @algoMsgAsString to all peers if Arguments::isUsingNetworkLevelMulticast is true
+     * (network-level multicast) and only the peers which we connected to if Arguments::isUsingNetworkLevelMulticast is
+     * false (software-level multicast).
      * @param algoMsgAsString Message to be totalOrderBroadcast
      */
     virtual void multicastMsg(const std::string &algoMsgAsString) = 0;

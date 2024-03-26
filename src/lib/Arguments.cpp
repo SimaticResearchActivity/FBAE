@@ -51,7 +51,7 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
     }
 
     if (parser.hasopt('P')) {
-        networkLevelMulticastPort = parser.getoptIntRequired('m');
+        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('m'));
     }
 
     if (parser.hasopt('w')) {
@@ -137,7 +137,7 @@ std::string_view Arguments::getNetworkLevelMulticastAddress() const {
     return networkLevelMulticastAddress;
 }
 
-int Arguments::getNetworkLevelMulticastPort() const {
+uint16_t Arguments::getNetworkLevelMulticastPort() const {
     return networkLevelMulticastPort;
 }
 

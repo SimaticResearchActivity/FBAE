@@ -28,7 +28,8 @@ private:
      * its data can be referenced by ptrSock outside of these functions. We choose to define this object as an instance
      * variable.
      */
-    boost::asio::io_service ioService;
+    boost::asio::io_service ioServiceTcp;
+    boost::asio::io_service ioServiceUdp; // For multicast
 
     /**
      * @brief Mutex used to guarantee that all calls to callbackReceive are done in a critical section.
@@ -61,11 +62,26 @@ private:
     void handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock);
 
     /**
+     * @brief Endpoint used to send network-level multicast
+     */
+    boost::asio::ip::udp::endpoint multicastEndpoint;
+
+    /**
+     * @brief Socket used to send network-level multicast
+     */
+    boost::asio::ip::udp::socket multicastSocket{ioServiceTcp};
+
+    /**
      * @brief Waits till a packet is received on @psock
      * @param ptrSock
      * @return String containing received packet
      */
     static std::string receiveEvent(boost::asio::ip::tcp::socket *ptrSock);
+
+    /**
+     * @brief Thread for receiving multicasts (works until an empty multicast is received)
+     */
+    void receiveMulticast();
 
     /**
      * @brief Tries to connect to host @host

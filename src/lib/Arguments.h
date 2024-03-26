@@ -13,7 +13,7 @@ constexpr int minSizeClientMessageToBroadcast{31};
 // Maximum length of a UDP packet
 constexpr size_t maxLength{65515};
 
-constexpr int defaultNetworkLevelMulticastPort = 30001;
+constexpr uint16_t defaultNetworkLevelMulticastPort = 30001;
 
 constexpr int specialRankToRequestExecutionInTasks{99};
 
@@ -29,11 +29,11 @@ private:
     /**
      * @brief True if participant must use network multicast
      */
-    bool isUsingNetworkLevelMulticast;
+    bool isUsingNetworkLevelMulticast{false};
     int maxBatchSize{INT32_MAX};
     int64_t nbMsg{0};
     std::string networkLevelMulticastAddress;
-    int networkLevelMulticastPort{defaultNetworkLevelMulticastPort};
+    uint16_t networkLevelMulticastPort{defaultNetworkLevelMulticastPort};
     rank_t rank{0};
     int sizeMsg{0};
     std::string siteFile{};
@@ -51,7 +51,7 @@ public:
     [[nodiscard]] int getMaxBatchSize() const;
     [[nodiscard]] int64_t getNbMsg() const;
     [[nodiscard]] std::string_view getNetworkLevelMulticastAddress() const;
-    [[nodiscard]] int getNetworkLevelMulticastPort() const;
+    [[nodiscard]] uint16_t getNetworkLevelMulticastPort() const;
     [[nodiscard]] rank_t getRank() const;
     [[nodiscard]] std::vector<HostTuple> getSites() const;
     [[nodiscard]] int getSizeMsg() const;

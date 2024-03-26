@@ -27,11 +27,11 @@ void Tcp::acceptConn(int port, size_t nbAwaitedConnections) {
     std::vector<std::future<void>> tasksHandleConn(nbAwaitedConnections);
     try
     {
-        tcp::acceptor a(ioService, tcp::endpoint(tcp::v4(), static_cast<unsigned short>(port)));
+        tcp::acceptor a(ioServiceTcp, tcp::endpoint(tcp::v4(), static_cast<unsigned short>(port)));
 
         for (auto &t : tasksHandleConn)
         {
-            auto ptrSock = make_unique<tcp::socket>(ioService);
+            auto ptrSock = make_unique<tcp::socket>(ioServiceTcp);
             a.accept(*ptrSock);
 
             boost::asio::ip::tcp::no_delay option(true);
@@ -100,10 +100,13 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     }
 }
 
-void Tcp::multicastMsg(const std::string &algoMsgAsString)
-{
-    for (auto const& [r, sock]: rank2sock) {
-        send(r, algoMsgAsString);
+void Tcp::multicastMsg(const std::string &algoMsgAsString) {
+    if (getAlgoLayer()->getSessionLayer()->getArguments().getIsUsingNetworkLevelMulticast()) {
+        multicastSocket.send_to(boost::asio::buffer(algoMsgAsString), multicastEndpoint);
+    } else {
+        for (auto const &[r, sock]: rank2sock) {
+            send(r, algoMsgAsString);
+        }
     }
 }
 
@@ -111,6 +114,23 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
     setAlgoLayer(aAlgoLayer);
     const auto sites = getAlgoLayer()->getSessionLayer()->getArguments().getSites();
     auto rank = getAlgoLayer()->getSessionLayer()->getRank();
+
+    future<void> taskReceiveMulticast;
+    if (auto arguments = getAlgoLayer()->getSessionLayer()->getArguments() ; arguments.getIsUsingNetworkLevelMulticast()) {
+        try {
+            auto multicastAddress{boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress())};
+            multicastEndpoint = boost::asio::ip::udp::endpoint{multicastAddress, arguments.getNetworkLevelMulticastPort()};
+            multicastSocket = boost::asio::ip::udp::socket{ioServiceUdp, multicastEndpoint.protocol()};
+        }
+        catch (boost::system::system_error& e)
+        {
+            cerr << "ERROR: Unexpected Boost Exception in method receiveMulticast: " << e.what()
+                 << " (could be because multicast address, defined with -M program argument, is incorrect)\n";
+            exit(1);
+        }
+
+        taskReceiveMulticast = std::async(&Tcp::receiveMulticast, this);
+    }
 
     // Accept nbAwaitedConnections connections from incoming peers
     auto taskAcceptConn{ std::async(&Tcp::acceptConn, this, get < PORT > (sites[rank]), nbAwaitedConnections)};
@@ -125,6 +145,9 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
     getInitDoneCalled().count_down();
 
     taskAcceptConn.get();
+    if (getAlgoLayer()->getSessionLayer()->getArguments().getIsUsingNetworkLevelMulticast()) {
+        taskReceiveMulticast.get();
+    }
 }
 
 std::string Tcp::receiveEvent(boost::asio::ip::tcp::socket *ptrSock)
@@ -142,6 +165,47 @@ std::string Tcp::receiveEvent(boost::asio::ip::tcp::socket *ptrSock)
                                         boost::asio::buffer(v));
     assert(msg_length == len);
     return std::string{v.data(), v.size()};
+}
+
+void Tcp::receiveMulticast() {
+    auto arguments = getAlgoLayer()->getSessionLayer()->getArguments();
+
+    try {
+        // Create the socket so that multiple may be bound to the same address.
+        boost::asio::ip::address listenAddress{boost::asio::ip::make_address("0.0.0.0")}; // We listen to any hosts
+        boost::asio::ip::udp::endpoint listenEndpoint(
+                listenAddress, arguments.getNetworkLevelMulticastPort());
+
+        boost::asio::ip::udp::socket sock{ioServiceUdp};
+        sock.open(listenEndpoint.protocol());
+        sock.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+        sock.bind(listenEndpoint);
+
+        // Join the multicast group.
+        auto multicastAddress{boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress())};
+        sock.set_option(
+                boost::asio::ip::multicast::join_group(multicastAddress));
+
+        // Wait for multicasts until empty multicast
+        size_t length;
+        do {
+            boost::asio::ip::udp::endpoint senderEndpoint;
+            std::vector<char> v(maxLength);
+            length = sock.receive_from(boost::asio::buffer(v), senderEndpoint);
+            cout << "***MULTICAST*** Receive message of size " << length << "\n";
+            if (length != 0) {
+                std::string s{v.data(), length};
+                std::scoped_lock lock(mtxCallbackHandleMessage);
+                getAlgoLayer()->callbackReceive(std::move(s));
+            }
+        } while (length != 0);
+    }
+    catch (boost::system::system_error& e)
+    {
+       cerr << "ERROR: Unexpected Boost Exception in method receiveMulticast: " << e.what()
+            << " (could be because multicast address, defined with -M program argument, is incorrect)\n";
+       exit(1);
+    }
 }
 
 struct ForLength
@@ -176,6 +240,13 @@ void Tcp::terminate() {
         sock->close();
     }
     rank2sock.clear();
+    if (getAlgoLayer()->getSessionLayer()->getArguments().getIsUsingNetworkLevelMulticast()) {
+        if (getAlgoLayer()->getSessionLayer()->getRank() == 0) {
+            // Send an empty multicast to stop all receiveMulticast tasks
+            cout << "***MULTICAST*** Send message of size 0\n";
+            multicastMsg("");
+        }
+    }
 }
 
 unique_ptr<tcp::socket>  Tcp::tryConnectToHost(const HostTuple &host)
@@ -184,13 +255,13 @@ unique_ptr<tcp::socket>  Tcp::tryConnectToHost(const HostTuple &host)
     try
     {
         // EndPoint creation
-        tcp::resolver resolver(ioService);
+        tcp::resolver resolver(ioServiceTcp);
 
         auto portAsString = to_string(get<PORT>(host));
         tcp::resolver::query query(tcp::v4(), get<HOSTNAME>(host), portAsString);
         tcp::resolver::iterator iterator = resolver.resolve(query);
 
-        ptrSock = make_unique<tcp::socket>(ioService);
+        ptrSock = make_unique<tcp::socket>(ioServiceTcp);
         ptrSock->connect(*iterator);
 
         boost::asio::ip::tcp::no_delay option(true);
