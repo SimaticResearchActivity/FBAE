@@ -25,10 +25,9 @@ void LCR::initializeVectorClock() noexcept {
 }
 
 void LCR::tryDeliver() noexcept {
-    std::cout << std::endl;
-    while (pending[0].isStable) {
+    while (!pending.empty() && pending[0].isStable) {
         getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
-        pending.erase(pending.begin());
+        pending.pop_back();
     }
 }
 
@@ -103,7 +102,7 @@ void LCR::callbackReceive(std::string &&algoMsgAsString) {
     // Deserialize the message.
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
 
-    std::cout << "Site: " << static_cast<uint32_t>(getSessionLayer()->getRank()) << " " << message << std::endl;
+//    std::cout << "Site: " << static_cast<uint32_t>(getSessionLayer()->getRank()) << " " << message << std::endl;
 
     std::optional<StructBroadcastMessage> messageToForward {};
     // Differentiate between if the message is being delivered or being acknowledged.
