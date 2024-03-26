@@ -91,7 +91,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Message,
                 .senderRank = 2,
-                .isStable = false,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -132,7 +131,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
             .messageId = MessageId::Message,
             .senderRank = 0,
-            .isStable = false,
             .clock = 1,
             .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -173,7 +171,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 2,
-                .isStable = true,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -214,7 +211,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 1,
-                .isStable = true,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };

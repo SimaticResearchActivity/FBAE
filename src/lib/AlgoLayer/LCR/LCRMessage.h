@@ -34,11 +34,6 @@ namespace fbae_LCRAlgoLayer {
          */
         rank_t senderRank {};
         /**
-         * @brief A flag describing whether or not this message is stable and thus
-         * ready for delivery.
-         */
-        bool isStable = false;
-        /**
          * @brief The value of the sender's vector clock indexed at its own rank.
          */
         lcr_clock_t clock;
@@ -49,14 +44,13 @@ namespace fbae_LCRAlgoLayer {
 
         template<class Archive> void serialize(Archive& archive) {
             // serialize things by passing them to the archive
-            archive(messageId, senderRank, clock, sessionMessage, isStable);
+            archive(messageId, senderRank, clock, sessionMessage);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const StructBroadcastMessage &message) {
             return os <<(static_cast<bool>(message.messageId) ? "Message" : "Acknowledgement")
                       << " from "
-                      << static_cast<uint32_t>(message.senderRank)
-                      << " that is " << (message.isStable ? "" : "not ") << "stable";
+                      << static_cast<uint32_t>(message.senderRank);
         }
     };
 }
