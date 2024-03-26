@@ -41,7 +41,7 @@ inline void Logger::logFatal(const std::string && caller, const std::string && m
 
 [[maybe_unused]] inline LoggerInstance Logger::instanceOnSite(rank_t rank, const std::string &caller) {
     std::stringstream stream;
-    stream << "Rank " << std::to_string(rank) <<  ": " << caller;
+    stream << "Rank " << std::to_string(static_cast<uint32_t>(rank)) <<  ": " << caller;
     return LoggerInstance(stream.str());
 }
 
