@@ -29,7 +29,6 @@ private:
     /**
      * @brief True if participant must use network multicast
      */
-    bool isUsingNetworkLevelMulticast{false};
     int maxBatchSize{INT32_MAX};
     int64_t nbMsg{0};
     std::string networkLevelMulticastAddress;
@@ -38,6 +37,7 @@ private:
     int sizeMsg{0};
     std::string siteFile{};
     std::vector<HostTuple> sites;
+    bool usingNetworkLevelMulticast{false};
     bool verbose{false};
     int warmupCooldown{0};
 
@@ -55,8 +55,8 @@ public:
     [[nodiscard]] rank_t getRank() const;
     [[nodiscard]] std::vector<HostTuple> getSites() const;
     [[nodiscard]] int getSizeMsg() const;
-    [[nodiscard]] bool getIsUsingNetworkLevelMulticast() const;
     [[nodiscard]] bool getVerbose() const;
     [[nodiscard]] int getWarmupCooldown() const;
+    [[nodiscard]] bool isUsingNetworkLevelMulticast() const;
 };
 

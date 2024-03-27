@@ -6,7 +6,7 @@
 #include "cereal/types/vector.hpp"
 
 Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
-    : isUsingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
+    : usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
     , sites{sites}
 {
 }
@@ -47,7 +47,7 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
                       << parser.description() << std::endl;
             exit(1);
         }
-        isUsingNetworkLevelMulticast = true;
+        usingNetworkLevelMulticast = true;
     }
 
     if (parser.hasopt('P')) {
@@ -104,10 +104,10 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
     return std::string {
-        algoStr + ","
-        + commLayerStr + ","
-        + (isUsingNetworkLevelMulticast ? "true" : "false") + ","
-        + std::to_string(frequency) + ","
+            algoStr + ","
+            + commLayerStr + ","
+            + (usingNetworkLevelMulticast ? "true" : "false") + ","
+            + std::to_string(frequency) + ","
         + std::to_string(maxBatchSize) + ","
         + std::to_string(nbMsg) + ","
         + std::to_string(warmupCooldown) + "%,"
@@ -155,14 +155,14 @@ int Arguments::getSizeMsg() const {
     return sizeMsg;
 }
 
-bool Arguments::getIsUsingNetworkLevelMulticast() const {
-    return isUsingNetworkLevelMulticast;
-}
-
 bool Arguments::getVerbose() const {
     return verbose;
 }
 
 int Arguments::getWarmupCooldown() const {
     return warmupCooldown;
+}
+
+bool Arguments::isUsingNetworkLevelMulticast() const {
+    return usingNetworkLevelMulticast;
 }

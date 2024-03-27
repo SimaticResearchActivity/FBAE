@@ -3,7 +3,7 @@
 #include "OptParserExtended.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
-#include "CommLayer/Tcp/Tcp.h"
+#include "CommLayer/Tcp/TcpCommLayer.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
 
 using namespace std;
@@ -14,7 +14,7 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
     char commId = parser.getoptStringRequired('c')[0];
     switch(commId)
     {
-        case 't': return make_unique<Tcp>();
+        case 't': return make_unique<TcpCommLayer>();
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is \"" << commId << "\""
                       << " which is not the identifier of a defined communication layer"
