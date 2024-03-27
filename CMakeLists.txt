@@ -15,7 +15,7 @@ set (BUILD_SHARED_LIBS FALSE)
 set(CMAKE_CXX_STANDARD 20)
 
 #
-# We include the subset of Boost we will be using.
+# Include the subset of Boost which FBAE uses
 #
 cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
 FetchContent_Declare(
@@ -30,10 +30,8 @@ if(WIN32)
 endif()
 
 #
-# Cereal : A simple FetchContent does not work ==> We have to download it
-# manually
+# Include Cereal (A simple FetchContent does not work ==> We have to download it manually)
 #
-
 # Download and unpack Cereal at configure time
 configure_file(CMakeLists_cereal.txt.in cereal-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
@@ -48,12 +46,24 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build .
 if(result)
     message(FATAL_ERROR "Build step for cereal failed: ${result}")
 endif()
-
 # Give access to cereal include directory
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 
+#
+# Include GoogleTest
+#
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 add_subdirectory(src/lib)
 add_subdirectory(src/main)
+
 # enable_testing() must be in the source directory root (see cmake documentation at https://cmake.org/cmake/help/latest/ command/enable_testing.html)
 # Otherwise, Visual Studio test explorer does not see unit tests (See ticket https://developercommunity.visualstudio.com/t/No-tests-discovered-for-googletest-and-C/1148799#T-ND1150621)
 enable_testing()
