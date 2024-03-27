@@ -48,7 +48,7 @@ add_executable(tests
 
 target_link_libraries(tests gtest_main lib_fbae)
 if (WIN32)
-  target_link_libraries(tests ws2_32.lib winmm.lib)
+  target_link_libraries(tests wsock32.lib ws2_32.lib)
 else() # We are under UNIX
     target_link_options(tests PRIVATE -pthread)
 endif()

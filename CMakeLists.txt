@@ -17,7 +17,12 @@ set(CMAKE_CXX_STANDARD 20)
 #
 # We include the subset of Boost we will be using.
 #
-include_directories(boost_subset)
+cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
+FetchContent_Declare(
+    boost_subset_for_asio
+    URL https://github.com/SimaticResearchActivity/boost_subset_for_asio/archive/refs/tags/v1.84.0.tar.gz
+)
+FetchContent_MakeAvailable(boost_subset_for_asio)
 if(WIN32)
     # Compilation of some of the boost sources requires the following definition
     # (which is appropriate for Windows 7 target)

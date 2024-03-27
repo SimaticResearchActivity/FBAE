@@ -35,3 +35,4 @@ add_library(lib_fbae
 )
 
 target_include_directories(lib_fbae PUBLIC ./)
+target_link_libraries(lib_fbae boost_subset_for_asio)
