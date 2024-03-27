@@ -42,9 +42,11 @@ namespace fbae_LCRAlgoLayer {
          */
         fbae_SessionLayer::SessionMsg sessionMessage;
 
+        bool isStable;
+
         template<class Archive> void serialize(Archive& archive) {
             // serialize things by passing them to the archive
-            archive(messageId, senderRank, clock, sessionMessage);
+            archive(messageId, senderRank, clock, sessionMessage, isStable);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const StructBroadcastMessage &message) {

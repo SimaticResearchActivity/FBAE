@@ -13,12 +13,19 @@ LCR::LCR(std::unique_ptr<CommLayer> commLayer)
     // access to the session layer which is not yet initialized.
 }
 
-void LCR::initializeVectorClock() noexcept {
+inline void LCR::initializeVectorClock() noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     vectorClock.reserve(sitesCount);
     for (lcr_clock_t i = 0; i < sitesCount; i++)
         vectorClock.push_back(0);
+}
+
+void LCR::tryDeliver() noexcept {
+    while (!pending.empty() && pending[0].isStable) {
+        getSessionLayer()->callbackDeliver(pending[0].senderRank, pending[0].sessionMessage);
+        pending.erase(pending.begin());
+    }
 }
 
 inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
@@ -29,11 +36,12 @@ inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBro
 
     vectorClock[message.senderRank] += 1;
 
-    if (nextSiteRank == message.senderRank) {
-        getSessionLayer()->callbackDeliver(message.senderRank, message.sessionMessage);
+    bool isCycleFinished = nextSiteRank == message.senderRank;
+    message.isStable = isCycleFinished;
+    pending.push_back(message);
+    if (isCycleFinished) {
+        tryDeliver();
         message.messageId = MessageId::Acknowledgement;
-    } else {
-        pending.push_back(message);
     }
 
     return std::move(message);
@@ -48,10 +56,10 @@ inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(St
     if (nextSiteRank == message.senderRank)
         return {};
 
-    for (uint32_t i = 0; i < pending.size(); i++) {
-        if (pending[i].clock == message.clock && pending[i].senderRank == message.senderRank) {
-            getSessionLayer()->callbackDeliver(pending[i].senderRank, pending[i].sessionMessage);
-            pending.erase(pending.begin() + i);
+    for (auto &pendingMessage : pending) {
+        if (pendingMessage.clock == message.clock && pendingMessage.senderRank == message.senderRank) {
+            pendingMessage.isStable = true;
+            tryDeliver();
             break;
         }
     }
@@ -114,6 +122,7 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
             .senderRank = currentRank,
             .clock = vectorClock[currentRank],
             .sessionMessage = sessionMessage,
+            .isStable = false,
     };
 
     pending.push_back(message);

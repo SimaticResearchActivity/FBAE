@@ -27,6 +27,8 @@ private:
      */
     void initializeVectorClock() noexcept;
 
+    void tryDeliver() noexcept;
+
     /**
      * @brief Internal function for handling reception of a message from another site.
      * @param message: The message we received that want to handle.
