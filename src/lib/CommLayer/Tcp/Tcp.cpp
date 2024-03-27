@@ -7,7 +7,7 @@
 #include <iostream>
 #include "../../AlgoLayer/AlgoLayer.h"
 #include "../../SessionLayer/SessionLayer.h"
-#include "TcpCommLayer.h"
+#include "Tcp.h"
 #include "cereal/archives/binary.hpp"
 
 using boost::asio::ip::tcp;
@@ -55,7 +55,7 @@ constexpr const char* path2file(const char* path) {
 class MulticastReceiver : public std::enable_shared_from_this<MulticastReceiver> {
 public:
     MulticastReceiver(boost::asio::io_context& ioContext,
-                      TcpCommLayer *tcpCommLayer)
+                      Tcp *tcpCommLayer)
             : socket{ioContext}
             , tcp{tcpCommLayer}
     {
@@ -104,7 +104,7 @@ private:
     }
 
     boost::asio::ip::udp::socket socket;
-    TcpCommLayer *tcp;
+    Tcp *tcp;
 };
 
 /**
@@ -113,7 +113,7 @@ private:
  */
 class TcpIncomingSession : public std::enable_shared_from_this<TcpIncomingSession> {
 public:
-    TcpIncomingSession(tcp::socket socket, TcpCommLayer *tcpCommLayer)
+    TcpIncomingSession(tcp::socket socket, Tcp *tcpCommLayer)
             : socket{std::move(socket)}
             , tcpCommLayer{tcpCommLayer}
     {
@@ -166,7 +166,7 @@ private:
     }
 
     tcp::socket socket;
-    TcpCommLayer *tcpCommLayer;
+    Tcp *tcpCommLayer;
 };
 
 /**
@@ -174,7 +174,7 @@ private:
  */
 class TcpServer {
 public:
-    TcpServer(boost::asio::io_context& ioContext, size_t nbAwaitedConnections, TcpCommLayer *tcpCommLayer)
+    TcpServer(boost::asio::io_context& ioContext, size_t nbAwaitedConnections, Tcp *tcpCommLayer)
             : acceptor(ioContext, tcp::endpoint(tcp::v4(),
                                                 static_cast<unsigned short>(get<PORT>(tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[
                                                         tcpCommLayer->getAlgoLayer()->getSessionLayer()->getRank()]))))
@@ -208,7 +208,7 @@ private:
     tcp::acceptor acceptor;
     size_t nbAwaitedConnections;
     tcp::socket socket;
-    TcpCommLayer *tcpCommLayer;
+    Tcp *tcpCommLayer;
 };
 
 /**
@@ -216,7 +216,7 @@ private:
  */
 class TcpClient : public std::enable_shared_from_this<TcpClient> {
 public:
-    TcpClient(boost::asio::io_context& ioContext, rank_t rankClient, TcpCommLayer *tcpCommLayer)
+    TcpClient(boost::asio::io_context& ioContext, rank_t rankClient, Tcp *tcpCommLayer)
             : ptrSocket{make_unique<tcp::socket>(ioContext)}
             , rankClient{rankClient}
             , resolver{ioContext}
@@ -295,23 +295,23 @@ private:
     unique_ptr<tcp::socket> ptrSocket{nullptr};
     rank_t rankClient;
     tcp::resolver resolver;
-    TcpCommLayer *tcpCommLayer;
+    Tcp *tcpCommLayer;
     boost::asio::steady_timer timer;
     int remainingNbTcpConnectTentatives{maxNbTcpConnectTentatives};
 };
 
-void TcpCommLayer::addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket) {
+void Tcp::addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket) {
     rank2sock[rank] = std::move(ptrSocket);
 }
 
-void TcpCommLayer::decrementNbAwaitedInitializationEvents() {
+void Tcp::decrementNbAwaitedInitializationEvents() {
     --nbAwaitedInitializationEvents;
     if (nbAwaitedInitializationEvents == 0) {
         getAlgoLayer()->callbackInitDone();
     }
 }
 
-void TcpCommLayer::multicastMsg(const std::string &algoMsgAsString) {
+void Tcp::multicastMsg(const std::string &algoMsgAsString) {
     if (getAlgoLayer()->getSessionLayer()->getArguments().isUsingNetworkLevelMulticast()) {
         multicastSocket.send_to(boost::asio::buffer(algoMsgAsString), multicastEndpoint);
     } else {
@@ -321,7 +321,7 @@ void TcpCommLayer::multicastMsg(const std::string &algoMsgAsString) {
     }
 }
 
-void TcpCommLayer::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
+void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
     const auto arguments = getAlgoLayer()->getSessionLayer()->getArguments();
     const auto sites = arguments.getSites();
@@ -348,13 +348,12 @@ void TcpCommLayer::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, 
         }
 
         ioContext.run();
-        std::cout << "*** Sortie de io_context.run(); ***\n";
+        std::cout << "*** Exit io_context.run(); ***\n";
     }
     catch (boost::system::system_error& e)
     {
-        std::cerr << "Boost error '" << e.what() << "' not handled at: "
-                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line()
-                  << "\n";
+        std::cerr << "Boost excdeption '" << e.what() << "' not handled at: "
+                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
         exit(1);
     }
 }
@@ -371,7 +370,7 @@ struct ForLength
     }
 };
 
-void TcpCommLayer::send(rank_t r, const std::string &algoMsgAsString) {
+void Tcp::send(rank_t r, const std::string &algoMsgAsString) {
     assert(rank2sock.contains(r));
     ForLength forLength{algoMsgAsString.length()};
     std::stringstream oStream;
@@ -386,7 +385,7 @@ void TcpCommLayer::send(rank_t r, const std::string &algoMsgAsString) {
     boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
 }
 
-void TcpCommLayer::terminate() {
+void Tcp::terminate() {
     for (auto const& [r, sock]: rank2sock) {
         sock->close();
     }
@@ -399,6 +398,6 @@ void TcpCommLayer::terminate() {
     }
 }
 
-std::string TcpCommLayer::toString() {
+std::string Tcp::toString() {
     return "TCP";
 }

@@ -20,8 +20,8 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
-		CommLayer/Tcp/TcpCommLayer.cpp
-		CommLayer/Tcp/TcpCommLayer.h
+		CommLayer/Tcp/Tcp.cpp
+		CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
