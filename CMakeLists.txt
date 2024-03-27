@@ -30,8 +30,8 @@ if(WIN32)
 endif()
 
 #
-# Cereal : A simple FetchContent does not work ==> We generate its library
-# in the same manner as google-test
+# Cereal : A simple FetchContent does not work ==> We have to download it
+# manually
 #
 
 # Download and unpack Cereal at configure time
