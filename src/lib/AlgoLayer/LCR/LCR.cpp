@@ -17,7 +17,7 @@ inline void LCR::initializeVectorClock() noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     vectorClock.reserve(sitesCount);
-    for (lcrClock_t i = 0; i < sitesCount; i++)
+    for (LCRClock_t i = 0; i < sitesCount; i++)
         vectorClock.push_back(0);
 }
 

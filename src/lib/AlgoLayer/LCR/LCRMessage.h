@@ -51,7 +51,7 @@ namespace fbae_LCRAlgoLayer {
          * at its own rank, or more simply the "time" at which
          * this message was sent.
          */
-        lcrClock_t clock;
+        LCRClock_t clock;
 
         /**
          * @brief The actual message that was sent from the session
