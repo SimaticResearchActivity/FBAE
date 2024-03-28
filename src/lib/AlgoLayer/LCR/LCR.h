@@ -9,17 +9,17 @@
 // Differences: messages do not contain the entire vector clock of the site that sent it,
 // only the value for its own rank.
 
-/** @brief The LCR Algorithm layer. */
+/** @brief The LCR Algorithm. */
 class LCR: public AlgoLayer {
 public:
-    explicit LCR(std::unique_ptr<CommLayer> commLayer);
+    explicit LCR(std::unique_ptr<CommLayer> commLayer) noexcept;
 
-    void callbackReceive(std::string && algoMsgAsString) override;
-    void execute() override;
-    void terminate() override;
-    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) override;
+    void callbackReceive(std::string && algoMsgAsString) noexcept override;
+    void execute() noexcept override;
+    void terminate() noexcept override;
+    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) noexcept override;
 
-    std::string toString() override;
+    std::string toString() noexcept override;
 
 private:
     /**
@@ -27,6 +27,10 @@ private:
      */
     void initializeVectorClock() noexcept;
 
+    /**
+     * @brief Internal function used to try delivering a message to
+     * the session layer.
+     */
     void tryDeliver() noexcept;
 
     /**

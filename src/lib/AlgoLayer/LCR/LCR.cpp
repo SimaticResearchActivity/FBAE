@@ -7,7 +7,7 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-LCR::LCR(std::unique_ptr<CommLayer> commLayer)
+LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept
         :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
     // We cannot initialize the vector clock at this point in time, as we need
     // access to the session layer which is not yet initialized.
@@ -36,7 +36,7 @@ inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBro
 
     vectorClock[message.senderRank] += 1;
 
-    bool isCycleFinished = nextSiteRank == message.senderRank;
+    const bool isCycleFinished = nextSiteRank == message.senderRank;
     message.isStable = isCycleFinished;
     pending.push_back(message);
     if (isCycleFinished) {
@@ -67,7 +67,7 @@ inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(St
     return std::move(message);
 }
 
-void LCR::callbackReceive(std::string &&algoMsgAsString) {
+void LCR::callbackReceive(std::string &&algoMsgAsString) noexcept {
     auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
 
     std::optional<StructBroadcastMessage> messageToForward = {};
@@ -90,7 +90,7 @@ void LCR::callbackReceive(std::string &&algoMsgAsString) {
     }
 }
 
-void LCR::execute() {
+void LCR::execute() noexcept {
     // This initialization is done now because at this point in time
     // we have access to the session layer.
     initializeVectorClock();
@@ -105,15 +105,15 @@ void LCR::execute() {
     getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount) }, 1, this);
 }
 
-void LCR::terminate() {
+void LCR::terminate() noexcept {
     getCommLayer()->terminate();
 }
 
-std::string LCR::toString() {
+std::string LCR::toString() noexcept {
     return "LCR";
 }
 
-void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) {
+void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessage) noexcept {
     const rank_t currentRank = getSessionLayer()->getRank();
     vectorClock[currentRank] += 1;
 
