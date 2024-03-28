@@ -52,7 +52,7 @@ private:
     /**
      * @brief The internal vector clock of the site.
     */
-    std::vector<lcr_clock_t> vectorClock;
+    std::vector<lcrClock_t> vectorClock;
 
     /**
      * @brief The pending list of messages of the site.
