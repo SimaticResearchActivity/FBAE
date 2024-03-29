@@ -67,7 +67,7 @@ std::optional<fbae_AlgoLayer::BatchSessionMsg> AlgoLayer::batchGetBatchMsgsWithL
     if (batchWaitingSessionMsg.empty()) {
         return std::nullopt;
     } else {
-        auto msg = std::make_optional<fbae_AlgoLayer::BatchSessionMsg>(senderPos, std::move(batchWaitingSessionMsg));
+        auto msg = std::make_optional<fbae_AlgoLayer::BatchSessionMsg>( { senderPos, std::move(batchWaitingSessionMsg) });
         batchWaitingSessionMsg.clear();
         return msg;
     }

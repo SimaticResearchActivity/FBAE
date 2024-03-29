@@ -2,6 +2,7 @@
 #include <iostream>
 #include "OptParserExtended.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
+#include "AlgoLayer/LCR/LCR.h"
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
@@ -31,6 +32,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
     {
         case 'S': return make_unique<Sequencer>(concreteCommLayer(parser));
         case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser));
+        case 'L' : return make_unique<LCR>(concreteCommLayer(parser));
         default:
             std::cerr << "ERROR: Argument for Broadcast Algorithm is " << algoId
                       << " which is not the identifier of a defined algorithm"
@@ -46,7 +48,7 @@ int main(int argc, char* argv[])
     // Take care of program arguments
     //
     OptParserExtended parser{
-            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer based",
+            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = LCR",
             "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\tt = TCP",
             "f:frequency number \t [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
             "h|help \t Show help message",
