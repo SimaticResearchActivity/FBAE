@@ -1,4 +1,6 @@
 #include "Logger.h"
+#include <log4cxx/logger.h>
+#include <log4cxx/basicconfigurator.h>
 
 #include <utility>
 #include <sstream>
@@ -6,8 +8,9 @@
 
 
 void Logger::trace(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_TRACE(loggerInternal, message);
+    auto loggerInternal = LOG4CXX_NS::Logger();
+//     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+//     LOG4CXX_TRACE(loggerInternal, message);
     std::cout << "Trace from " << caller << ": " << message << std::endl;
 }
 

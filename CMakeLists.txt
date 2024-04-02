@@ -47,6 +47,23 @@ endif()
 # Give access to cereal include directory
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 
+configure_file(CMakeLists_log4cxx.txt.in log4cxx-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
+if (result)
+    message(FATAL_ERROR "CMake step for log4cxx failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
+if (result)
+    message(FATAL_ERROR "Build step for log4cxx failed: ${result}")
+endif()
+
+# Give access to log4cxx include directory
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
+
 add_subdirectory(src/lib)
 add_subdirectory(src/main)
 # enable_testing() must be in the source directory root (see cmake documentation at https://cmake.org/cmake/help/latest/ command/enable_testing.html)

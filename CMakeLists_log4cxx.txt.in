@@ -1,0 +1,22 @@
+#
+# For Apache-Log4cxx
+#
+# Contents inspired by https://github.com/google/googletest/tree/master/googletest#incorporating-into-an-existing-cmake-project
+
+# On Windows, for other CMakeLists_*.txt.in, we do not need the following cmake_minimimum_version. But we do need it
+# for CMakeLists_log4cxx.txt.in
+cmake_minimum_required(VERSION 3.15)
+
+project(log4cxx-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(log4cxx
+  GIT_REPOSITORY    https://github.com/apache/logging-log4cxx
+  GIT_TAG           ""
+  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src"
+  BINARY_DIR        ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      ""
+)
