@@ -16,21 +16,34 @@ namespace fbae_test_Sequencer {
     using namespace std;
     using namespace fbae_SessionLayer;
 
-    TEST(Sequencer, SequencerExecute) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw= commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        rank_t myRank = sequencerRank;
-        SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
+    constexpr auto nbSites = 4;
 
+    class SequencerTest : public testing::Test {
+    protected:
+        void SetUp() override {
+            sites = vector<HostTuple>(nbSites, HostTuple{"", 0});
+            commLayer = make_unique<CommStub>();
+            commLayerRaw = commLayer.get();
+            algoLayer = make_unique<Sequencer>(std::move(commLayer));
+            algoLayerRaw = algoLayer.get();
+        }
+
+        vector<HostTuple> sites;
+        unique_ptr<CommStub> commLayer;
+        CommStub* commLayerRaw;
+        unique_ptr<Sequencer> algoLayer;
+        Sequencer* algoLayerRaw;
+        rank_t myRank;
+    };
+
+    TEST_F(SequencerTest, SequencerExecute) {
+        Arguments arguments{sites};
+        myRank = sequencerRank;
+        SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
         algoLayerRaw->execute();
 
         // Check established connections
-        EXPECT_EQ(nbSites - 1, commLayerRaw->getConnectedDest().size());
+        ASSERT_EQ(nbSites - 1, commLayerRaw->getConnectedDest().size());
         EXPECT_EQ(1, commLayerRaw->getConnectedDest()[0]);
         EXPECT_EQ(2, commLayerRaw->getConnectedDest()[1]);
         EXPECT_EQ(3, commLayerRaw->getConnectedDest()[2]);
@@ -39,10 +52,10 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(nbSites - 1, commLayerRaw->getNbAwaitedConnections());
 
         // Check no message was broadcast and thus sent.
-        EXPECT_EQ(0, commLayerRaw->getSent().size());
+        ASSERT_EQ(0, commLayerRaw->getSent().size());
 
         // Check @AlgoLayer:broadcastersGroup is correct
-        EXPECT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
+        ASSERT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
         EXPECT_EQ(1, algoLayerRaw->getBroadcastersGroup()[0]);
         EXPECT_EQ(2, algoLayerRaw->getBroadcastersGroup()[1]);
         EXPECT_EQ(3, algoLayerRaw->getBroadcastersGroup()[2]);
@@ -54,31 +67,24 @@ namespace fbae_test_Sequencer {
         EXPECT_TRUE(sessionStub.isCallbackInitDoneCalled());
 
         // Check no message was delivered
-        EXPECT_EQ(0, sessionStub.getDelivered().size());
+        ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
-    TEST(Sequencer, BroadcasterExecute) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw= commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        rank_t myRank = sequencerRank + 1;
+    TEST_F(SequencerTest, BroadcasterExecute) {
+        Arguments arguments{sites};
+        myRank = sequencerRank + 1;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
-
         algoLayerRaw->execute();
 
         // Check established connections
-        EXPECT_EQ(1, commLayerRaw->getConnectedDest().size());
+        ASSERT_EQ(1, commLayerRaw->getConnectedDest().size());
         EXPECT_EQ(sequencerRank, commLayerRaw->getConnectedDest()[0]);
 
         // Check nbAwaitedConnections
         EXPECT_EQ(1, commLayerRaw->getNbAwaitedConnections());
 
         // Check FirstBroadcast message was broadcast and thus sent.
-        EXPECT_EQ(1, commLayerRaw->getSent().size());
+        ASSERT_EQ(1, commLayerRaw->getSent().size());
         // Check that this message was sent to sequencer
         EXPECT_EQ(sequencerRank, commLayerRaw->getSent()[0].first);
         // Check contents of this message
@@ -88,7 +94,7 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast, broadcastMsg.sessionMsg->msgId);
 
         // Check @AlgoLayer:broadcastersGroup is correct
-        EXPECT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
+        ASSERT_EQ(nbSites - 1, algoLayerRaw->getBroadcastersGroup().size());
         EXPECT_EQ(1, algoLayerRaw->getBroadcastersGroup()[0]);
         EXPECT_EQ(2, algoLayerRaw->getBroadcastersGroup()[1]);
         EXPECT_EQ(3, algoLayerRaw->getBroadcastersGroup()[2]);
@@ -100,28 +106,22 @@ namespace fbae_test_Sequencer {
         EXPECT_TRUE(sessionStub.isCallbackInitDoneCalled());
 
         // Check no message was delivered
-        EXPECT_EQ(0, sessionStub.getDelivered().size());
+        ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
-    TEST(Sequencer, TotalOrderBroadcast) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw= commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        rank_t myRank = sequencerRank + 1;
-        SessionStub sessionStub{arguments, sequencerRank + 1, std::move(algoLayer)};
-
+    TEST_F(SequencerTest, TotalOrderBroadcast) {
+        Arguments arguments{sites};
+        myRank = sequencerRank + 1;
+        SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
         algoLayerRaw->execute();
+
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
                                                    "A");
         algoLayerRaw->totalOrderBroadcast(sessionMsg);
 
         // Check that 1 message was sent
-        EXPECT_EQ(1, commLayerRaw->getSent().size());
+        ASSERT_EQ(1, commLayerRaw->getSent().size());
         // Check that this message was sent to sequencer
         EXPECT_EQ(sequencerRank, commLayerRaw->getSent()[0].first);
         // Check contents of this message
@@ -132,21 +132,15 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(sessionMsg->getPayload(), broadcastRequestMsg.sessionMsg->getPayload());
 
         // Check that no message is delivered
-        EXPECT_EQ(0, sessionStub.getDelivered().size());
+        ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
-    TEST(Sequencer, SequencerReceivesBroadcastRequest) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw= commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        auto myRank = sequencerRank;
+    TEST_F(SequencerTest, SequencerReceivesBroadcastRequest) {
+        Arguments arguments{sites};
+        myRank = sequencerRank;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
-
         algoLayerRaw->execute();
+
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
                                                    "A");
@@ -158,7 +152,7 @@ namespace fbae_test_Sequencer {
         algoLayerRaw->callbackReceive(std::move(algoMsgAsString));
 
         // Check that 3 messages are sent by Sequencer
-        EXPECT_EQ(nbSites-1, commLayerRaw->getSent().size());
+        ASSERT_EQ(nbSites-1, commLayerRaw->getSent().size());
         // Check that destinations of all of these messages
         EXPECT_EQ(1, commLayerRaw->getSent()[0].first);
         EXPECT_EQ(2, commLayerRaw->getSent()[1].first);
@@ -174,21 +168,15 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(sessionMsg->getPayload(), broadcastMsg.sessionMsg->getPayload());
 
         // Check that no message is delivered
-        EXPECT_EQ(0, sessionStub.getDelivered().size());
+        ASSERT_EQ(0, sessionStub.getDelivered().size());
     }
 
-    TEST(Sequencer, ParticipantReceivesBroadcast) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        rank_t myRank = sequencerRank + 1;
+    TEST_F(SequencerTest, ParticipantReceivesBroadcast) {
+        Arguments arguments{sites};
+        myRank = sequencerRank + 1;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
-
         algoLayerRaw->execute();
+
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
                                                    "A");
@@ -200,10 +188,10 @@ namespace fbae_test_Sequencer {
         algoLayerRaw->callbackReceive(std::move(algoMsgAsString));
 
         // Check that no message has been sent
-        EXPECT_EQ(0, commLayerRaw->getSent().size());
+        ASSERT_EQ(0, commLayerRaw->getSent().size());
 
         // Check that 1 message has been delivered
-        EXPECT_EQ(1, sessionStub.getDelivered().size());
+        ASSERT_EQ(1, sessionStub.getDelivered().size());
         // Check sender of this message
         EXPECT_EQ(senderPos, sessionStub.getDelivered()[0].first);
         // Check contents of this message
@@ -211,18 +199,12 @@ namespace fbae_test_Sequencer {
         EXPECT_EQ(sessionMsg->getPayload(), sessionStub.getDelivered()[0].second->getPayload());
     }
 
-    TEST(Sequencer, ParticipantReceivesUnknownMessage) {
-        constexpr auto nbSites = 4;
-        vector<HostTuple> sites(nbSites, HostTuple{"", 0});
-        Arguments arguments{sites, false};
-        auto commLayer = make_unique<CommStub>();
-        auto commLayerRaw = commLayer.get();
-        auto algoLayer = make_unique<Sequencer>(std::move(commLayer));
-        auto algoLayerRaw= algoLayer.get();
-        rank_t myRank = sequencerRank + 1;
+    TEST_F(SequencerTest, ParticipantReceivesUnknownMessage) {
+        Arguments arguments{sites};
+        myRank = sequencerRank + 1;
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
-
         algoLayerRaw->execute();
+
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         EXPECT_DEATH({algoLayerRaw->callbackReceive("z_thatIsMessageWithNonSenseMsgId which is 'z'");},
                      ".*Unexpected msgId.*"); // Syntax of matcher is presented at https://google.github.io/googletest/advanced.html#regular-expression-syntax

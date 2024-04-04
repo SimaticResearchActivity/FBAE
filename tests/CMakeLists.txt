@@ -10,8 +10,9 @@ add_executable(tests
         SessionLayer/SessionStub.h
         CommLayer/CommStub.cpp
         CommLayer/CommStub.h
-        AlgoLayer/testSequencer.cpp
-        AlgoLayer/testBBOBB.cpp
+        AlgoLayer/SequencerTest.cpp
+        AlgoLayer/BBOBBTest.cpp
+        AlgoLayer/LCRTest.cpp
 )
 target_link_libraries(tests GTest::gtest_main lib_fbae)
 if (WIN32)

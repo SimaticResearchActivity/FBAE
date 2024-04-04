@@ -1,6 +1,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <thread>
 #include <memory>
 #include <optional>
 #include "../Arguments.h"
@@ -139,7 +140,7 @@ private:
      * @brief Vector of threads which registered to accept that they are not concerned by value of @batchCtrlShortcut
      * (they always wait for @batchWaitingSessionMsg to be small enough; See Issue #37).
      */
-    std::vector<std::thread::id> batchCtrlThreadsRegisteredForFullBatchCtrl;
+    std::vector<std::thread::id> batchCtrlThreadsRegisteredForFullBatchCtrl{};
 
     /**
      * @brief PerfMeasures messages waiting to be broadcast.
