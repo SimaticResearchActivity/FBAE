@@ -30,7 +30,7 @@ namespace fbae_test_serializationOverhead {
     //                             + sizeStringInSessionMsg
     constexpr size_t sizeOfEncodedSessionMsg = overheadCerealPolymorphicEncoding + sizeof(fbae_SessionLayer::SessionMsgId) + sizeof(CEREAL_SIZE_TYPE) + sizeStringInSessionMsg;
 
-    TEST(SerializationOverhead, SerializedSequencerMsg) {
+    TEST(SerializationOverheadTest, SerializedSequencerMsg) {
         auto sessionMsg = make_shared<fbae_SessionLayer::SessionTest>(
                 fbae_SessionLayer::SessionMsgId::TestMessage,
                 string(sizeStringInSessionMsg,'A')

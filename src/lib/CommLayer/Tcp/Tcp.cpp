@@ -352,7 +352,7 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
     }
     catch (boost::system::system_error& e)
     {
-        std::cerr << "Boost excdeption '" << e.what() << "' not handled at: "
+        std::cerr << "Boost exception '" << e.what() << "' not handled at: "
                   << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
         exit(1);
     }

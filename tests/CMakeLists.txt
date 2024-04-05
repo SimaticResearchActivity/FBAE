@@ -5,7 +5,7 @@
 # Note: enable_testing() already done in top CMakeLists.txt
 
 add_executable(tests
-        testSerializationOverhead.cpp
+        SerializationOverheadTest.cpp
         SessionLayer/SessionStub.cpp
         SessionLayer/SessionStub.h
         CommLayer/CommStub.cpp
@@ -13,6 +13,11 @@ add_executable(tests
         AlgoLayer/SequencerTest.cpp
         AlgoLayer/BBOBBTest.cpp
         AlgoLayer/LCRTest.cpp
+        AlgoLayer/AlgoStub.cpp
+        AlgoLayer/AlgoStub.h
+        AlgoLayer/InitDoneSupervisor.cpp
+        AlgoLayer/InitDoneSupervisor.h
+        CommLayer/TcpTest.cpp
 )
 target_link_libraries(tests GTest::gtest_main lib_fbae)
 if (WIN32)
