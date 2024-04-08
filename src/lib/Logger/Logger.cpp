@@ -8,7 +8,6 @@
 
 
 void Logger::trace(const std::string && caller, const std::string && message) noexcept {
-    auto loggerInternal = LOG4CXX_NS::Logger();
 //     auto loggerInternal = log4cxx::Logger::getLogger(caller);
 //     LOG4CXX_TRACE(loggerInternal, message);
     std::cout << "Trace from " << caller << ": " << message << std::endl;
