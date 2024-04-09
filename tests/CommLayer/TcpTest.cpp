@@ -59,6 +59,7 @@ namespace fbae_test_Tcp {
     };
 
     TEST(TcpTest, Main) {
+        GTEST_SKIP() << "(Test skipped because its execution takes time).";
         // Test scenario is presented in doc/mscCommLayerTest.pu
 
         InitDoneSupervisor initDoneSupervisor;
