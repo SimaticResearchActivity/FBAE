@@ -20,8 +20,8 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
-        CommLayer/Tcp/Tcp.cpp
-        CommLayer/Tcp/Tcp.h
+		CommLayer/Tcp/Tcp.cpp
+		CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
@@ -39,3 +39,4 @@ add_library(lib_fbae
 )
 
 target_include_directories(lib_fbae PUBLIC ./)
+target_link_libraries(lib_fbae boost_subset_for_asio)

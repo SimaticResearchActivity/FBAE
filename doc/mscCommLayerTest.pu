@@ -1,0 +1,212 @@
+@startuml
+skinparam BoxPadding 10
+title Message Sequence Chart for Communication Layer test
+actor CommLayerTest as main
+
+participant initDoneSupervisor as initDoneS
+
+box "Host 0" #LightBlue
+participant commLayer_0 as comm0
+participant algoStub_0 as algo0
+participant async_0 as async0
+endbox
+
+box "Host 1" #LightGreen
+participant commLayer_1 as comm1
+participant algoStub_1 as algo1
+participant async_1 as async1
+endbox
+
+box "Host 2" #LightSalmon
+participant commLayer_2 as comm2
+participant algoStub_2 as algo2
+participant async_2 as async2
+endbox
+
+box "Host 3" #LightPink
+participant commLayer_3 as comm3
+participant algoStub_3 as algo3
+participant async_3 as async3
+endbox
+
+activate main
+main -> initDoneS : creation()
+activate initDoneS
+== Check messages are received only when initialization of CommLayer is done ==
+main -> comm0 : creation()
+activate comm0
+main -> algo0 : creation(commLayer_0, initDoneSupervisor)
+activate algo0
+main -> async0 : creation(commLayer_0)
+activate async0
+async0 -> comm0 : openDestAndWaitIncomingMsg({1}, 1, waitForNetworkLevelMulticast: true)
+comm0 ->(10) comm1 : openConn
+comm1 -->(10) comm0 : openConn KO
+
+main -> comm1 : creation()
+activate comm1
+main -> algo1 : creation(commLayer_0, initDoneSupervisor)
+activate algo1
+main -> async1 : creation(commLayer_1)
+activate async1
+async1 -> comm1 : openDestAndWaitIncomingMsg({0,2}, 2, waitForNetworkLevelMulticast: false)
+
+comm1 ->(10) comm0 : openConn
+comm0 -->(10) comm1 : openConn OK
+comm1 ->(10) comm2 : openConn
+comm2 -->(10) comm1 : openConn KO
+comm0 ->(10) comm1 : openConn
+comm1 -->(10) comm0 : openConn OK
+comm0 -> algo0 : callbackInitDone()
+algo0 -> initDoneS : callbackInitDone()
+
+main -> initDoneS : waitInitDone()
+initDoneS --> main : return
+
+main -> comm0 : send(1, "A")
+comm0 ->(10) comm1 : "A"
+note over main
+Wait 50 milliseconds to be sure "A" was received and processed
+end note
+main -> algo1 : getReceived()
+algo1 --> main : vector of received messages
+note over main
+Assert vector is empty
+end note
+
+main -> comm2 : creation()
+activate comm2
+main -> algo2 : creation(commLayer_2, initDoneSupervisor)
+activate algo2
+main -> async2 : creation(commLayer_2)
+activate async2
+async2 -> comm2 : openDestAndWaitIncomingMsg({3}, 1, waitForNetworkLevelMulticast: true)
+
+main -> initDoneS : waitInitDone()
+
+comm2 ->(10) comm3 : openConn
+comm3 -->(10) comm2 : openConn KO
+comm1 ->(10) comm2 : openConn
+comm2 -->(10) comm1 : openConn OK
+comm1 -> algo1 : callbackInitDone()
+algo1 -> initDoneS : callbackInitDone()
+initDoneS --> main : return
+
+main -> algo1 : getReceived()
+algo1 --> main : vector of received messages
+note over main
+Assert vector is {"A"}
+end note
+
+main -> comm1 : send(2, "B")
+comm1 ->(10) comm2 : "B"
+note over main
+Wait 50 milliseconds to be sure "B" was received and processed
+end note
+main -> algo2 : getReceived()
+algo2 --> main : vector of received messages
+note over main
+Assert vector is empty
+end note
+
+main -> comm3 : creation()
+activate comm3
+main -> algo3 : creation(commLayer_3, initDoneSupervisor)
+activate algo3
+main -> async3 : creation(commLayer_3)
+activate async3
+async3 -> comm3 : openDestAndWaitIncomingMsg({}, 1, waitForNetworkLevelMulticast: true)
+
+main -> initDoneS : waitInitDone()
+
+comm2 ->(10) comm3 : openConn
+comm3 -->(10) comm2 : openConn OK
+comm2 -> algo2 : callbackInitDone()
+algo2 -> initDoneS : callbackInitDone()
+initDoneS --> main : return
+main -> initDoneS : waitInitDone()
+comm3 -> algo3 : callbackInitDone()
+algo3 -> initDoneS : callbackInitDone()
+initDoneS --> main : return
+
+main -> algo2 : getReceived()
+algo2 --> main : vector of received messages
+note over main
+Assert vector is {"B"}
+end note
+
+== Check multicast ==
+main -> comm1 : multicast("C")
+note over comm1
+CommLayer_1 makes multicasts based on unicast
+end note
+comm1 ->(10) comm0 : "C"
+comm0 -> algo0 : callbackReceive("C")
+comm1 ->(10) comm2 : "C"
+comm2 -> algo2 : callbackReceive("C")
+note over main
+Call getReceived() on all algoStub
+
+Assert "C" has been received by algoStub_0
+and algoStub_2, but not algoStub_1, nor algoStub_3
+end note
+
+main -> comm0 : multicast("D")
+note over comm0
+CommLayer_0 makes network-level multicast
+end note
+comm0 ->(10) comm0 : "D"
+comm0 -> algo0 : callbackReceive("D")
+comm0 ->(10) comm2 : "D"
+comm2 -> algo2 : callbackReceive("D")
+comm0 ->(10) comm3 : "D"
+comm3 -> algo3 : callbackReceive("D")
+note over main
+Call getReceived() on all algoStub
+
+Assert "C" has been received by algoStub_0,
+algoStub_2 and algoStub_3, but not algoStub_1
+end note
+
+== Check termination ==
+main -> comm0 : terminate()
+comm0 --> main : return
+comm0 --> async0 : return
+main -> comm1 : terminate()
+comm1 ->(10) comm0 : close connection
+comm1 ->(10) comm2 : close connection
+comm1 --> main : return
+comm1 --> async1 : return
+main -> comm2 : terminate()
+comm2 ->(10) comm3 : close connection
+comm2 --> main : return
+comm2 --> async2 : return
+main -> comm3 : terminate()
+comm3 --> main : return
+comm3 --> async3 : return
+
+main -> async0 : get()
+async0 --> main : return
+deactivate async0
+main -> async1 : get()
+async1 --> main : return
+deactivate async1
+main -> async2 : get()
+async2 --> main : return
+deactivate async2
+main -> async3 : get()
+async3 --> main : return
+deactivate async3
+
+deactivate main
+deactivate initDoneS
+deactivate algo0
+deactivate comm0
+deactivate algo1
+deactivate comm1
+deactivate algo2
+deactivate comm2
+deactivate algo3
+deactivate comm3
+
+@enduml

@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "boost/asio.hpp"
 #include <future>
 #include <map>
 #include <mutex>
 #include <shared_mutex>
+#include "boost/asio.hpp"
 #include "../CommLayer.h"
 #include "../../Arguments.h"
 
@@ -23,54 +23,82 @@ public:
 
 private:
     /**
-     * @brief As Boost tutorial explains, all programs that use asio need to have at least one boost::asio::io_service
-     * object. In fact, ioService must exist outside scope of the try catch in @acceptConn and @tryConnectToHost so that
-     * its data can be referenced by ptrSock outside of these functions. We choose to define this object as an instance
-     * variable.
+     * @brief Add a new element in rank2sock
+     * @param rank Rank of the element to add
+     * @param socket Socket of the element to add
      */
-    boost::asio::io_service ioService;
+    void addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket);
 
     /**
-     * @brief Mutex used to guarantee that all calls to callbackReceive are done in a critical section.
+    * @brief Handles message received by one of the coroutines of @Tcp.cpp
+    * @param algoMsgAsString String containing message.
+    */
+    void callbackReceive(std::string && algoMsgAsString);
+
+    /**
+     * @brief Coroutine to handle connection to another client.
+     * @param rankClient Rank of the client to connect to.
+     * @return
      */
-    std::mutex mtxCallbackHandleMessage;
+    boost::asio::awaitable<void> coroutineClient(rank_t rankClient);
+
+    /**
+     * @brief Coroutine waiting asynchronously for unicasts received on an incoming connection and delivering them to @Tcp instance
+     * @param socket Socket on which to wait for unicasts
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineIncomingMessageReceiver(boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::ip::tcp::socket> socket);
+
+    /**
+     * @brief Coroutine taking care for waiting asynchronously for multicasts and delivering them to @Tcp instance.
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineMulticastReceiver();
+
+    /**
+     * @brief Coroutine to accept incoming connexions.
+     * @param nbAwaitedConnections Number of connections to accept.
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineServer(size_t nbAwaitedConnections);
+
+    /**
+     * @brief Decrements nbAwaitedInitializationEvents and calls @callbackInitDone() if it reaches 0
+    */
+    void decrementNbAwaitedInitializationEvents();
+
+    /**
+     * @brief Flag used to determine if @callbackInitDone() was called.
+     */
+    bool initDone{false};
+
+    /**
+     * @brief Buffer for storing messages when @callbackReceive() is called and @initDone is false.
+     */
+    std::vector<std::string> initDoneMessageBuffer;
+
+    /**
+     * @brief ioContext used for asynchronous IO
+     */
+    boost::asio::io_context ioContext;
+
+    /**
+     * @brief Endpoint used to send network-level multicast
+     */
+    boost::asio::ip::udp::endpoint multicastEndpoint;
+
+    /**
+     * @brief Socket used to send network-level multicast
+     */
+    boost::asio::ip::udp::socket multicastSocket{ioContext};
+
+    /**
+     * @brief Number of initialization events to wait for before calling @callbackInitDone
+     */
+    size_t nbAwaitedInitializationEvents{0};
 
     /**
      * @brief Mapping between rank of each outgoing peers and its associated socket
      */
-     std::map<rank_t,std::unique_ptr<boost::asio::ip::tcp::socket>> rank2sock;
-
-    /**
-     * @brief Thread for accepting @nbAwaitedConnections connections on port @port
-     * @param port
-     * @param nbAwaitedConnections
-     */
-    void acceptConn(int port, size_t nbAwaitedConnections);
-
-    /**
-     * @brief Connect to host
-    * @param host Host to connect to.
-    * @return socket which can be used to communicate with @host.
-    */
-    std::unique_ptr<boost::asio::ip::tcp::socket> connectToHost(HostTuple const & host);
-
-    /**
-     * @brief Thread for handling messages received on @ptrSock (which was created by acceptConn)
-     * @param ptrSock
-     */
-    void handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSock);
-
-    /**
-     * @brief Waits till a packet is received on @psock
-     * @param ptrSock
-     * @return String containing received packet
-     */
-    static std::string receiveEvent(boost::asio::ip::tcp::socket *ptrSock);
-
-    /**
-     * @brief Tries to connect to host @host
-     * @param host
-     * @return unique_ptr containing socket if connection succeeds and nullptr if connection fails.
-     */
-    std::unique_ptr<boost::asio::ip::tcp::socket>  tryConnectToHost(HostTuple const & host);
+    std::map<rank_t,std::unique_ptr<boost::asio::ip::tcp::socket>> rank2sock;
 };

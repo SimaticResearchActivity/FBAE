@@ -5,9 +5,15 @@
 #include "cereal/types/tuple.hpp"
 #include "cereal/types/vector.hpp"
 
-Arguments::Arguments(std::vector<HostTuple> const& sites)
+auto networkLevelMulticastAddressForTests{"239.255.0.1"};
+
+Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
     : sites{sites}
+    , usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
 {
+    if (isUsingNetworkLevelMulticast) {
+        networkLevelMulticastAddress = networkLevelMulticastAddressForTests;
+    }
 }
 
 Arguments::Arguments(mlib::OptParserExtended const& parser)
@@ -35,6 +41,22 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
                       << parser.synopsis () << std::endl;
             exit(EXIT_FAILURE);
         }
+    }
+
+    if (parser.hasopt('M')) {
+        if (!parser.getopt('M', networkLevelMulticastAddress)) {
+            std::cout << "Option -M is missing\n\n";
+            std::cout << "Usage:" << std::endl;
+            std::cout << parser.synopsis() << std::endl;
+            std::cout << "Where:" << std::endl
+                      << parser.description() << std::endl;
+            exit(1);
+        }
+        usingNetworkLevelMulticast = true;
+    }
+
+    if (parser.hasopt('P')) {
+        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('P'));
     }
 
     if (parser.hasopt('w')) {
@@ -87,9 +109,10 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
     return std::string {
-        algoStr + ","
-        + commLayerStr + ","
-        + std::to_string(frequency) + ","
+            algoStr + ","
+            + commLayerStr + ","
+            + (usingNetworkLevelMulticast ? "true" : "false") + ","
+            + std::to_string(frequency) + ","
         + std::to_string(maxBatchSize) + ","
         + std::to_string(nbMsg) + ","
         + std::to_string(warmupCooldown) + "%,"
@@ -100,7 +123,7 @@ Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, st
 
 std::string Arguments::csvHeadline()
 {
-    return std::string { "algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
+    return std::string { "algoLayer,commLayer,isUsingNetworkLevelMulticast,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
 }
 
 int Arguments::getFrequency() const {
@@ -113,6 +136,14 @@ int Arguments::getMaxBatchSize() const {
 
 int64_t Arguments::getNbMsg() const {
     return nbMsg;
+}
+
+std::string_view Arguments::getNetworkLevelMulticastAddress() const {
+    return networkLevelMulticastAddress;
+}
+
+uint16_t Arguments::getNetworkLevelMulticastPort() const {
+    return networkLevelMulticastPort;
 }
 
 rank_t Arguments::getRank() const
@@ -128,10 +159,15 @@ std::vector<std::tuple<std::string, int>> Arguments::getSites() const
 int Arguments::getSizeMsg() const {
     return sizeMsg;
 }
+
 bool Arguments::getVerbose() const {
     return verbose;
 }
 
 int Arguments::getWarmupCooldown() const {
     return warmupCooldown;
+}
+
+bool Arguments::isUsingNetworkLevelMulticast() const {
+    return usingNetworkLevelMulticast;
 }
