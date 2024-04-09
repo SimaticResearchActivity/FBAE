@@ -23,8 +23,12 @@ public:
     void waitInitDone();
 
 private:
-    static constexpr int initialWaitCallbackInitDone = 0;
-    std::counting_semaphore<initialWaitCallbackInitDone> waitCallbackInitDone{initialWaitCallbackInitDone};
+    /**
+     * @brief During tests, maximum number of @AlgoLayer instances in parallel.
+     */
+    static constexpr std::ptrdiff_t maximumNumberAlgoLayerInstancesDuringTests = 8;
+    static constexpr std::ptrdiff_t initialWaitCallbackInitDone = 0;
+    std::counting_semaphore<maximumNumberAlgoLayerInstancesDuringTests> waitCallbackInitDone{ initialWaitCallbackInitDone };
 };
 
 

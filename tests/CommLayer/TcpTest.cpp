@@ -27,10 +27,14 @@ namespace fbae_test_Tcp {
     public:
         Host(rank_t rank, std::vector<rank_t> const &dest, size_t nbAwaitedConnections, const Arguments &arguments,
              InitDoneSupervisor &initDoneSupervisor)
-                : algo{make_unique<AlgoStub>(std::move(comm), initDoneSupervisor)}, algoRaw{algo.get()},
-                  sessionStub{arguments, rank, std::move(algo)}, async{std::async([dest, nbAwaitedConnections, this]() {
-                    commRaw->openDestAndWaitIncomingMsg(dest, nbAwaitedConnections, algoRaw);
-                })} {
+                : algo{make_unique<AlgoStub>(std::move(comm), initDoneSupervisor)}
+                , algoRaw{algo.get()}
+                , sessionStub{arguments, rank, std::move(algo)}
+                , async{std::async(
+                        std::launch::async,
+                        [dest, nbAwaitedConnections, this]() {
+                            commRaw->openDestAndWaitIncomingMsg(dest, nbAwaitedConnections, algoRaw);
+                    })} {
         }
 
         AlgoStub *getAlgoRaw() {
@@ -58,40 +62,40 @@ namespace fbae_test_Tcp {
         // Test scenario is presented in doc/mscCommLayerTest.pu
 
         InitDoneSupervisor initDoneSupervisor;
-        Arguments arguments{
-                {
-                        {"localhost", initialPort},
-                        {"localhost", initialPort + 1},
-                        {"localhost", initialPort + 2},
-                        {"localhost", initialPort + 3}
-                }
+        const std::vector<HostTuple> sites{
+                {"localhost", initialPort},
+                {"localhost", initialPort + 1},
+                {"localhost", initialPort + 2},
+                {"localhost", initialPort + 3}
         };
+        Arguments arguments023{ sites, true};
+        Arguments arguments1{ sites, false};
 
         // Using a vector of Host does not compile ==> We use host0, host1, etc. instead of host[i].
-        Host host0{0, {}, 1, arguments, initDoneSupervisor};
-        Host host1{1, {0, 2}, 2, arguments, initDoneSupervisor};
+        Host host0{0, {1}, 1, arguments023, initDoneSupervisor};
+        Host host1{1, {0, 2}, 1, arguments1, initDoneSupervisor};
 
         initDoneSupervisor.waitInitDone();
 
         constexpr auto msgA{"A"};
         host0.getCommRaw()->send(1, msgA);
         std::this_thread::sleep_for(delayBeforeTestingReceived);
-        ASSERT_EQ(0, host0.getAlgoRaw()->getReceived().size());
+        ASSERT_EQ(0, host1.getAlgoRaw()->getReceived().size());
 
-        Host host2{2, {3}, 1, arguments, initDoneSupervisor};
+        Host host2{2, {3}, 1, arguments023, initDoneSupervisor};
 
         initDoneSupervisor.waitInitDone();
 
-        ASSERT_EQ(1, host0.getAlgoRaw()->getReceived().size());
-        EXPECT_EQ(msgA, host0.getAlgoRaw()->getReceived()[0]);
-        host0.getAlgoRaw()->getReceived().clear();
+        ASSERT_EQ(1, host1.getAlgoRaw()->getReceived().size());
+        EXPECT_EQ(msgA, host1.getAlgoRaw()->getReceived()[0]);
+        host1.getAlgoRaw()->getReceived().clear();
 
         constexpr auto msgB{"B"};
         host1.getCommRaw()->send(2, msgB);
         std::this_thread::sleep_for(delayBeforeTestingReceived);
         ASSERT_EQ(0, host2.getAlgoRaw()->getReceived().size());
 
-        Host host3{3, {}, 1, arguments, initDoneSupervisor};
+        Host host3{3, {}, 1, arguments023, initDoneSupervisor};
 
         initDoneSupervisor.waitInitDone();
         initDoneSupervisor.waitInitDone();

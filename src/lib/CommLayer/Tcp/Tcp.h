@@ -29,11 +29,27 @@ public:
     void addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket);
 
     /**
+    * @brief Handles message received by one of the coroutines of @Tcp.cpp
+    * @param algoMsgAsString String containing message.
+    */
+    void callbackReceive(std::string && algoMsgAsString);
+
+    /**
      * @brief Decrements nbAwaitedInitializationEvents and calls @callbackInitDone() if it reaches 0
     */
     void decrementNbAwaitedInitializationEvents();
 
 private:
+    /**
+     * @brief Flag used to determine if @callbackInitDone() was called.
+     */
+    bool initDone{false};
+
+    /**
+     * @brief Buffer for storing messages when @callbackReceive() is called and @initDone is false.
+     */
+    std::vector<std::string> initDoneMessageBuffer;
+
     /**
      * @brief ioContext used for asynchronous IO
      */

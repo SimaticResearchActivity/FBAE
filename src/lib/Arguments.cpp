@@ -6,9 +6,12 @@
 #include "cereal/types/vector.hpp"
 
 Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
-    : usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
-    , sites{sites}
+    : sites{sites}
+    , usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
 {
+    if (isUsingNetworkLevelMulticast) {
+        networkLevelMulticastAddress = "239.255.0.1";
+    }
 }
 
 Arguments::Arguments(mlib::OptParserExtended const& parser)
@@ -40,7 +43,7 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 
     if (parser.hasopt('M')) {
         if (!parser.getopt('M', networkLevelMulticastAddress)) {
-            std::cout << "Option -m is missing\n\n";
+            std::cout << "Option -M is missing\n\n";
             std::cout << "Usage:" << std::endl;
             std::cout << parser.synopsis() << std::endl;
             std::cout << "Where:" << std::endl
@@ -51,7 +54,7 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
     }
 
     if (parser.hasopt('P')) {
-        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('m'));
+        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('P'));
     }
 
     if (parser.hasopt('w')) {

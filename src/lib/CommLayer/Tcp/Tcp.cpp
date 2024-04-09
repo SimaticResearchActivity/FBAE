@@ -11,17 +11,26 @@
 #include "cereal/archives/binary.hpp"
 
 using boost::asio::ip::tcp;
+using boost::asio::awaitable;
+using boost::asio::co_spawn;
+using boost::asio::detached;
+using boost::asio::use_awaitable_t;
+using boost::asio::as_tuple_t;
+using default_token = as_tuple_t<use_awaitable_t<>>;
+using tcp_acceptor = default_token::as_default_on_t<tcp::acceptor>;
+using tcp_socket = default_token::as_default_on_t<tcp::socket>;
+namespace this_coro = boost::asio::this_coro;
 using namespace std;
 
 /**
- * @brief Maximum number of TCP connect tentatives before considering we cannot connect to desired host
+ * @brief Maximum number of TCP connect attempts before considering we cannot connect to desired host
  */
-constexpr int maxNbTcpConnectTentatives{20};
+constexpr int maxNbTcpConnectAttempts{20};
 
 /**
  * @brief Duration between two tentatives to connect to a host
  */
-constexpr chrono::duration durationBetweenTcpConnectTentatives{500ms};
+constexpr chrono::duration durationBetweenTcpConnectAttempts{500ms};
 
 /**
  * @brief Defines that any multicasting hosts is listened to.
@@ -50,264 +59,178 @@ constexpr const char* path2file(const char* path) {
 }
 
 /**
- * @brief Private class taking care for waiting asynchronously for multicasts and delivering them to @AlgoLayer.
+ * @brief Coroutine taking care for waiting asynchronously for multicasts and delivering them to @Tcp instance.
+ * @param tcpCommLayer Pointer to @Tcp instance
+ * @return
  */
-class MulticastReceiver : public std::enable_shared_from_this<MulticastReceiver> {
-public:
-    MulticastReceiver(boost::asio::io_context& ioContext,
-                      Tcp *tcpCommLayer)
-            : socket{ioContext}
-            , tcp{tcpCommLayer}
-    {
-    }
-    void start() {
-        auto arguments{tcp->getAlgoLayer()->getSessionLayer()->getArguments()};
-        // Create the socket so that multiple may be bound to the same address.
-        boost::asio::ip::udp::endpoint listen_endpoint(
-                boost::asio::ip::make_address(multicastListenToAnyone),
-                arguments.getNetworkLevelMulticastPort());
-        socket.open(listen_endpoint.protocol());
-        socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
-        socket.bind(listen_endpoint);
-        // Join the multicast group.
-        socket.set_option(
-                boost::asio::ip::multicast::join_group(
-                        boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress())));
+awaitable<void> multicastReceiver(Tcp *tcpCommLayer)
+{
+    auto executor = co_await this_coro::executor;
+    boost::asio::ip::udp::socket socket{executor};
 
-        tcp->decrementNbAwaitedInitializationEvents();
-        doReceiveMulticast();
-    }
+    auto arguments{tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments()};
+    // Create the socket so that multiple may be bound to the same address.
+    boost::asio::ip::udp::endpoint listen_endpoint(
+            boost::asio::ip::make_address(multicastListenToAnyone),
+            arguments.getNetworkLevelMulticastPort());
+    socket.open(listen_endpoint.protocol());
+    socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+    socket.bind(listen_endpoint);
 
-private:
-    void doReceiveMulticast()
-    {
-        auto self(shared_from_this());
-        std::vector<char> v(maxLength);
-        boost::asio::ip::udp::endpoint sender_endpoint;
-        socket.async_receive_from(
-                boost::asio::buffer(v), sender_endpoint,
-                [this, self, &v](boost::system::error_code ec, std::size_t length)
-                {
-                    if (ec) {
-                        std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                        exit(1);
-                    }
-                    assert(length == v.size());
-                    if (length != 0) {
-                        tcp->getAlgoLayer()->callbackReceive(std::string{v.data(), v.size()});
-                        doReceiveMulticast();
-                    }else{
-                        std::cout << "Received empty message ==> Terminate\n";
-                    }
-                });
-    }
+    // Join the multicast group.
+    socket.set_option(
+            boost::asio::ip::multicast::join_group(boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress())));
 
-    boost::asio::ip::udp::socket socket;
-    Tcp *tcp;
-};
+    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+
+    boost::asio::ip::udp::endpoint sender_endpoint;
+    std::vector<char> v(maxLength);
+    for (;;) {
+        auto length = co_await socket.async_receive_from(
+                boost::asio::buffer(v), sender_endpoint, boost::asio::use_awaitable);
+        if (length == 0) {
+            // Received empty message ==> Terminate
+            break;
+        }
+        tcpCommLayer->callbackReceive(std::string{v.data(), length});
+    }
+}
 
 /**
- * @brief Private class taking care for waiting asynchronously for unicasts received on an incoming connection
- * and delivering them to @AlgoLayer.
+ * @brief Coroutine waiting asynchronously for unicasts received on an incoming connection and delivering them to @Tcp instance
+ * @param socket Socket on which to wait for unicasts
+ * @param tcpCommLayer Pointer to @Tcp instance
+ * @return
  */
-class TcpIncomingSession : public std::enable_shared_from_this<TcpIncomingSession> {
-public:
-    TcpIncomingSession(tcp::socket socket, Tcp *tcpCommLayer)
-            : socket{std::move(socket)}
-            , tcpCommLayer{tcpCommLayer}
-    {
-    }
-
-    void start() {
-        doReadLength();
-    }
-
-private:
-    void doReadLength() {
-        auto self(shared_from_this());
+awaitable<void> tcpIncomingSession(tcp_socket socket, Tcp *tcpCommLayer)
+{
+    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+    for (;;) {
+        // Read message length
         size_t len;
-        socket.async_read_some(boost::asio::buffer(&len, sizeof(len)),
-                                [this, self, &len](boost::system::error_code ec, std::size_t length)
-                                {
-                                    if (ec == boost::asio::error::eof) {
-                                        std::cout << "Client disconnected\n";
-                                        return;
-                                    }
-                                    if (ec) {
-                                        std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                                                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                                        exit(1);
-                                    }
-                                    assert(length == sizeof(len));
-                                    doReadMsg(len);
-                                });
-    }
+        auto [e1, lenRead1] = co_await socket.async_read_some(boost::asio::buffer(&len, sizeof(len)));
+        if (e1 == boost::asio::error::eof) {
+            // Client disconnected
+            break;
+        }
+        if (e1) {
+            std::cerr << "Boost error '" << e1.what() << "' not handled at: "
+                      << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+            exit(1);
+        }
+        assert(lenRead1 == sizeof(len));
 
-    void doReadMsg(size_t len) {
-        auto self(shared_from_this());
+        // Read message itself
         std::vector<char> v(len);
-        socket.async_read_some(boost::asio::buffer(v),
-                               [this, len, &v, self](boost::system::error_code ec, std::size_t length)
-                               {
-                                   if (ec == boost::asio::error::eof) {
-                                       std::cout << "Client disconnected (between receiving length and receiving message ==> Bizarre\n";
-                                       return;
-                                   }
-                                   if (ec) {
-                                       std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                                                 << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                                       exit(1);
-                                   }
-                                   assert(length == len);
-                                   tcpCommLayer->getAlgoLayer()->callbackReceive(std::string{v.data(), v.size()});
-                                   doReadLength();
-                               });
+        auto [e2, lenRead2] = co_await socket.async_read_some(boost::asio::buffer(v));
+        if (e2 == boost::asio::error::eof) {
+            std::cerr << "ERROR : Client disconnected between receiving message length and receiving message\n";
+            exit(1);
+        }
+        if (e2) {
+            std::cerr << "Boost error '" << e2.what() << "' not handled at: "
+                      << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+            exit(1);
+        }
+        assert(lenRead2 == len);
+        tcpCommLayer->callbackReceive(std::string{v.data(), v.size()});
     }
-
-    tcp::socket socket;
-    Tcp *tcpCommLayer;
-};
+}
 
 /**
- * @brief Private class taking care for waiting asynchronously connections to current host.
+ * @brief Coroutine to accept incoming connexions.
+ * @param nbAwaitedConnections Number of connections to accept.
+ * @param tcpCommLayer Pointer to @Tcp instance to which to deliver incoming messages.
+ * @return
  */
-class TcpServer {
-public:
-    TcpServer(boost::asio::io_context& ioContext, size_t nbAwaitedConnections, Tcp *tcpCommLayer)
-            : acceptor(ioContext, tcp::endpoint(tcp::v4(),
-                                                static_cast<unsigned short>(get<PORT>(tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[
-                                                        tcpCommLayer->getAlgoLayer()->getSessionLayer()->getRank()]))))
-            , nbAwaitedConnections{nbAwaitedConnections}
-            , socket{ioContext}
-            , tcpCommLayer{tcpCommLayer}
-    {
-            do_accept();
-    }
+awaitable<void> tcpServer(size_t nbAwaitedConnections, Tcp *tcpCommLayer)
+{
+    auto executor = co_await this_coro::executor;
+    tcp_acceptor acceptor(executor, tcp::endpoint(tcp::v4(),
+                                                  static_cast<unsigned short>(get<PORT>(tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[
+                                                          tcpCommLayer->getAlgoLayer()->getSessionLayer()->getRank()]))));
+    for (int i = 0 ; i < nbAwaitedConnections ; ++i) {
+        if (auto [e, socket] = co_await acceptor.async_accept(); socket.is_open()) {
+            if (e) {
+                std::cerr << "Boost exception '" << e.what() << "' not handled at: "
+                          << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+                exit(1);
 
-private:
-    void do_accept() {
-        if (nbAwaitedConnections > 0) {
-            acceptor.async_accept(socket,
-                                  [this](boost::system::error_code ec) {
-                                      if (ec) {
-                                          std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                                                    << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                                          exit(1);
-                                      }
-                                      std::make_shared<TcpIncomingSession>(std::move(socket), tcpCommLayer)->start();
-                                      --nbAwaitedConnections;
-                                      tcpCommLayer->decrementNbAwaitedInitializationEvents();
-                                      do_accept();
-                                  });
-        } else {
-            std::cout << "Stop accepting TCP connections \n";
+            }
+            co_spawn(executor, tcpIncomingSession(std::move(socket), tcpCommLayer), detached);
         }
     }
-
-    tcp::acceptor acceptor;
-    size_t nbAwaitedConnections;
-    tcp::socket socket;
-    Tcp *tcpCommLayer;
-};
+}
 
 /**
- * @brief Private class taking care for connecting to a distant host.
+ * @brief Coroutine to handle connection to another client.
+ * @param rankClient Rank of the client to connect to.
+ * @param tcpCommLayer Pointer to Tcp instance requiring this connection.
+ * @return
  */
-class TcpClient : public std::enable_shared_from_this<TcpClient> {
-public:
-    TcpClient(boost::asio::io_context& ioContext, rank_t rankClient, Tcp *tcpCommLayer)
-            : ptrSocket{make_unique<tcp::socket>(ioContext)}
-            , rankClient{rankClient}
-            , resolver{ioContext}
-            , tcpCommLayer{tcpCommLayer}
-            , timer(ioContext)
-    {
-    }
+awaitable<void> tcpClient(rank_t rankClient, Tcp *tcpCommLayer) {
+    auto executor = co_await this_coro::executor;
+    auto ptrSocket = make_unique<tcp::socket>(executor);
 
-    void start()
-    {
-        doAsyncResolve();
-    }
-
-private:
-    void doAsyncConnect(tcp::resolver::iterator it)
-    {
-        auto self(shared_from_this());
-        ptrSocket->async_connect(*it, [this, self, &it](boost::system::error_code ec)
-        {
-            if (ec == boost::asio::error::connection_refused) {
-                --remainingNbTcpConnectTentatives;
-                if (remainingNbTcpConnectTentatives == 0) {
-                    auto [hostname, port] {tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[rankClient]};
-                    std::cerr << "Error: Connection to '" << hostname << ":" << static_cast<unsigned short>(port) << "' refused. Maybe server is not running on that port?\n";
-                    exit(1);
-                }
-                doTimeoutBeforeNewAsyncConnect(std::move(it));
-            }
-            if (ec) {
-                std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                    << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                exit(1);
-            }
-            tcpCommLayer->addElementInRank2sock(rankClient, std::move(ptrSocket));
-            tcpCommLayer->decrementNbAwaitedInitializationEvents();
-        });
-    }
-
-    void doAsyncResolve()
-    {
-        auto self(shared_from_this());
+    int nbTcpConnectAttempts{0};
+    bool connected{false};
+    do {
         auto [hostname, port] {tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[rankClient]};
-        tcp::resolver::query q{hostname, std::to_string(static_cast<unsigned short>(port))};
-        resolver.async_resolve(q, [this, self, hostname, port](boost::system::error_code ec, tcp::resolver::iterator it)
+        try {
+            tcp::resolver resolver{executor};
+            boost::asio::ip::basic_resolver_results<tcp> endpoints =
+                    co_await resolver.async_resolve(hostname, std::to_string(static_cast<unsigned short>(port)), boost::asio::use_awaitable);
+            co_await boost::asio::async_connect(*ptrSocket, endpoints, boost::asio::use_awaitable);
+            connected = true;
+        }
+        catch (boost::system::system_error& e)
         {
-            if (ec == boost::asio::error::host_not_found) {
+            if (e.code() == boost::asio::error::host_not_found) {
                 std::cerr << "Error: Host '" << hostname << ":" << static_cast<unsigned short>(port) << "' does not exist.\n";
                 exit(1);
             }
-            if (ec) {
-                std::cerr << "Boost error '" << ec.what() << "' not handled at: "
+            if (e.code() != boost::asio::error::connection_refused) {
+                std::cerr << "Boost exception '" << e.what() << "' not handled at: "
                           << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
                 exit(1);
             }
-            doAsyncConnect(std::move(it));
-        });
-    }
-
-    void doTimeoutBeforeNewAsyncConnect(tcp::resolver::iterator it)
-    {
-        auto self(shared_from_this());
-        timer.expires_after(std::chrono::milliseconds(durationBetweenTcpConnectTentatives));
-        timer.async_wait(
-                [this, self, &it](boost::system::error_code ec)
-                {
-                    if (ec) {
-                        std::cerr << "Boost error '" << ec.what() << "' not handled at: "
-                                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
-                        exit(1);
-                    }
-                    doAsyncConnect(std::move(it));
-                });
-
-    }
-
-    unique_ptr<tcp::socket> ptrSocket{nullptr};
-    rank_t rankClient;
-    tcp::resolver resolver;
-    Tcp *tcpCommLayer;
-    boost::asio::steady_timer timer;
-    int remainingNbTcpConnectTentatives{maxNbTcpConnectTentatives};
-};
+            ++nbTcpConnectAttempts;
+            if (nbTcpConnectAttempts > maxNbTcpConnectAttempts) {
+                std::cerr << "Error: Connection to '" << hostname << ":" << static_cast<unsigned short>(port) << "' refused. Maybe no FBAE instance is running on this hostname:port?\n";
+                exit(1);
+            }
+        }
+        if (!connected) {
+            boost::asio::steady_timer timer(executor);
+            timer.expires_after(durationBetweenTcpConnectAttempts);
+            co_await timer.async_wait(boost::asio::use_awaitable);
+        }
+    } while (!connected);
+    tcpCommLayer->addElementInRank2sock(rankClient, std::move(ptrSocket));
+    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+}
 
 void Tcp::addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket) {
     rank2sock[rank] = std::move(ptrSocket);
+}
+
+void Tcp::callbackReceive(string &&algoMsgAsString) {
+    if (initDone) {
+        getAlgoLayer()->callbackReceive(std::move(algoMsgAsString));
+    } else {
+        initDoneMessageBuffer.emplace_back(std::move(algoMsgAsString));
+    }
 }
 
 void Tcp::decrementNbAwaitedInitializationEvents() {
     --nbAwaitedInitializationEvents;
     if (nbAwaitedInitializationEvents == 0) {
         getAlgoLayer()->callbackInitDone();
+        for (auto & msg: initDoneMessageBuffer) {
+            getAlgoLayer()->callbackReceive(std::move(msg));
+        }
+        initDoneMessageBuffer.clear();
+        initDone = true;
     }
 }
 
@@ -338,17 +261,16 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
                 boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress()),
                 arguments.getNetworkLevelMulticastPort()};
             multicastSocket = {ioContext, multicastEndpoint.protocol()};
-            std::make_shared<MulticastReceiver>(ioContext, this)->start();
+            co_spawn(ioContext,multicastReceiver( this), detached);
         }
 
-        TcpServer s(ioContext, nbAwaitedConnections, this);
+        co_spawn(ioContext, tcpServer(nbAwaitedConnections, this), detached);
 
         for (const auto rankClient: dest) {
-            std::make_shared<TcpClient>(ioContext, rankClient, this)->start();
+            co_spawn(ioContext, tcpClient(rankClient, this), detached);
         }
 
         ioContext.run();
-        std::cout << "*** Exit io_context.run(); ***\n";
     }
     catch (boost::system::system_error& e)
     {
@@ -393,7 +315,6 @@ void Tcp::terminate() {
     if (getAlgoLayer()->getSessionLayer()->getArguments().isUsingNetworkLevelMulticast()
         && getAlgoLayer()->getSessionLayer()->getRank() == 0) {
         // Send an empty multicast to stop all receiveMulticast tasks
-        cout << "***MULTICAST*** Send message of size 0\n";
         multicastMsg("");
     }
 }
