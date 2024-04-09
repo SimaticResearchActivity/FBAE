@@ -21,6 +21,7 @@ public:
     void terminate() override;
     std::string toString() override;
 
+private:
     /**
      * @brief Add a new element in rank2sock
      * @param rank Rank of the element to add
@@ -35,11 +36,37 @@ public:
     void callbackReceive(std::string && algoMsgAsString);
 
     /**
+     * @brief Coroutine to handle connection to another client.
+     * @param rankClient Rank of the client to connect to.
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineClient(rank_t rankClient);
+
+    /**
+     * @brief Coroutine waiting asynchronously for unicasts received on an incoming connection and delivering them to @Tcp instance
+     * @param socket Socket on which to wait for unicasts
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineIncomingMessageReceiver(boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::ip::tcp::socket> socket);
+
+    /**
+     * @brief Coroutine taking care for waiting asynchronously for multicasts and delivering them to @Tcp instance.
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineMulticastReceiver();
+
+    /**
+     * @brief Coroutine to accept incoming connexions.
+     * @param nbAwaitedConnections Number of connections to accept.
+     * @return
+     */
+    boost::asio::awaitable<void> coroutineServer(size_t nbAwaitedConnections);
+
+    /**
      * @brief Decrements nbAwaitedInitializationEvents and calls @callbackInitDone() if it reaches 0
     */
     void decrementNbAwaitedInitializationEvents();
 
-private:
     /**
      * @brief Flag used to determine if @callbackInitDone() was called.
      */

@@ -58,17 +58,11 @@ constexpr const char* path2file(const char* path) {
     return file;
 }
 
-/**
- * @brief Coroutine taking care for waiting asynchronously for multicasts and delivering them to @Tcp instance.
- * @param tcpCommLayer Pointer to @Tcp instance
- * @return
- */
-awaitable<void> multicastReceiver(Tcp *tcpCommLayer)
-{
+awaitable<void> Tcp::coroutineMulticastReceiver() {
     auto executor = co_await this_coro::executor;
     boost::asio::ip::udp::socket socket{executor};
 
-    auto arguments{tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments()};
+    auto arguments{getAlgoLayer()->getSessionLayer()->getArguments()};
     // Create the socket so that multiple may be bound to the same address.
     boost::asio::ip::udp::endpoint listen_endpoint(
             boost::asio::ip::make_address(multicastListenToAnyone),
@@ -81,7 +75,7 @@ awaitable<void> multicastReceiver(Tcp *tcpCommLayer)
     socket.set_option(
             boost::asio::ip::multicast::join_group(boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress())));
 
-    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+    decrementNbAwaitedInitializationEvents();
 
     boost::asio::ip::udp::endpoint sender_endpoint;
     std::vector<char> v(maxLength);
@@ -92,19 +86,13 @@ awaitable<void> multicastReceiver(Tcp *tcpCommLayer)
             // Received empty message ==> Terminate
             break;
         }
-        tcpCommLayer->callbackReceive(std::string{v.data(), length});
+        callbackReceive(std::string{v.data(), length});
     }
 }
 
-/**
- * @brief Coroutine waiting asynchronously for unicasts received on an incoming connection and delivering them to @Tcp instance
- * @param socket Socket on which to wait for unicasts
- * @param tcpCommLayer Pointer to @Tcp instance
- * @return
- */
-awaitable<void> tcpIncomingSession(tcp_socket socket, Tcp *tcpCommLayer)
-{
-    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+awaitable<void> Tcp::coroutineIncomingMessageReceiver(
+        boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::ip::tcp::socket> socket) {
+    decrementNbAwaitedInitializationEvents();
     for (;;) {
         // Read message length
         size_t len;
@@ -133,22 +121,16 @@ awaitable<void> tcpIncomingSession(tcp_socket socket, Tcp *tcpCommLayer)
             exit(1);
         }
         assert(lenRead2 == len);
-        tcpCommLayer->callbackReceive(std::string{v.data(), v.size()});
+        callbackReceive(std::string{v.data(), v.size()});
     }
 }
 
-/**
- * @brief Coroutine to accept incoming connexions.
- * @param nbAwaitedConnections Number of connections to accept.
- * @param tcpCommLayer Pointer to @Tcp instance to which to deliver incoming messages.
- * @return
- */
-awaitable<void> tcpServer(size_t nbAwaitedConnections, Tcp *tcpCommLayer)
+awaitable<void> Tcp::coroutineServer(size_t nbAwaitedConnections)
 {
     auto executor = co_await this_coro::executor;
     tcp_acceptor acceptor(executor, tcp::endpoint(tcp::v4(),
-                                                  static_cast<unsigned short>(get<PORT>(tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[
-                                                          tcpCommLayer->getAlgoLayer()->getSessionLayer()->getRank()]))));
+                                                  static_cast<unsigned short>(get<PORT>(getAlgoLayer()->getSessionLayer()->getArguments().getSites()[
+                                                          getAlgoLayer()->getSessionLayer()->getRank()]))));
     for (int i = 0 ; i < nbAwaitedConnections ; ++i) {
         if (auto [e, socket] = co_await acceptor.async_accept(); socket.is_open()) {
             if (e) {
@@ -157,25 +139,19 @@ awaitable<void> tcpServer(size_t nbAwaitedConnections, Tcp *tcpCommLayer)
                 exit(1);
 
             }
-            co_spawn(executor, tcpIncomingSession(std::move(socket), tcpCommLayer), detached);
+            co_spawn(executor, coroutineIncomingMessageReceiver(std::move(socket)), detached);
         }
     }
 }
 
-/**
- * @brief Coroutine to handle connection to another client.
- * @param rankClient Rank of the client to connect to.
- * @param tcpCommLayer Pointer to Tcp instance requiring this connection.
- * @return
- */
-awaitable<void> tcpClient(rank_t rankClient, Tcp *tcpCommLayer) {
+awaitable<void> Tcp::coroutineClient(rank_t rankClient) {
     auto executor = co_await this_coro::executor;
     auto ptrSocket = make_unique<tcp::socket>(executor);
 
     int nbTcpConnectAttempts{0};
     bool connected{false};
     do {
-        auto [hostname, port] {tcpCommLayer->getAlgoLayer()->getSessionLayer()->getArguments().getSites()[rankClient]};
+        auto [hostname, port] {getAlgoLayer()->getSessionLayer()->getArguments().getSites()[rankClient]};
         try {
             tcp::resolver resolver{executor};
             boost::asio::ip::basic_resolver_results<tcp> endpoints =
@@ -206,8 +182,8 @@ awaitable<void> tcpClient(rank_t rankClient, Tcp *tcpCommLayer) {
             co_await timer.async_wait(boost::asio::use_awaitable);
         }
     } while (!connected);
-    tcpCommLayer->addElementInRank2sock(rankClient, std::move(ptrSocket));
-    tcpCommLayer->decrementNbAwaitedInitializationEvents();
+    addElementInRank2sock(rankClient, std::move(ptrSocket));
+    decrementNbAwaitedInitializationEvents();
 }
 
 void Tcp::addElementInRank2sock(rank_t rank, std::unique_ptr<boost::asio::ip::tcp::socket> ptrSocket) {
@@ -261,13 +237,13 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
                 boost::asio::ip::make_address(arguments.getNetworkLevelMulticastAddress()),
                 arguments.getNetworkLevelMulticastPort()};
             multicastSocket = {ioContext, multicastEndpoint.protocol()};
-            co_spawn(ioContext,multicastReceiver( this), detached);
+            co_spawn(ioContext, coroutineMulticastReceiver(), detached);
         }
 
-        co_spawn(ioContext, tcpServer(nbAwaitedConnections, this), detached);
+        co_spawn(ioContext, coroutineServer(nbAwaitedConnections), detached);
 
         for (const auto rankClient: dest) {
-            co_spawn(ioContext, tcpClient(rankClient, this), detached);
+            co_spawn(ioContext, coroutineClient(rankClient), detached);
         }
 
         ioContext.run();
