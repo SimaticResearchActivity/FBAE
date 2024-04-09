@@ -39,7 +39,9 @@ main -> algo0 : creation(commLayer_0, initDoneSupervisor)
 activate algo0
 main -> async0 : creation(commLayer_0)
 activate async0
-async0 -> comm0 : openDestAndWaitIncomingMsg({}, 1, waitForNetworkLevelMulticast: true)
+async0 -> comm0 : openDestAndWaitIncomingMsg({1}, 1, waitForNetworkLevelMulticast: true)
+comm0 ->(10) comm1 : openConn
+comm1 -->(10) comm0 : openConn KO
 
 main -> comm1 : creation()
 activate comm1
@@ -53,6 +55,8 @@ comm1 ->(10) comm0 : openConn
 comm0 -->(10) comm1 : openConn OK
 comm1 ->(10) comm2 : openConn
 comm2 -->(10) comm1 : openConn KO
+comm0 ->(10) comm1 : openConn
+comm1 -->(10) comm0 : openConn OK
 comm0 -> algo0 : callbackInitDone()
 algo0 -> initDoneS : callbackInitDone()
 
@@ -81,7 +85,7 @@ async2 -> comm2 : openDestAndWaitIncomingMsg({3}, 1, waitForNetworkLevelMulticas
 main -> initDoneS : waitInitDone()
 
 comm2 ->(10) comm3 : openConn
-comm3 ->(10) comm2 : openConn KO
+comm3 -->(10) comm2 : openConn KO
 comm1 ->(10) comm2 : openConn
 comm2 -->(10) comm1 : openConn OK
 comm1 -> algo1 : callbackInitDone()
@@ -116,7 +120,7 @@ async3 -> comm3 : openDestAndWaitIncomingMsg({}, 1, waitForNetworkLevelMulticast
 main -> initDoneS : waitInitDone()
 
 comm2 ->(10) comm3 : openConn
-comm3 ->(10) comm2 : openConn OK
+comm3 -->(10) comm2 : openConn OK
 comm2 -> algo2 : callbackInitDone()
 algo2 -> initDoneS : callbackInitDone()
 initDoneS --> main : return
