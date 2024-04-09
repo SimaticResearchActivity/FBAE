@@ -5,12 +5,14 @@
 #include "cereal/types/tuple.hpp"
 #include "cereal/types/vector.hpp"
 
+auto networkLevelMulticastAddressForTests{"239.255.0.1"};
+
 Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
     : sites{sites}
     , usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
 {
     if (isUsingNetworkLevelMulticast) {
-        networkLevelMulticastAddress = "239.255.0.1";
+        networkLevelMulticastAddress = networkLevelMulticastAddressForTests;
     }
 }
 
