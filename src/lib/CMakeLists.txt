@@ -1,4 +1,6 @@
-add_library(lib_fbae 
+
+
+add_library(lib_fbae
         Arguments.cpp
 	Arguments.h
 	OptParserExtended.cpp
@@ -40,4 +42,6 @@ add_library(lib_fbae
 		Logger/Logger.h
 )
 
-target_include_directories(lib_fbae PUBLIC ./)
+find_package(log4cxx)
+target_include_directories(lib_fbae PUBLIC ./ PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(lib_fbae PRIVATE log4cxx)

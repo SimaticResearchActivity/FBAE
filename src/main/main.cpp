@@ -7,6 +7,8 @@
 #include "CommLayer/Tcp/Tcp.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
 
+#include "Logger/Logger.h"
+
 using namespace std;
 using namespace mlib;
 
@@ -44,6 +46,9 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
 
 int main(int argc, char* argv[])
 {
+    // Required to set up the log4cxx library.
+    Logger::setupLogger();
+
     //
     // Take care of program arguments
     //

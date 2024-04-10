@@ -1,4 +1,5 @@
 #include "Logger.h"
+
 #include <log4cxx/logger.h>
 #include <log4cxx/basicconfigurator.h>
 
@@ -8,39 +9,37 @@
 
 
 void Logger::trace(const std::string && caller, const std::string && message) noexcept {
-//     auto loggerInternal = log4cxx::Logger::getLogger(caller);
-//     LOG4CXX_TRACE(loggerInternal, message);
-    std::cout << "Trace from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_TRACE(loggerInternal, message);
 }
 
 void Logger::info(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_INFO(loggerInternal, message);
-    std::cout << "Info from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_INFO(loggerInternal, message);
 }
 
 void Logger::error(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_ERROR(loggerInternal, message);
-    std::cout << "Error from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_ERROR(loggerInternal, message);
 }
 
 void Logger::debug(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_DEBUG(loggerInternal, message);
-    std::cout << "Debug from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_DEBUG(loggerInternal, message);
 }
 
 void Logger::warn(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_WARN(loggerInternal, message);
-    std::cout << "Warning from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_WARN(loggerInternal, message);
 }
 
 void Logger::fatal(const std::string && caller, const std::string && message) noexcept {
-    // auto loggerInternal = log4cxx::Logger::getLogger(caller);
-    // LOG4CXX_FATAL(loggerInternal, message);
-    std::cout << "Fatal error from " << caller << ": " << message << std::endl;
+     auto loggerInternal = log4cxx::Logger::getLogger(caller);
+     LOG4CXX_FATAL(loggerInternal, message);
+}
+
+void Logger::setupLogger(void) {
+    log4cxx::BasicConfigurator::configure();
 }
 
 [[maybe_unused]] LoggerInstance Logger::instance(std::string caller) noexcept {

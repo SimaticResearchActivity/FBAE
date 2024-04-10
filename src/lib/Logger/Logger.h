@@ -119,6 +119,15 @@ private:
 };
 
 namespace Logger {
+
+    /** @brief Sets up the logger.
+     *
+     * This function sets up the underlying library log4cxx. It is
+     * required to call this function once before any call to functions
+     * related to logging.
+     */
+    void setupLogger();
+
     /**
      * @brief Instance a LoggerInstance bound by a caller name.
      *
