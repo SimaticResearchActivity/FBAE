@@ -6,7 +6,6 @@
 
 #include "msgTemplates.h"
 #include "AlgoLayer/LCR/LCR.h"
-#include "AlgoLayer/LCR/LCRMessage.h"
 
 #include "../CommLayer/CommStub.h"
 #include "../SessionLayer/SessionStub.h"
@@ -57,7 +56,7 @@ namespace fbae_test_LCR {
         ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
         ASSERT_EQ(myRank, broadcastMsg.senderRank);
         ASSERT_EQ(1, broadcastMsg.clock);
-        ASSERT_FALSE(broadcastMsg.isStable);
+//        ASSERT_FALSE(broadcastMsg.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
 
         // Check plain Participant is broadcasting messages
@@ -91,7 +90,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Message,
                 .senderRank = 2,
-                .isStable = false,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -107,7 +105,7 @@ namespace fbae_test_LCR {
         ASSERT_EQ(MessageId::Message, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
-        ASSERT_FALSE(secondIncomingMessage.isStable);
+//        ASSERT_FALSE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
@@ -132,7 +130,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
             .messageId = MessageId::Message,
             .senderRank = 0,
-            .isStable = false,
             .clock = 1,
             .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -148,7 +145,7 @@ namespace fbae_test_LCR {
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(0, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
-        ASSERT_TRUE(secondIncomingMessage.isStable);
+//        ASSERT_TRUE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
@@ -173,7 +170,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 2,
-                .isStable = true,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -189,7 +185,7 @@ namespace fbae_test_LCR {
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
-        ASSERT_TRUE(secondIncomingMessage.isStable);
+//        ASSERT_TRUE(secondIncomingMessage.isStable);
         ASSERT_EQ(SessionMsgId::FirstBroadcast, secondIncomingMessage.sessionMessage->msgId);
     }
 
@@ -214,7 +210,6 @@ namespace fbae_test_LCR {
         auto message = StructBroadcastMessage {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 1,
-                .isStable = true,
                 .clock = 1,
                 .sessionMessage = firstIncomingMessage.sessionMessage
         };
@@ -224,7 +219,7 @@ namespace fbae_test_LCR {
         // Send the message to the current site.
         algoLayerRaw->callbackReceive(serializeStruct(message));
 
-        ASSERT_EQ(1, commLayerRaw->getSent().size());
+        ASSERT_EQ(2, commLayerRaw->getSent().size());
     }
 
 

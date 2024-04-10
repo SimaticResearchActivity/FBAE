@@ -9,12 +9,21 @@ namespace fbae_LCRAlgoLayer {
      * a classic message and an acknowledgement message.
      */
     enum class MessageId: MsgId_t {
-        /**
-         * @brief A classic message we are forwarding to another site.
-         */
-        Acknowledgement,
+
         /**
          * @brief An acknowledgement message we are forwarding to another site.
+         * This is a message a site should receive after having already
+         * received a classic "Message" message. Once received, the site
+         * knows this message is ready to be delivered.
+         */
+        Acknowledgement,
+
+        /**
+         * @brief A classic message we are forwarding to another site.
+         * When receiving this message, a site is not expected to have
+         * received it's content yet, and is not ready to deliver its
+         * content to the session layer, as not all sites are guaranteed
+         * to have received the message yet.
          */
         Message,
     };
@@ -25,31 +34,50 @@ namespace fbae_LCRAlgoLayer {
      */
     struct StructBroadcastMessage {
         /**
-         * @brief the message type: classic message or acknowledgment message.
+         * @brief the message type. See MessageId enum for
+         * more information.
          */
-        MessageId messageId {};
+        MessageId messageId = MessageId::Message;
+
         /**
-         * @brief The rank of the site that sent this message in the first place
-         * (the one on which was called "totalOrderBroadcast")
+         * @brief The rank of the site that sent this message
+         * in the first place (the one on which was called
+         * the totalOrderBroadcast method).
          */
-        rank_t senderRank {};
+        rank_t senderRank;
+
         /**
-         * @brief A flag describing whether or not this message is stable and thus
-         * ready for delivery.
+         * @brief The value of the sender's vector clock indexed
+         * at its own rank, or more simply the "time" at which
+         * this message was sent.
          */
-        bool isStable = false;
+        LCRClock_t clock;
+
         /**
-         * @brief The value of the sender's vector clock indexed at its own rank.
-         */
-        lcr_clock_t clock;
-        /**
-         * @brief The actual message that was sent.
+         * @brief The actual message that was sent from the session
+         * layer.
          */
         fbae_SessionLayer::SessionMsg sessionMessage;
+
+
+        /**
+         * @brief flag used to check if the message is stable.
+         * A message is stable if it can be delivered safely
+         * to the session layer (which means, if we have the
+         * guarantee that all sites have acquired this message).
+         */
+        bool isStable = false;
 
         template<class Archive> void serialize(Archive& archive) {
             // serialize things by passing them to the archive
             archive(messageId, senderRank, clock, sessionMessage, isStable);
         }
+
+        friend std::ostream &operator<<(std::ostream &os, const StructBroadcastMessage &message) {
+            return os <<(static_cast<bool>(message.messageId) ? "Message" : "Acknowledgement")
+                      << " from "
+                      << static_cast<uint32_t>(message.senderRank);
+        }
     };
 }
+

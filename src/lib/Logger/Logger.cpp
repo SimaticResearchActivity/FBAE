@@ -7,7 +7,6 @@
 #include <sstream>
 #include <iostream>
 
-
 void Logger::trace(const std::string && caller, const std::string && message) noexcept {
      auto loggerInternal = log4cxx::Logger::getLogger(caller);
      LOG4CXX_TRACE(loggerInternal, message);
