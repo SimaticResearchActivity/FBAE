@@ -139,7 +139,7 @@ namespace Logger {
      * @example:
      * const auto logger = Logger::instance("myFunction");
      */
-    LoggerInstance instance(std::string caller) noexcept;
+    [[nodiscard]] LoggerInstance instance(std::string caller) noexcept;
 
     /**
      * @brief Instance a LoggerInstance bound by a caller rank and name.
@@ -162,7 +162,7 @@ namespace Logger {
      * // If we are in an AlgoLayer
      * const auto logger = Logger::instance(getSessionLayer().getRank(), "myFunction");
      */
-    [[maybe_unused]] LoggerInstance instanceOnSite(rank_t rank, const std::string &caller) noexcept;
+    [[nodiscard]] [[maybe_unused]] LoggerInstance instanceOnSite(rank_t rank, const std::string &caller) noexcept;
 
     /**
      * @brief Log a trace from the function or part of code that

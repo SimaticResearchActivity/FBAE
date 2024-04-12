@@ -73,12 +73,12 @@ namespace fbae_test_serializationOverhead {
                 0,
                 std::chrono::system_clock::now(),
                 "");
-        // We store this session message in a fbae_SequencerAlgoLayer::StructBroadcastMessage so that it is serialized
+        // We store this session message in a fbae_SequencerAlgoLayer::MessagePacket so that it is serialized
         auto s {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{fbae_SequencerAlgoLayer::MsgId::Broadcast,
                                                                                                                                                         '1',
                                                                                                                                                         sessionPerf})};
 
-        // We compare minSizeClientMessageToBroadcast with the serialization (without header of fbae_SequencerAlgoLayer::StructBroadcastMessage)
+        // We compare minSizeClientMessageToBroadcast with the serialization (without header of fbae_SequencerAlgoLayer::MessagePacket)
         EXPECT_EQ(minSizeClientMessageToBroadcast,
                   s.size() - sizeof(fbae_SequencerAlgoLayer::MsgId) - sizeof(rank_t));
     }

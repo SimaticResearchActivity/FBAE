@@ -5,7 +5,6 @@
 
 #include <utility>
 #include <sstream>
-#include <iostream>
 
 void Logger::trace(const std::string && caller, const std::string && message) noexcept {
      auto loggerInternal = log4cxx::Logger::getLogger(caller);
@@ -37,15 +36,15 @@ void Logger::fatal(const std::string && caller, const std::string && message) no
      LOG4CXX_FATAL(loggerInternal, message);
 }
 
-void Logger::setupLogger(void) {
+void Logger::setupLogger() {
     log4cxx::BasicConfigurator::configure();
 }
 
-[[maybe_unused]] LoggerInstance Logger::instance(std::string caller) noexcept {
+[[nodiscard]] [[maybe_unused]] LoggerInstance Logger::instance(std::string caller) noexcept {
     return LoggerInstance(std::move(caller));
 }
 
-[[maybe_unused]] LoggerInstance Logger::instanceOnSite(rank_t rank, const std::string &caller) noexcept {
+[[nodiscard]] [[maybe_unused]] LoggerInstance Logger::instanceOnSite(rank_t rank, const std::string &caller) noexcept {
     std::stringstream stream;
     stream << "Rank " << std::to_string(static_cast<uint32_t>(rank)) <<  ": " << caller;
     return LoggerInstance(stream.str());

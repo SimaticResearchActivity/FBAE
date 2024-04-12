@@ -5,7 +5,7 @@
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
 
-//#include "Logger/Logger.h"
+#include "Logger/Logger.h"
 
 using namespace fbae_LCRAlgoLayer;
 
@@ -30,7 +30,7 @@ void LCR::tryDeliver() noexcept {
     }
 }
 
-inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket message) noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
@@ -49,7 +49,7 @@ inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBro
     return std::move(message);
 }
 
-inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(MessagePacket message) noexcept {
     const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
@@ -69,16 +69,10 @@ inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(St
     return std::move(message);
 }
 
-void LCR::callbackReceive(std::string &&algoMsgAsString) noexcept {
-//    auto logger = Logger::instanceOnSite(getSessionLayer()->getRank(), "LCR::callbackReceive");
-//
-//    std::stringstream buffer;
-//    buffer << "Received a message: " << algoMsgAsString;
-//    logger.info(buffer.str());
+void LCR::callbackReceive(std::string &&serializedMessagePacket) noexcept {
+    auto message = deserializeStruct<MessagePacket>(std::move(serializedMessagePacket));
 
-    auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
-
-    std::optional<StructBroadcastMessage> messageToForward = {};
+    std::optional<MessagePacket> messageToForward = {};
     switch (message.messageId) {
         case MessageId::Message:
             messageToForward = handleMessageReceive(std::move(message));
@@ -87,13 +81,16 @@ void LCR::callbackReceive(std::string &&algoMsgAsString) noexcept {
             messageToForward = handleAcknowledgmentReceive(std::move(message));
             break;
         default: {
-            std::cerr << "ERROR\tLCRAlgoLayer: Unexpected messageId (" << static_cast<int>(message.messageId) << ")\n";
+            auto logger = Logger::instanceOnSite(getSessionLayer()->getRank(), "LCR::callbackReceive");
+            std::stringstream buffer;
+            buffer << "Unexpected messageId #" << static_cast<uint32_t>(message.messageId);
+            logger.fatal(buffer.str());
             exit(EXIT_FAILURE);
         }
     }
 
     if (messageToForward.has_value()) {
-        const auto serialized = serializeStruct<StructBroadcastMessage>(messageToForward.value());
+        const auto serialized = serializeStruct<MessagePacket>(messageToForward.value());
         getCommLayer()->multicastMsg(serialized);
     }
 }
@@ -125,7 +122,7 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
     const rank_t currentRank = getSessionLayer()->getRank();
     vectorClock[currentRank] += 1;
 
-    const StructBroadcastMessage message = {
+    const MessagePacket message = {
             .messageId = MessageId::Message,
             .senderRank = currentRank,
             .clock = vectorClock[currentRank],
@@ -135,6 +132,6 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
 
     pending.push_back(message);
 
-    const auto serialized = serializeStruct<StructBroadcastMessage>(message);
+    const auto serialized = serializeStruct<MessagePacket>(message);
     getCommLayer()->multicastMsg(serialized);
 }

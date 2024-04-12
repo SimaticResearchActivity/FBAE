@@ -52,7 +52,7 @@ namespace fbae_test_LCR {
         // Check that this message was sent to process 0
         ASSERT_EQ(0, commLayerRaw->getSent()[0].first);
         // Check contents of this message
-        auto broadcastMsg{deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto broadcastMsg{deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
         ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
         ASSERT_EQ(myRank, broadcastMsg.senderRank);
         ASSERT_EQ(1, broadcastMsg.clock);
@@ -85,9 +85,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Message,
                 .senderRank = 2,
                 .clock = 1,
@@ -101,7 +101,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Message, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -125,9 +125,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
             .messageId = MessageId::Message,
             .senderRank = 0,
             .clock = 1,
@@ -141,7 +141,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(0, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -165,9 +165,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 2,
                 .clock = 1,
@@ -181,7 +181,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -205,9 +205,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 1,
                 .clock = 1,
@@ -246,7 +246,7 @@ namespace fbae_test_LCR {
 //        // Check that this message was sent to sequencer
 //        ASSERT_EQ(sequencerRank, commLayerRaw->getSent()[0].first);
 //        // Check contents of this message
-//        auto broadcastRequestMsg{deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+//        auto broadcastRequestMsg{deserializeStruct<fbae_SequencerAlgoLayer::MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 //        ASSERT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest, broadcastRequestMsg.msgId);
 //        ASSERT_EQ(myRank-1, broadcastRequestMsg.senderPos); // myRank-1 because senderPos is 1 less than senderRank
 //        ASSERT_EQ(sessionMsg->msgId, broadcastRequestMsg.sessionMsg->msgId);
@@ -272,7 +272,7 @@ namespace fbae_test_LCR {
 //        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
 //                                                   "A");
 //        constexpr rank_t senderPos = 42;
-//        auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{
+//        auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::MessagePacket>(fbae_SequencerAlgoLayer::MessagePacket{
 //            fbae_SequencerAlgoLayer::MsgId::BroadcastRequest,
 //            senderPos,
 //            sessionMsg})};
@@ -288,7 +288,7 @@ namespace fbae_test_LCR {
 //        ASSERT_EQ(commLayerRaw->getSent()[0].second, commLayerRaw->getSent()[1].second);
 //        ASSERT_EQ(commLayerRaw->getSent()[0].second, commLayerRaw->getSent()[2].second);
 //        // Check contents of the first message
-//        auto broadcastMsg{deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+//        auto broadcastMsg{deserializeStruct<fbae_SequencerAlgoLayer::MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 //        ASSERT_EQ(fbae_SequencerAlgoLayer::MsgId::Broadcast, broadcastMsg.msgId);
 //        ASSERT_EQ(senderPos, broadcastMsg.senderPos);
 //        ASSERT_EQ(sessionMsg->msgId, broadcastMsg.sessionMsg->msgId);
@@ -314,7 +314,7 @@ namespace fbae_test_LCR {
 //        auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage,
 //                                                   "A");
 //        constexpr rank_t senderPos = 42;
-//        auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(fbae_SequencerAlgoLayer::StructBroadcastMessage{
+//        auto algoMsgAsString {serializeStruct<fbae_SequencerAlgoLayer::MessagePacket>(fbae_SequencerAlgoLayer::MessagePacket{
 //            fbae_SequencerAlgoLayer::MsgId::Broadcast,
 //            senderPos,
 //            sessionMsg})};
