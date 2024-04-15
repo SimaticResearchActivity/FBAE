@@ -5,7 +5,7 @@
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
 
-#include "Logger/Logger.h"
+#include "Logger/BasicLogger.h"
 
 using namespace fbae_LCRAlgoLayer;
 

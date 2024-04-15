@@ -1,4 +1,4 @@
-#include "Logger.h"
+#include "BasicLogger.h"
 
 #include <log4cxx/logger.h>
 #include <log4cxx/basicconfigurator.h>
@@ -36,9 +36,9 @@ void Logger::fatal(const std::string && caller, const std::string && message) no
      LOG4CXX_FATAL(loggerInternal, message);
 }
 
-void Logger::setupLogger() {
-    log4cxx::BasicConfigurator::configure();
-}
+// void Logger::setupLogger() {
+//     log4cxx::BasicConfigurator::configure();
+// }
 
 [[nodiscard]] [[maybe_unused]] LoggerInstance Logger::instance(std::string caller) noexcept {
     return LoggerInstance(std::move(caller));

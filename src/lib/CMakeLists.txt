@@ -38,7 +38,10 @@ add_library(lib_fbae
         AlgoLayer/LCR/LCR.h
 		AlgoLayer/LCR/LCRMessage.h
         AlgoLayer/LCR/LCRTypedefs.h
-		Logger/Logger.cpp
+        Logger/BasicLogger.cpp
+        Logger/BasicLogger.h
+        Logger/StreamLogger.cpp
+        Logger/StreamLogger.h
 		Logger/Logger.h
 )
 
