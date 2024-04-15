@@ -9,17 +9,17 @@ void Logger::setupLogger() {
     log4cxx::BasicConfigurator::configure();
 }
 
-StreamInstance::StreamInstance(std::string callerName, Logger::StreamType streamType) :
+Logger::StreamInstance::StreamInstance(std::string callerName, Logger::StreamType streamType) :
     callerName(std::move(callerName)), streamType(streamType) {}
 
-[[maybe_unused]] StreamInstance Logger::instanceStream(StreamType streamType, const std::string & callerName) {
+[[maybe_unused]] Logger::StreamInstance Logger::instanceStream(StreamType streamType, const std::string & callerName) {
     return StreamInstance(
             callerName,
             streamType
     );
 }
 
-void StreamInstance::terminate() {
+void Logger::StreamInstance::terminate() {
     const std::string completeMessage = messageBuffer.str();
     auto loggerInternal = log4cxx::Logger::getLogger(callerName);
     switch (streamType) {
