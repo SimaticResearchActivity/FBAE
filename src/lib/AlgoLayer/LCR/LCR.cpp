@@ -5,7 +5,7 @@
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
 
-#include "Logger/BasicLogger.h"
+#include "Logger/Logger.h"
 
 using namespace fbae_LCRAlgoLayer;
 
@@ -81,10 +81,8 @@ void LCR::callbackReceive(std::string &&serializedMessagePacket) noexcept {
             messageToForward = handleAcknowledgmentReceive(std::move(message));
             break;
         default: {
-            auto logger = Logger::instanceOnSite(getSessionLayer()->getRank(), "LCR::callbackReceive");
-            std::stringstream buffer;
-            buffer << "Unexpected messageId #" << static_cast<uint32_t>(message.messageId);
-            logger.fatal(buffer.str());
+            auto logger = Logger::instanceOnSite("LCR::callbackReceive", getSessionLayer()->getRank());
+            logger.fatal() << "Unexpected messageId #" << static_cast<uint32_t>(message.messageId) << Logger::endLog;
             exit(EXIT_FAILURE);
         }
     }

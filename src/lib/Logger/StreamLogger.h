@@ -1,8 +1,12 @@
 #pragma once
 
+#include "LoggerConfig.h"
+#ifdef LOGGER_TYPE_STREAM
+
+#include "basicTypes.h"
+
 #include <string>
 #include <sstream>
-
 
 namespace Logger {
     /**
@@ -19,7 +23,8 @@ namespace Logger {
      * the log will be sent and the internal buffer will be
      * reset.
      */
-    [[maybe_unused]] static const std::string endLog = "\0";
+     // This string should never appear under normal circumstances.
+    [[maybe_unused]] static const std::string endLog = { '\xff', '\0' };
 
     /**
      * @brief A instance of a Logging stream.
@@ -58,6 +63,23 @@ namespace Logger {
         Logger::StreamType streamType;
     };
 
+    struct StreamInstanceBuilder {
+    public:
+        StreamInstanceBuilder(std::string callerName) noexcept;
+
+        [[maybe_unused]] StreamInstance trace();
+        [[maybe_unused]] StreamInstance info();
+        [[maybe_unused]] StreamInstance warn();
+        [[maybe_unused]] StreamInstance error();
+        [[maybe_unused]] StreamInstance fatal();
+        [[maybe_unused]] StreamInstance debug();
+    private:
+        std::string callerName;
+    };
+
+
+    [[maybe_unused]] StreamInstanceBuilder instance(std::string callerName) noexcept;
+    [[maybe_unused]] StreamInstanceBuilder instanceOnSite(std::string callerName, rank_t rank) noexcept;
     /**
      * @brief The function we call to create a instance of a StreamInstance.
      *
@@ -73,3 +95,4 @@ namespace Logger {
     void setupLogger();
 }
 
+#endif // LOGGER_TYPE_STREAM

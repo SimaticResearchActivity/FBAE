@@ -43,6 +43,8 @@ add_library(lib_fbae
         Logger/StreamLogger.cpp
         Logger/StreamLogger.h
 		Logger/Logger.h
+        Logger/LoggerConfig.h
+		Logger/LoggerConfig.h
 )
 
 find_package(log4cxx)

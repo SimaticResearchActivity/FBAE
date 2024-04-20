@@ -1,4 +1,6 @@
-#include "StreamLogger.h"
+#include "Logger.h"
+
+#ifdef LOGGER_TYPE_STREAM
 
 #include <log4cxx/logger.h>
 #include <log4cxx/basicconfigurator.h>
@@ -9,36 +11,36 @@ void Logger::setupLogger() {
     log4cxx::BasicConfigurator::configure();
 }
 
-Logger::StreamInstance::StreamInstance(std::string callerName, Logger::StreamType streamType) :
+Logger::StreamInstance::StreamInstance(std::string callerName, StreamType streamType) :
     callerName(std::move(callerName)), streamType(streamType) {}
 
 [[maybe_unused]] Logger::StreamInstance Logger::instanceStream(StreamType streamType, const std::string & callerName) {
-    return StreamInstance(
+    return {
             callerName,
             streamType
-    );
+    };
 }
 
 void Logger::StreamInstance::terminate() {
     const std::string completeMessage = messageBuffer.str();
     auto loggerInternal = log4cxx::Logger::getLogger(callerName);
     switch (streamType) {
-        case Logger::StreamType::Trace:
+        case StreamType::Trace:
             LOG4CXX_TRACE(loggerInternal, completeMessage);
             break;
-        case Logger::StreamType::Info:
+        case StreamType::Info:
             LOG4CXX_INFO(loggerInternal, completeMessage);
             break;
-        case Logger::StreamType::Warn:
+        case StreamType::Warn:
             LOG4CXX_WARN(loggerInternal, completeMessage);
             break;
-        case Logger::StreamType::Error:
+        case StreamType::Error:
             LOG4CXX_ERROR(loggerInternal, completeMessage);
             break;
-        case Logger::StreamType::Fatal:
+        case StreamType::Fatal:
             LOG4CXX_FATAL(loggerInternal, completeMessage);
             break;
-        case Logger::StreamType::Debug:
+        case StreamType::Debug:
             LOG4CXX_DEBUG(loggerInternal, completeMessage);
             break;
         default:
@@ -51,3 +53,42 @@ void Logger::StreamInstance::terminate() {
 
     messageBuffer.str(std::string());
 }
+
+Logger::StreamInstanceBuilder::StreamInstanceBuilder(std::string callerName) noexcept : callerName(std::move(callerName)) {}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::trace() {
+    return { callerName, StreamType::Trace };
+}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::info() {
+    return { callerName, StreamType::Info };
+}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::warn() {
+    return { callerName, StreamType::Warn };
+}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::error() {
+    return { callerName, StreamType::Error };
+}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::fatal() {
+    return { callerName, StreamType::Fatal };
+}
+
+Logger::StreamInstance Logger::StreamInstanceBuilder::debug() {
+    return { callerName, StreamType::Debug };
+}
+
+Logger::StreamInstanceBuilder Logger::instance(std::string callerName) noexcept {
+    return { std::move(callerName) };
+}
+
+Logger::StreamInstanceBuilder Logger::instanceOnSite(std::string callerName, rank_t rank) noexcept {
+    std::stringstream buffer;
+    buffer << "Rank " << std::to_string(static_cast<uint32_t>(rank)) <<  ": " << callerName;
+    return { buffer.str() };
+}
+
+
+#endif // LOGGER_TYPE_STREAM

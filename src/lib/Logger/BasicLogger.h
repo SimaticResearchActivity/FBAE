@@ -1,5 +1,9 @@
 #pragma once
 
+#include "LoggerConfig.h"
+
+#ifndef LOGGER_TYPE_STREAM
+
 #include "../basicTypes.h"
 
 #include <string>
@@ -248,3 +252,5 @@ namespace Logger {
      */
     void fatal(const std::string && caller, const std::string && message) noexcept;
 }
+
+#endif // LOGGER_TYPE_STREAM

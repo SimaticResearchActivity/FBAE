@@ -1,4 +1,5 @@
-#include "BasicLogger.h"
+#include "Logger.h"
+#ifndef LOGGER_TYPE_STREAM
 
 #include <log4cxx/logger.h>
 #include <log4cxx/basicconfigurator.h>
@@ -88,3 +89,5 @@ LoggerInstance::LoggerInstance(std::string callerName) noexcept : callerName(std
             static_cast<const std::string &&>(callerName),
             static_cast<const std::string &&>(message));
 }
+
+#endif // LOGGER_TYPE_STREAM
