@@ -20,6 +20,8 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/Sequencer.cpp
         AlgoLayer/Sequencer/Sequencer.h
         AlgoLayer/Sequencer/SequencerMsg.h
+		AlgoLayer/Trains/Trains.cpp
+		AlgoLayer/Trains/Trains.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
         CommLayer/Tcp/Tcp.cpp
