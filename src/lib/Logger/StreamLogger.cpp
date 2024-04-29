@@ -15,10 +15,7 @@ Logger::StreamInstance::StreamInstance(std::string callerName, StreamType stream
     callerName(std::move(callerName)), streamType(streamType) {}
 
 [[maybe_unused]] Logger::StreamInstance Logger::instanceStream(StreamType streamType, const std::string & callerName) {
-    return {
-            callerName,
-            streamType
-    };
+    return StreamInstance(callerName, streamType);
 }
 
 void Logger::StreamInstance::terminate() {
@@ -57,37 +54,37 @@ void Logger::StreamInstance::terminate() {
 Logger::StreamInstanceBuilder::StreamInstanceBuilder(std::string callerName) noexcept : callerName(std::move(callerName)) {}
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::trace() {
-    return { callerName, StreamType::Trace };
+    return StreamInstance(callerName, StreamType::Trace);
 }
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::info() {
-    return { callerName, StreamType::Info };
+    return StreamInstance(callerName, StreamType::Info);
 }
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::warn() {
-    return { callerName, StreamType::Warn };
+    return StreamInstance(callerName, StreamType::Warn);
 }
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::error() {
-    return { callerName, StreamType::Error };
+    return StreamInstance(callerName, StreamType::Error);
 }
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::fatal() {
-    return { callerName, StreamType::Fatal };
+    return StreamInstance(callerName, StreamType::Fatal);
 }
 
 Logger::StreamInstance Logger::StreamInstanceBuilder::debug() {
-    return { callerName, StreamType::Debug };
+    return StreamInstance(callerName, StreamType::Debug);
 }
 
 Logger::StreamInstanceBuilder Logger::instance(std::string callerName) noexcept {
-    return { std::move(callerName) };
+    return StreamInstanceBuilder(std::move(callerName));
 }
 
-Logger::StreamInstanceBuilder Logger::instanceOnSite(std::string callerName, rank_t rank) noexcept {
+Logger::StreamInstanceBuilder Logger::instanceOnSite(const std::string &callerName, rank_t rank) noexcept {
     std::stringstream buffer;
     buffer << "Rank " << std::to_string(static_cast<uint32_t>(rank)) <<  ": " << callerName;
-    return { buffer.str() };
+    return StreamInstanceBuilder(buffer.str());
 }
 
 

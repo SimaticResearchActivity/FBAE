@@ -1,4 +1,3 @@
-#include <iostream>
 #include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "LCR.h"

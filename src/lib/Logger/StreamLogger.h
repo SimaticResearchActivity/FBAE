@@ -23,8 +23,8 @@ namespace Logger {
      * the log will be sent and the internal buffer will be
      * reset.
      */
-     // This string should never appear under normal circumstances.
-    [[maybe_unused]] static const std::string endLog = { '\xff', '\0' };
+     // This string should never appear under normal circumstances?
+    [[maybe_unused]] static const std::string endLog = { '\xFF', '\0' };
 
     /**
      * @brief A instance of a Logging stream.
@@ -35,7 +35,7 @@ namespace Logger {
      */
     struct StreamInstance {
     public:
-        StreamInstance(std::string  callerName, Logger::StreamType streamType);
+        explicit StreamInstance(std::string callerName, Logger::StreamType streamType);
 
         /**
          * @brief Push content onto the stream instance.
@@ -65,7 +65,7 @@ namespace Logger {
 
     struct StreamInstanceBuilder {
     public:
-        StreamInstanceBuilder(std::string callerName) noexcept;
+        explicit StreamInstanceBuilder(std::string callerName) noexcept;
 
         [[maybe_unused]] StreamInstance trace();
         [[maybe_unused]] StreamInstance info();
@@ -77,9 +77,8 @@ namespace Logger {
         std::string callerName;
     };
 
-
     [[maybe_unused]] StreamInstanceBuilder instance(std::string callerName) noexcept;
-    [[maybe_unused]] StreamInstanceBuilder instanceOnSite(std::string callerName, rank_t rank) noexcept;
+    [[maybe_unused]] StreamInstanceBuilder instanceOnSite(const std::string &callerName, rank_t rank) noexcept;
     /**
      * @brief The function we call to create a instance of a StreamInstance.
      *
@@ -87,7 +86,7 @@ namespace Logger {
      * @param callerName [in] The name of the function or piece of code who wishes to log information.
      * @return A instance of a StreamInstance corresponding to the parameters provided to the function.
      */
-    StreamInstance instanceStream(StreamType streamType, const std::string & callerName);
+    StreamInstance instanceStream(StreamType streamType, const std::string &callerName);
 
     /**
      * @brief This function must be called before creating and using any StreamInstance.
