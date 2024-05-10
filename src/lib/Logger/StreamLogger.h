@@ -8,6 +8,33 @@
 #include <string>
 #include <sstream>
 
+
+/*
+ * How to use the stream logger:
+ *
+ * // create a logger by passing the name of the function
+ * // we are currently in.
+ * auto logger = Logger::instance("myFunction");
+ *
+ * // Or we can create a logger by passing in the name of the
+ * // function we are currently in and the rank of the site we
+ * // are currently in if we are in a SessionLayer, AlgoLayer
+ * // or a CommLayer.
+ * auto logger = Logger::instanceOnSite("myFunction", myRank);
+ *
+ * // We can log information like this:
+ * logger.info() << "This is information." << Logger::endLog;
+ *
+ * Or using any of the following functions: trace(), info(), warn()
+ * error(), fatal() or debug().
+ *
+ * The message will only be flushed once we pass Logger::endLog
+ * to the logger. We shouldn't push anything after this item.
+ *
+ * Strings, numbers, and anything that can be displayed onto the screen
+ * can be passed in these functions.
+ */
+
 namespace Logger {
     /**
      * @brief The type of log stream we want
@@ -90,7 +117,6 @@ namespace Logger {
          * auto logger = Logger::instance("myFunction");
          *
          * logger.info() \<\< "My message" \<\< Logger::endLog;
-         *
          * @return the instance of the info stream.
          */
         [[maybe_unused]] StreamInstance info();
@@ -192,6 +218,10 @@ namespace Logger {
     [[maybe_unused]] StreamInstanceBuilder instanceOnSite(const std::string &callerName, rank_t rank) noexcept;
     /**
      * @brief The function we call to create a instance of a StreamInstance.
+     *
+     *
+     * This shouldn't be used unless we are sure we will only be logging a single thing in
+     * this function. If not, we would prefer to use instance or instanceOnSite instead.
      *
      * @param streamType [in] The type of the stream we wish to construct. See Logger::StreamType for more information.
      * @param callerName [in] The name of the function or piece of code who wishes to log information.
