@@ -16,5 +16,33 @@ public:
 private:
     // Mettre tout ce dont on a besoin : fonctions + paramètres de notre classe
 
+
+    // Comment on modélise le train, enfin où on met notre train ?
+    /**
+     * @brief List containing the messages (the train).
+     */
+    std::vector<fbae_TrainsAlgoLayer::MessagePacket> train;
+
+    /**
+     * @brief Internal function used to send the train to the successor.
+     */
+    void deliverTrain() noexcept;
+
+    /**@brief Internal function used to get all the messages from
+     * the train.
+     */
+     void getMessages() noexcept;
+
+    /**
+     * @brief Internal function used to delete the message of the
+     * successor from the train.
+     */
+    void deleteMessage() noexcept;
+
+    /**
+     * @brief Internal function used to add a message to the train.
+     */
+     void addMessage() noexcept;
+
 };
 
