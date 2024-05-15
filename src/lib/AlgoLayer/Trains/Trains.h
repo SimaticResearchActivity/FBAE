@@ -2,11 +2,17 @@
 
 #include "../../SessionLayer/SessionLayerMsg.h"
 #include "../AlgoLayer.h"
+#include "../../adaptCereal.h"
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/vector.hpp"
 
 struct Wagon {
     int sender;
     int rotation;
     std::vector<fbae_SessionLayer::SessionMsg> msgs;
+    template<class Archive> void serialize(Archive& archive) {
+        archive(sender,rotation,msgs);
+    }
 };
 
 struct Train {
