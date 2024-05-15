@@ -2,7 +2,6 @@
 #include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "Trains.h"
-#include "TrainsMessage.h"
 #include "../../msgTemplates.h"
 
 #include "Logger/Logger.h"
