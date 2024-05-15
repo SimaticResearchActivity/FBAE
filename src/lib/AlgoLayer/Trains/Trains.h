@@ -1,6 +1,25 @@
 #pragma once
 
+#include "../../SessionLayer/SessionLayerMsg.h"
 #include "../AlgoLayer.h"
+
+struct Wagon {
+    int sender;
+    int rotation;
+    std::vector<fbae_SessionLayer::SessionMsg> msgs;
+};
+
+struct Train {
+    int id;
+    int clock;
+    int rotation;
+    std::vector<Wagon> wagons;
+    bool initialize = true;
+
+    template<class Archive> void serialize(Archive& archive) {
+        archive(id,clock,rotation,wagons);
+    }
+};
 
 class Trains: public AlgoLayer {
 public:
@@ -16,33 +35,17 @@ public:
 private:
     // Mettre tout ce dont on a besoin : fonctions + paramètres de notre classe
 
+    void UTODeliver(std::vector<fbae_SessionLayer::SessionMsg> messages, std::vector<rank_t> ranks);
 
-    // Comment on modélise le train, enfin où on met notre train ?
-    /**
-     * @brief List containing the messages (the train).
-     */
-    std::vector<fbae_TrainsAlgoLayer::MessagePacket> train;
-
-    /**
-     * @brief Internal function used to send the train to the successor.
-     */
-    void deliverTrain() noexcept;
-
-    /**@brief Internal function used to get all the messages from
-     * the train.
-     */
-     void getMessages() noexcept;
-
-    /**
-     * @brief Internal function used to delete the message of the
-     * successor from the train.
-     */
-    void deleteMessage() noexcept;
-
-    /**
-     * @brief Internal function used to add a message to the train.
-     */
-     void addMessage() noexcept;
+    static const int DELAY;
+    static const int NB_ROT = 3;
+    static const int NB_TR = 2;
+    int idLast;
+    bool initDone;
+    Train lastTrains[NB_TR];
+    int nbJoin;
+    std::vector<Wagon> receivedWagons[NB_TR][NB_ROT];
+    Wagon wagonToSend;
 
 };
 
