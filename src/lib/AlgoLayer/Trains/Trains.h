@@ -6,24 +6,42 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/vector.hpp"
 
+struct TrainMessage {
+    fbae_SessionLayer::SessionMsg message;
+    uint32_t clock;
+
+    template<class Archive> void serialize(Archive& archive) {
+        archive(message, clock);
+    }
+};
+
 struct Wagon {
     int sender;
-    int rotation;
-    std::vector<fbae_SessionLayer::SessionMsg> msgs;
+    std::vector<TrainMessage> msgs;
+    uint32_t clock;
+
     template<class Archive> void serialize(Archive& archive) {
-        archive(sender,rotation,msgs);
+        archive(sender, msgs, clock);
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, Wagon wagon) {
+        os << "Wagon: " << wagon.sender << ", clock: " << wagon.clock << "\n";
+
+        for (const auto &msg : wagon.msgs) {
+            os << static_cast<int>(msg.message->msgId) << "\t";
+        }
+        os << "\n";
+        return os;
     }
 };
 
 struct Train {
     int id;
     int clock;
-    int rotation;
     std::vector<Wagon> wagons;
-    bool initialize = true;
 
     template<class Archive> void serialize(Archive& archive) {
-        archive(id,clock,rotation,wagons);
+        archive(id, clock, wagons);
     }
 };
 
@@ -39,19 +57,7 @@ public:
     std::string toString() noexcept override;
 
 private:
-    // Mettre tout ce dont on a besoin : fonctions + paramètres de notre classe
-
-    void UTODeliver(std::vector<fbae_SessionLayer::SessionMsg> messages, std::vector<rank_t> ranks);
-
-    static const int DELAY;
-    static const int NB_ROT = 3;
-    static const int NB_TR = 2;
-    int idLast;
-    bool initDone;
-    Train lastTrains[NB_TR];
-    int nbJoin;
-    std::vector<Wagon> receivedWagons[NB_TR][NB_ROT];
+    std::vector<Wagon> pendingWagons;
     Wagon wagonToSend;
-
+    uint32_t clock;
 };
-

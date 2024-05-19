@@ -45,6 +45,7 @@ add_executable(tests
         AlgoLayer/testSequencer.cpp
         AlgoLayer/testBBOBB.cpp
         AlgoLayer/testLCR.cpp
+        ../src/lib/AlgoLayer/Trains/testTrains.cpp
 )
 
 target_link_libraries(tests gtest_main lib_fbae)
