@@ -1,5 +1,9 @@
 #include "CommLayer.h"
 
+CommLayer::CommLayer(std::string const& logger_name) :
+    m_logger{ fbae::getLogger(logger_name) }
+{}
+
 AlgoLayer *CommLayer::getAlgoLayer() const {
     return algoLayer;
 }
@@ -10,4 +14,8 @@ std::latch &CommLayer::getInitDoneCalled() {
 
 void CommLayer::setAlgoLayer(AlgoLayer *aAlgoLayer) {
     algoLayer = aAlgoLayer;
+}
+
+fbae::LoggerPtr CommLayer::getCommLogger() {
+    return m_logger;
 }

@@ -4,13 +4,15 @@
 #include "../Arguments.h"
 #include "../CommLayer/CommLayer.h"
 #include "SessionLayerMsg.h"
+#include "../Logger/LoggerConfig.h"
+
 class AlgoLayer;
 
 class SessionLayer {
 public:
     virtual ~SessionLayer() = default;
 
-    explicit SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer);
+    explicit SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::string const& logger_name);
 
     /**
      * @brief Constructor used only for tests.
@@ -54,8 +56,19 @@ public:
      */
     [[nodiscard]] virtual rank_t getRank() const;
 
+protected:
+    /**
+    * @brief Return the logger of the parent
+    */
+    fbae::LoggerPtr getSessionLogger();
+
 private:
     const Arguments &arguments;
     std::unique_ptr<AlgoLayer> algoLayer;
     const rank_t rank;
+
+    /**
+    * @brief Logger used to print informations
+    */
+    fbae::LoggerPtr m_logger;
 };

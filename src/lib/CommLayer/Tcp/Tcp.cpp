@@ -13,6 +13,10 @@
 using boost::asio::ip::tcp;
 using namespace std;
 
+Tcp::Tcp() :
+    CommLayer{"fbae.comm.TCP"}
+{}
+
 /**
  * @brief Number of TCP connect tentatives before considering we cannot connect to desired host
  */
@@ -43,9 +47,9 @@ void Tcp::acceptConn(int port, size_t nbAwaitedConnections) {
     catch (boost::system::system_error& e)
     {
         if (e.code() == boost::asio::error::address_in_use)
-            cerr << "ERROR: Server cannot bind to port " << port << " (probably because there is an other server running and already bound to this port)\n";
+            LOG4CXX_ERROR_FMT(getCommLogger(), "Server cannot bind to port {} (probably because there is an other server running and already bound to this port)", port);
         else
-            cerr << "ERROR: Unexpected Boost Exception in task acceptConn: " << e.what() << "\n";
+            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in task acceptConn {}: ", e.what());
         exit(1);
     }
     for (auto &t : tasksHandleConn) {
@@ -64,7 +68,7 @@ std::unique_ptr<boost::asio::ip::tcp::socket>  Tcp::connectToHost(const HostTupl
         }
         this_thread::sleep_for(durationBetweenTcpConnectTentatives);
     }
-    cerr << "ERROR: Could not connect to server on machine \"" << get<HOSTNAME>(host) << "\", either because server is not started on this machine or it is not listening on port " << get<PORT>(host) << "\n";
+    LOG4CXX_ERROR_FMT(getCommLogger(), "Could not connect to server on machine \"{}\", either because server is not started on this machine or it is not listening on port {}", get<HOSTNAME>(host), get<PORT>(host));
     exit(1);
 }
 
@@ -83,18 +87,17 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
     {
         if (e.code() == boost::asio::error::eof)
         {
-            if (getAlgoLayer()->getSessionLayer()->getArguments().getVerbose())
-                cout << "Client disconnected\n";
+            LOG4CXX_INFO(getCommLogger(), "Client disconnected");
         }
         else if (e.code() == boost::asio::error::connection_reset)
         {
             // Can only be experienced on Windows
-            cerr << "ERROR: Client disconnected abnormally (probably because it crashed)\n";
+            LOG4CXX_ERROR(getCommLogger(), "Client disconnected abnormally (probably because it crashed)");
             exit(1);
         }
         else
         {
-            cerr << "ERROR: Unexpected Boost Exception in task handleIncomingConn: " << e.what() << "\n";
+            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in task handleIncomingConn: {}", e.what());
             exit(1);
         }
     }
@@ -202,7 +205,7 @@ unique_ptr<tcp::socket>  Tcp::tryConnectToHost(const HostTuple &host)
             return nullptr;
         else
         {
-            cerr << "ERROR: Unexpected Boost Exception in method tryConnectToHost: " << e.what() << "\n";
+            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in method tryConnectToHost: {}", e.what());
             exit(1);
         }
     }

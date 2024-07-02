@@ -10,7 +10,10 @@
 // WARNING: Under Windows, you must have a different an elapsed time of at least 100 milliseconds,
 //          otherwaise values returned by get_cpu_time() are not precise enough.
 unsigned long long get_cpu_time(){
-    FILETIME start, exit, kernel, user;
+    FILETIME start;
+    FILETIME exit;
+    FILETIME kernel;
+    FILETIME user;
     if (GetProcessTimes(GetCurrentProcess(),&start,&exit,&kernel,&user) != 0){
         //  Returns total kernel and user time.
         return

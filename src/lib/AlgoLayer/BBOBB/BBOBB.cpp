@@ -15,7 +15,7 @@ using namespace std;
 using namespace fbae_BBOBBAlgoLayer;
 
 BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
-        : AlgoLayer{std::move(commLayer)}
+        : AlgoLayer{std::move(commLayer), "fbae.algo.BBOBB"}
 {
 }
 
@@ -26,7 +26,7 @@ void BBOBB::callbackReceive(std::string && algoMsgAsString) {
             processStepMsg(std::move(algoMsgAsString));
         }
     } else {
-        cerr << "ERROR\tBBOBBAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
+        LOG4CXX_ERROR_FMT(getAlgoLogger(), "Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
         exit(EXIT_FAILURE);
    }
 }
@@ -52,12 +52,9 @@ void BBOBB::beginWave() {
     }
 
     // Send it
-    if (getSessionLayer()->getArguments().getVerbose())
-        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-             << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : 0) to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step])
-             << "\n";
-    getCommLayer()->send(peersPos[lastSentStepMsg.step],
-                                            serializeStruct(lastSentStepMsg));
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "Broadcaster #{:d} : Send Step Message (wave : {:d} / step : 0) to Broadcaster #", getPosInBroadcastersGroup().value(), lastSentStepMsg.wave, peersPos[lastSentStepMsg.step]);
+    
+    getCommLayer()->send(peersPos[lastSentStepMsg.step], serializeStruct(lastSentStepMsg));
 }
 
 void BBOBB::catchUpIfLateInMessageSending() {
@@ -69,12 +66,9 @@ void BBOBB::catchUpIfLateInMessageSending() {
         lastSentStepMsg.batchesBroadcast.insert(lastSentStepMsg.batchesBroadcast.end(),
                                                 currentWaveReceivedStepMsg[step].batchesBroadcast.begin(), currentWaveReceivedStepMsg[step].batchesBroadcast.end() );
         // Send it
-        if (getSessionLayer()->getArguments().getVerbose())
-            cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-                 << " : Send Step Message (wave : " << static_cast<uint32_t>(lastSentStepMsg.wave) << " / step : " << static_cast<uint32_t>(lastSentStepMsg.step)
-                 << ") to Broadcaster #" << static_cast<uint32_t>(peersPos[lastSentStepMsg.step]) << "\n";
-        getCommLayer()->send(peersPos[lastSentStepMsg.step],
-                                                serializeStruct(lastSentStepMsg));
+        LOG4CXX_INFO_FMT(getAlgoLogger(), "Broadcaster #{:d} : Send Step Message (wave : {:d} / step : 0) to Broadcaster #", getPosInBroadcastersGroup().value(), lastSentStepMsg.wave, lastSentStepMsg.step, peersPos[lastSentStepMsg.step]);
+
+        getCommLayer()->send(peersPos[lastSentStepMsg.step], serializeStruct(lastSentStepMsg));
         step = lastSentStepMsg.step;
     }
     //After all the messages of one wave have been received (and thus sent), deliver the messages of this wave.
@@ -135,18 +129,13 @@ void BBOBB::execute() {
     }
     getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
-    if (getSessionLayer()->getArguments().getVerbose())
-        cout << "Broadcaster #" << static_cast<uint32_t>(pos)
-             << " Finished waiting for messages ==> Giving back control to SessionLayer\n";
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "Broadcaster #{:d} Finished waiting for messages ==> Giving back control to SessionLayer", pos);
 }
 
 void BBOBB::processStepMsg(string &&algoMsgAsString) {
     auto stepMsg{deserializeStruct<StepMsg>(std::move(algoMsgAsString))};
 
-    if (getSessionLayer()->getArguments().getVerbose())
-        cout << "\tBBOOBBAlgoLayer / Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-             << " : Receive a Step Message (wave : " << static_cast<uint32_t>(stepMsg.wave) << " / step : "
-             << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #" << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "Broadcaster #{:d} : Receive a Step Message (wave : {:d} / step : {:d}) from Broadcaster #{:d}", getPosInBroadcastersGroup().value(), stepMsg.wave, stepMsg.step, stepMsg.senderPos);
 
     if (stepMsg.wave == lastSentStepMsg.wave) {
         currentWaveReceivedStepMsg[stepMsg.step] = stepMsg;
@@ -158,10 +147,7 @@ void BBOBB::processStepMsg(string &&algoMsgAsString) {
         // Message is early and needs to be treated in the next wave
         nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
     } else {
-        cerr << "\tERROR\tBBOBBAlgoLayer/ Broadcaster #" << static_cast<uint32_t>(getPosInBroadcastersGroup().value())
-             << " (currentWave = " << static_cast<uint32_t>(lastSentStepMsg.wave) << ") : Unexpected wave = " << static_cast<uint32_t>(stepMsg.wave)
-             << " (with step = " << static_cast<uint32_t>(stepMsg.step) << ") from Broadcaster #"
-             << static_cast<uint32_t>(stepMsg.senderPos) << "\n";
+        LOG4CXX_ERROR_FMT(getAlgoLogger(), "Broadcaster #{:d} (currentWave = {:d}) : Unexpected wave = {:d} (with step = {:d}) from Broadcaster #{:d}" , getPosInBroadcastersGroup().value(), lastSentStepMsg.wave, stepMsg.wave, stepMsg.step, stepMsg.senderPos);
         exit(EXIT_FAILURE);
     }
 }

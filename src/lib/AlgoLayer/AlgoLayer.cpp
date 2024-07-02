@@ -5,8 +5,9 @@
 using namespace std;
 using namespace fbae_AlgoLayer;
 
-AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> commLayer)
-    : commLayer{std::move(commLayer)}
+AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> commLayer, std::string const& logger_name) : 
+    commLayer{std::move(commLayer)},
+    m_logger{fbae::getLogger(logger_name)}
 {
     this->commLayer->setAlgoLayer(this);
 }
@@ -92,3 +93,6 @@ void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {
     batchCtrlThreadsRegisteredForFullBatchCtrl.push_back(std::this_thread::get_id());
 }
 
+fbae::LoggerPtr AlgoLayer::getAlgoLogger() {
+    return m_logger;
+}

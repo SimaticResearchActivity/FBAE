@@ -45,8 +45,7 @@ add_library(lib_fbae
 		Logger/Logger.h
         Logger/LoggerConfig.h
 		Logger/LoggerConfig.h
-)
+ "Logger/LoggerConfig.cpp")
 
-find_package(log4cxx)
 target_include_directories(lib_fbae PUBLIC ./ PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
 target_link_libraries(lib_fbae PRIVATE log4cxx)

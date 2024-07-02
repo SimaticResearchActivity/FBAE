@@ -4,12 +4,13 @@
 #include "Sequencer.h"
 #include "SequencerMsg.h"
 #include "../../msgTemplates.h"
+#include <format>
 
 using namespace std;
 using namespace fbae_SequencerAlgoLayer;
 
-Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer)
-        : AlgoLayer{std::move(commLayer)}
+Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer) : 
+    AlgoLayer{ std::move(commLayer), "fbae.algo.Sequencer"}
 {
 }
 
@@ -42,7 +43,7 @@ void Sequencer::callbackReceive(std::string && algoMsgAsString)
         }
         default:
         {
-            cerr << "ERROR\tSequencerAlgoLayer: Unexpected msgId (" << static_cast<int>(msgId) << ")\n";
+            LOG4CXX_ERROR_FMT(getAlgoLogger(), "SequencerAlgoLayer: Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
             exit(EXIT_FAILURE);
         }
     }
@@ -65,16 +66,15 @@ void Sequencer::execute()
             // in a natural manner ==> We have to call it.
             getCommLayer()->terminate();
         }
-        if (getSessionLayer()->getArguments().getVerbose())
-            cout << "\tSequencerAlgoLayer / Sequencer : Finished waiting for messages ==> Giving back control to SessionLayer\n";
+        LOG4CXX_INFO(getAlgoLogger(), "Sequencer : Finished waiting for messages ==> Giving back control to SessionLayer");
     }
     else
     {
         // Process is a broadcaster
         vector<rank_t> dest{sequencerRank};
         getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
-        if (getSessionLayer()->getArguments().getVerbose())
-            cout << "\tSequencerAlgoLayer / Broadcaster with rank #" << static_cast<uint32_t>(getSessionLayer()->getRank()) << " : Finished waiting for messages ==> Giving back control to SessionLayer\n";
+
+        LOG4CXX_INFO_FMT(getAlgoLogger(), "Broadcaster with rank #{:d} : Finished waiting for messages ==> Giving back control to SessionLayer", getSessionLayer()->getRank());
     }
 }
 

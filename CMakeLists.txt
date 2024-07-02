@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(VERSION 3.15)
 
 include(FetchContent)
+
+if(WIN32)
+  # Variable required to use libraries installed thanks to vcpkg.
+  # This variable must be set before "project" cmake instruction.  
+  set(CMAKE_TOOLCHAIN_FILE C:/software/vcpkg/scripts/buildsystems/vcpkg.cmake)
+endif()
+
 project(FBAE VERSION 1.0.0 LANGUAGES CXX)
 
 if(WIN32)
@@ -13,6 +20,23 @@ endif()
 set (BUILD_SHARED_LIBS FALSE)
 
 set(CMAKE_CXX_STANDARD 20)
+
+#
+# We include Log4cxx
+#
+find_package(log4cxx CONFIG REQUIRED)
+
+#
+# We generate software using Log4cxx
+#
+
+# We want to use Log4cxx format trace capabilities ==> We must set
+# "LOG4CXX_FORMAT_NS" compilation flag to "std" value
+if (MSVC)
+    add_compile_options(/DLOG4CXX_FORMAT_NS=std)
+else()
+    add_compile_options(-DLOG4CXX_FORMAT_NS=std)
+endif()
 
 #
 # We include the subset of Boost we will be using.
@@ -61,8 +85,8 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 #    message(FATAL_ERROR "Build step for log4cxx failed: ${result}")
 #endif()
 #
-## Give access to log4cxx include directory
-#include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
+# Give access to log4cxx include directory
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
 
 add_subdirectory(src/lib)
 add_subdirectory(src/main)
