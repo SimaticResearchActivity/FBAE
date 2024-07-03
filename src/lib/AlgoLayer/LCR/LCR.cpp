@@ -6,7 +6,7 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept:  
+LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept:
     AlgoLayer{std::move(commLayer), "fbae.algo.LCR"}
 {
     // We cannot initialize the vector clock at this point in time, as we need
@@ -14,7 +14,7 @@ LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept:
 }
 
 inline void LCR::initializeVectorClock() noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     vectorClock.reserve(sitesCount);
     for (LCRClock_t i = 0; i < sitesCount; i++)
@@ -28,8 +28,8 @@ void LCR::tryDeliver() noexcept {
     }
 }
 
-inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket message) noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+inline std::optional<MessagePacket> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
@@ -47,8 +47,8 @@ inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket mess
     return std::move(message);
 }
 
-inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(MessagePacket message) noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
@@ -96,7 +96,7 @@ void LCR::execute() noexcept {
     initializeVectorClock();
 
     const rank_t rank = getSessionLayer()->getRank();
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     std::vector<rank_t> broadcasters(sitesCount);
     std::iota(broadcasters.begin(), broadcasters.end(), 0);

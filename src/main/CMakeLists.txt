@@ -5,7 +5,7 @@ add_executable(fbae
 target_link_libraries(fbae lib_fbae log4cxx)
 
 if (WIN32)
-  target_link_libraries(fbae ws2_32.lib winmm.lib)
+  target_link_libraries(fbae wsock32.lib ws2_32.lib)
 else() # We are under UNIX
   target_link_options(fbae PUBLIC -pthread)
 endif()

@@ -1,6 +1,4 @@
-
-
-add_library(lib_fbae
+add_library(lib_fbae 
         Arguments.cpp
 	Arguments.h
 	OptParserExtended.cpp
@@ -22,8 +20,8 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
-        CommLayer/Tcp/Tcp.cpp
-        CommLayer/Tcp/Tcp.h
+		CommLayer/Tcp/Tcp.cpp
+		CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
@@ -42,4 +40,4 @@ add_library(lib_fbae
         Logger/LoggerConfig.cpp)
 
 target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PRIVATE log4cxx)
+target_link_libraries(lib_fbae PRIVATE log4cxx boost_subset_for_asio)
