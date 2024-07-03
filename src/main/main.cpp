@@ -10,34 +10,28 @@
 using namespace std;
 using namespace mlib;
 
-unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser)
+unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser, fbae::LoggerPtr logger)
 {
     char commId = parser.getoptStringRequired('c')[0];
     switch(commId)
     {
         case 't': return make_unique<Tcp>();
         default:
-            std::cerr << "ERROR: Argument for Broadcast Algorithm is \"" << commId << "\""
-                      << " which is not the identifier of a defined communication layer"
-                      << std::endl
-                      << parser.synopsis () << std::endl;
+            LOG4CXX_FATAL_FMT(logger, "Argument for Broadcast Algorithm is \"{}\" which is not the identifier of a defined communication layer. \n{}", commId, parser.synopsis());
             exit(EXIT_FAILURE);
     }
 }
 
-unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser)
+unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser, fbae::LoggerPtr logger)
 {
     char algoId = parser.getoptStringRequired('a')[0];
     switch(algoId)
     {
-        case 'S': return make_unique<Sequencer>(concreteCommLayer(parser));
-        case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser));
-        case 'L' : return make_unique<LCR>(concreteCommLayer(parser));
+        case 'S': return make_unique<Sequencer>(concreteCommLayer(parser, logger));
+        case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser, logger));
+        case 'L' : return make_unique<LCR>(concreteCommLayer(parser, logger));
         default:
-            std::cerr << "ERROR: Argument for Broadcast Algorithm is " << algoId
-                      << " which is not the identifier of a defined algorithm"
-                      << std::endl
-                      << parser.synopsis () << std::endl;
+            LOG4CXX_FATAL_FMT(logger, "Argument for Broadcast Algorithm is \"{}\" which is not the identifier of a defined algorithm. \n{}", algoId, parser.synopsis());
             exit(EXIT_FAILURE);
     }
 }
@@ -59,7 +53,6 @@ int main(int argc, char* argv[])
             "r:rank rank_number \t Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)",
             "s:size size_in_bytes \t Size of messages sent by a client (must be in interval [31,65515])",
             "S:site siteFile_name \t Name (including path) of the sites file to be used",
-            "v|verbose \t [optional] Verbose display required",
             "w:warmupCooldown number \t [optional] Number in [0,99] representing percentage of PerfMessage sessionLayer messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)"
     };
 
@@ -67,29 +60,23 @@ int main(int argc, char* argv[])
     if (int ret ; (ret = parser.parse (argc, argv, &nonopt)) != 0)
     {
         if (ret == 1)
-            cerr << "Unknown option: " << argv[nonopt] << " Valid options are : " << endl
-                 << parser.synopsis () << endl;
+            LOG4CXX_FATAL_FMT(logger, "Unknown option: {} Valid options are : \n{}", argv[nonopt], parser.synopsis());
         else if (ret == 2)
-            cerr << "Option " << argv[nonopt] << " requires an argument." << endl;
+            LOG4CXX_FATAL_FMT(logger, "Option {} requires an argument.", argv[nonopt]);
         else if (ret == 3)
-            cerr << "Invalid options combination: " << argv[nonopt] << endl;
+            LOG4CXX_FATAL_FMT(logger, "Invalid options combination: {}", argv[nonopt]);
         exit (1);
     }
     if (nonopt < argc)
     {
-        cerr << "ERROR: There is a non-option argument '" << argv[nonopt]
-             << "' which cannot be understood. Please run again program but without this argument" << endl
-             << parser.synopsis () << endl;
+        LOG4CXX_FATAL_FMT(logger, "'There is a non-option argument {}' which cannot be understood. Please run again program but without this argument. \n{}", argv[nonopt], parser.synopsis());
         exit(1);
     }
 
     if ((argc == 1) || parser.hasopt ('h'))
     {
         //No arguments on command line or help required. Show help and exit.
-        cerr << "Usage:" << endl;
-        cerr << parser.synopsis () << endl;
-        cerr << "Where:" << endl
-             << parser.description () << endl;
+        LOG4CXX_FATAL_FMT(logger, "Usage: \n{}\n Where: \n{}", parser.synopsis(), parser.description());
         exit (0);
     }
 
@@ -98,9 +85,9 @@ int main(int argc, char* argv[])
     //
     // Launch the application
     //
-    if (arguments.getRank() != specialRankToRequestExecutionInTasks)
+    if (rank_t argRank = arguments.getRank(); argRank != specialRankToRequestExecutionInTasks)
     {
-        PerfMeasures session{arguments, arguments.getRank(), concreteAlgoLayer(parser)};
+        PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
         session.execute();
     }
     else
@@ -110,7 +97,7 @@ int main(int argc, char* argv[])
         vector<future<void>> sessionTasks;
         for (uint8_t rank = 0 ; rank < static_cast<uint8_t>(nbSites) ; ++rank)
         {
-            sessions.emplace_back(make_unique<PerfMeasures>(arguments, rank, concreteAlgoLayer(parser)));
+            sessions.emplace_back(make_unique<PerfMeasures>(arguments, rank, concreteAlgoLayer(parser, logger)));
             sessionTasks.emplace_back(std::async(std::launch::async, &PerfMeasures::execute, sessions.back().get()));
         }
         for (auto& t: sessionTasks)

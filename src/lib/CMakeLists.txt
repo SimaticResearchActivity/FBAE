@@ -38,14 +38,8 @@ add_library(lib_fbae
         AlgoLayer/LCR/LCR.h
 		AlgoLayer/LCR/LCRMessage.h
         AlgoLayer/LCR/LCRTypedefs.h
-        Logger/BasicLogger.cpp
-        Logger/BasicLogger.h
-        Logger/StreamLogger.cpp
-        Logger/StreamLogger.h
-		Logger/Logger.h
         Logger/LoggerConfig.h
-		Logger/LoggerConfig.h
- "Logger/LoggerConfig.cpp")
+        Logger/LoggerConfig.cpp)
 
-target_include_directories(lib_fbae PUBLIC ./ PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(lib_fbae PUBLIC ./)
 target_link_libraries(lib_fbae PRIVATE log4cxx)

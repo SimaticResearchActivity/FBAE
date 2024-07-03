@@ -47,9 +47,9 @@ void Tcp::acceptConn(int port, size_t nbAwaitedConnections) {
     catch (boost::system::system_error& e)
     {
         if (e.code() == boost::asio::error::address_in_use)
-            LOG4CXX_ERROR_FMT(getCommLogger(), "Server cannot bind to port {} (probably because there is an other server running and already bound to this port)", port);
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Server cannot bind to port {} (probably because there is an other server running and already bound to this port)", port);
         else
-            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in task acceptConn {}: ", e.what());
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Unexpected Boost Exception in task acceptConn {}: ", e.what());
         exit(1);
     }
     for (auto &t : tasksHandleConn) {
@@ -68,7 +68,7 @@ std::unique_ptr<boost::asio::ip::tcp::socket>  Tcp::connectToHost(const HostTupl
         }
         this_thread::sleep_for(durationBetweenTcpConnectTentatives);
     }
-    LOG4CXX_ERROR_FMT(getCommLogger(), "Could not connect to server on machine \"{}\", either because server is not started on this machine or it is not listening on port {}", get<HOSTNAME>(host), get<PORT>(host));
+    LOG4CXX_FATAL_FMT(getCommLogger(), "Could not connect to server on machine \"{}\", either because server is not started on this machine or it is not listening on port {}", get<HOSTNAME>(host), get<PORT>(host));
     exit(1);
 }
 
@@ -92,12 +92,12 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
         else if (e.code() == boost::asio::error::connection_reset)
         {
             // Can only be experienced on Windows
-            LOG4CXX_ERROR(getCommLogger(), "Client disconnected abnormally (probably because it crashed)");
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Client disconnected abnormally (probably because it crashed)");
             exit(1);
         }
         else
         {
-            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in task handleIncomingConn: {}", e.what());
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Unexpected Boost Exception in task handleIncomingConn: {}", e.what());
             exit(1);
         }
     }
@@ -205,7 +205,7 @@ unique_ptr<tcp::socket>  Tcp::tryConnectToHost(const HostTuple &host)
             return nullptr;
         else
         {
-            LOG4CXX_ERROR_FMT(getCommLogger(), "Unexpected Boost Exception in method tryConnectToHost: {}", e.what());
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Unexpected Boost Exception in method tryConnectToHost: {}", e.what());
             exit(1);
         }
     }

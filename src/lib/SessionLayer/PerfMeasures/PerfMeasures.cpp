@@ -4,6 +4,7 @@
 
 #include <mutex>
 #include <future>
+#include <syncstream>
 #include "PerfMeasures.h"
 
 using namespace std;
@@ -49,7 +50,7 @@ void PerfMeasures::callbackDeliver(rank_t senderPos, fbae_SessionLayer::SessionM
             break;
         default:
         {
-            LOG4CXX_ERROR_FMT(getSessionLogger(), "Unexpected sessionMsgTyp ({:d})", static_cast<uint32_t>(msg->msgId));
+            LOG4CXX_FATAL_FMT(getSessionLogger(), "Unexpected sessionMsgTyp ({:d})", static_cast<uint32_t>(msg->msgId));
             exit(EXIT_FAILURE);
         }
     }
@@ -76,8 +77,12 @@ void PerfMeasures::execute()
         static std::mutex mtx;
         scoped_lock lock{mtx};
 
-        LOG4CXX_INFO_FMT(getSessionLogger(), "{},{}", Arguments::csvHeadline(), Measures::csvHeadline());
-        LOG4CXX_INFO_FMT(getSessionLogger(), "{},{}", getArguments().asCsv(getAlgoLayer()->toString(), getAlgoLayer()->getCommLayer()->toString(), to_string(getRank())), measures.asCsv());
+        std::osyncstream synced_out(std::cout);
+        synced_out << Arguments::csvHeadline() << ","
+                   << Measures::csvHeadline() << endl;
+
+        synced_out << getArguments().asCsv(getAlgoLayer()->toString(), getAlgoLayer()->getCommLayer()->toString(), to_string(getRank())) << ","
+                   << measures.asCsv() << endl;
     }
     if (getArguments().getFrequency()  && getAlgoLayer()->isBroadcastingMessages())
         taskSendPeriodicPerfMessage.get();

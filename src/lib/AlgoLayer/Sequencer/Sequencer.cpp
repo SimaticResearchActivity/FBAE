@@ -43,7 +43,7 @@ void Sequencer::callbackReceive(std::string && algoMsgAsString)
         }
         default:
         {
-            LOG4CXX_ERROR_FMT(getAlgoLogger(), "SequencerAlgoLayer: Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
+            LOG4CXX_FATAL_FMT(getAlgoLogger(), "SequencerAlgoLayer: Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
             exit(EXIT_FAILURE);
         }
     }

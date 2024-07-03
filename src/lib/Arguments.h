@@ -5,6 +5,7 @@
 #include <vector>
 #include "basicTypes.h"
 #include "OptParserExtended.h"
+#include "./Logger/LoggerConfig.h"
 
 // The following value has been found experimentally when filler field of SessionPerf has size 0
 // (See TEST(SerializationOverhead, CheckMinSizeClientMessageToBroadcast) in @testSerializationOverhead.cpp
@@ -30,8 +31,8 @@ private:
     int sizeMsg{0};
     std::string siteFile{};
     std::vector<HostTuple> sites;
-    bool verbose{false};
     int warmupCooldown{0};
+    fbae::LoggerPtr logger{ fbae::getLogger("fbae.arg") };
 
 public:
     explicit Arguments(mlib::OptParserExtended const& parser);
@@ -45,7 +46,6 @@ public:
     [[nodiscard]] rank_t getRank() const;
     [[nodiscard]] std::vector<HostTuple> getSites() const;
     [[nodiscard]] int getSizeMsg() const;
-    [[nodiscard]] bool getVerbose() const;
     [[nodiscard]] int getWarmupCooldown() const;
 };
 

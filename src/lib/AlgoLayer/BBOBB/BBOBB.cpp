@@ -26,7 +26,7 @@ void BBOBB::callbackReceive(std::string && algoMsgAsString) {
             processStepMsg(std::move(algoMsgAsString));
         }
     } else {
-        LOG4CXX_ERROR_FMT(getAlgoLogger(), "Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
+        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
         exit(EXIT_FAILURE);
    }
 }
@@ -147,7 +147,7 @@ void BBOBB::processStepMsg(string &&algoMsgAsString) {
         // Message is early and needs to be treated in the next wave
         nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
     } else {
-        LOG4CXX_ERROR_FMT(getAlgoLogger(), "Broadcaster #{:d} (currentWave = {:d}) : Unexpected wave = {:d} (with step = {:d}) from Broadcaster #{:d}" , getPosInBroadcastersGroup().value(), lastSentStepMsg.wave, stepMsg.wave, stepMsg.step, stepMsg.senderPos);
+        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Broadcaster #{:d} (currentWave = {:d}) : Unexpected wave = {:d} (with step = {:d}) from Broadcaster #{:d}" , getPosInBroadcastersGroup().value(), lastSentStepMsg.wave, stepMsg.wave, stepMsg.step, stepMsg.senderPos);
         exit(EXIT_FAILURE);
     }
 }

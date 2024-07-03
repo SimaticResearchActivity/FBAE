@@ -6,7 +6,7 @@ include(FetchContent)
 if(WIN32)
   # Variable required to use libraries installed thanks to vcpkg.
   # This variable must be set before "project" cmake instruction.  
-  set(CMAKE_TOOLCHAIN_FILE C:/software/vcpkg/scripts/buildsystems/vcpkg.cmake)
+  set(CMAKE_TOOLCHAIN_FILE C:/Softwares/vcpkg/scripts/buildsystems/vcpkg.cmake)
 endif()
 
 project(FBAE VERSION 1.0.0 LANGUAGES CXX)
@@ -85,8 +85,11 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 #    message(FATAL_ERROR "Build step for log4cxx failed: ${result}")
 #endif()
 #
+
 # Give access to log4cxx include directory
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
+#include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
+include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
+
 
 add_subdirectory(src/lib)
 add_subdirectory(src/main)

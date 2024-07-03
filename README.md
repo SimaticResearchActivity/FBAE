@@ -43,7 +43,7 @@ Note: `res` directory of *FBAE* repository contains samples of site files.
 Once your site file is ready, you can run `fbae` executable according to the following usage:
 
 ```txt
-fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <number_of_messages> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -v|--verbose -w|--warmupCooldown <number>
+fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <number_of_messages> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -w|--warmupCooldown <number>
 Where:
   -a|--algo <algo_identifier>                Broadcast Algorithm
                                                 B = BBOBB
