@@ -54,4 +54,8 @@ else() # We are under UNIX
     target_link_options(tests PRIVATE -pthread)
 endif()
 
+add_custom_target(copy-res-tests ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_SOURCE_DIR}/res ${CMAKE_CURRENT_BINARY_DIR}/res)
+add_dependencies(tests copy-res-tests)
+
 add_test(NAME All_fbae_tests COMMAND tests)

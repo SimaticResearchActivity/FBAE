@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
-cmake_policy(VERSION 3.15)
+# cmake version must be at least 3.26 to provide copy_directory_if_different
+cmake_minimum_required(VERSION 3.26)
+cmake_policy(VERSION 3.26)
 
 include(FetchContent)
 
@@ -38,6 +39,9 @@ else()
     add_compile_options(-DLOG4CXX_FORMAT_NS=std)
 endif()
 
+# Give access to log4cxx include directory
+include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
+
 #
 # We include the subset of Boost we will be using.
 #
@@ -71,25 +75,9 @@ endif()
 # Give access to cereal include directory
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 
-#configure_file(CMakeLists_log4cxx.txt.in log4cxx-download/CMakeLists.txt)
-#execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-#        RESULT_VARIABLE result
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
-#if (result)
-#    message(FATAL_ERROR "CMake step for log4cxx failed: ${result}")
-#endif()
-#execute_process(COMMAND ${CMAKE_COMMAND} --build .
-#        RESULT_VARIABLE result
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
-#if (result)
-#    message(FATAL_ERROR "Build step for log4cxx failed: ${result}")
-#endif()
 #
-
-# Give access to log4cxx include directory
-#include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
-include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
-
+# Generate FBAE targets
+#
 
 add_subdirectory(src/lib)
 add_subdirectory(src/main)
