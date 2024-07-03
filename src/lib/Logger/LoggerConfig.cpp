@@ -13,9 +13,9 @@ namespace fbae {
                 if (PropertyConfigurator::configure("res/fbae_logger.properties") == spi::ConfigurationStatus::NotConfigured)
                     BasicConfigurator::configure(); // Send events to the console
             }
-            /*~log4cxx_initializer() {
+            ~log4cxx_initializer() {
                 LogManager::shutdown();
-            }*/
+            }
             log4cxx_initializer(log4cxx_initializer const&) = delete;
             log4cxx_initializer& operator=(log4cxx_initializer const&) = delete;
         };
