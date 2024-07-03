@@ -92,7 +92,7 @@ void Tcp::handleIncomingConn(std::unique_ptr<boost::asio::ip::tcp::socket> ptrSo
         else if (e.code() == boost::asio::error::connection_reset)
         {
             // Can only be experienced on Windows
-            LOG4CXX_FATAL_FMT(getCommLogger(), "Client disconnected abnormally (probably because it crashed)");
+            LOG4CXX_FATAL(getCommLogger(), "Client disconnected abnormally (probably because it crashed)");
             exit(1);
         }
         else
