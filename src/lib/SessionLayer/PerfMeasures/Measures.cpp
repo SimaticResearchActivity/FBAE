@@ -45,7 +45,7 @@ std::string Measures::asCsv()
                        / (static_cast<double>(duration.count()) / nbMillisecondsPerSecond)
                        / nbBitsPerMega;
 
-    return std::format("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+    return std::format("{},{},{},{},{},{},{},{},{},{},{},{},{}",
         pings.size(),
         (std::reduce(pings.begin(), pings.end()) / pings.size()).count(),
         pings[0].count(),
