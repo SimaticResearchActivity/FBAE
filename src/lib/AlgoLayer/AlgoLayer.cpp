@@ -93,6 +93,6 @@ void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {
     batchCtrlThreadsRegisteredForFullBatchCtrl.push_back(std::this_thread::get_id());
 }
 
-fbae::LoggerPtr AlgoLayer::getAlgoLogger() {
+fbae::LoggerPtr AlgoLayer::getAlgoLogger() const {
     return m_logger;
 }

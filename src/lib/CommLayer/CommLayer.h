@@ -71,7 +71,7 @@ protected:
     /**
     * @brief Return the logger of the parent
     */
-    fbae::LoggerPtr getCommLogger();
+    [[nodiscard]] fbae::LoggerPtr getCommLogger() const;
 
 private:
     AlgoLayer* algoLayer{nullptr};

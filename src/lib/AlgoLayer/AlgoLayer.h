@@ -120,7 +120,7 @@ protected :
     /**
     * @brief Return the logger of the parent
     */
-    fbae::LoggerPtr getAlgoLogger();
+    [[nodiscard]] fbae::LoggerPtr getAlgoLogger() const;
 
 private:
     std::optional<fbae_AlgoLayer::BatchSessionMsg> batchGetBatchMsgsWithLock(rank_t senderPos);

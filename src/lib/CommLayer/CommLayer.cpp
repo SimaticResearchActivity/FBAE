@@ -16,6 +16,6 @@ void CommLayer::setAlgoLayer(AlgoLayer *aAlgoLayer) {
     algoLayer = aAlgoLayer;
 }
 
-fbae::LoggerPtr CommLayer::getCommLogger() {
+fbae::LoggerPtr CommLayer::getCommLogger() const {
     return m_logger;
 }

@@ -28,6 +28,6 @@ rank_t SessionLayer::getRank() const {
     return rank;
 }
 
-fbae::LoggerPtr SessionLayer::getSessionLogger() {
+fbae::LoggerPtr SessionLayer::getSessionLogger() const {
     return m_logger;
 }

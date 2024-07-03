@@ -60,7 +60,7 @@ protected:
     /**
     * @brief Return the logger of the parent
     */
-    fbae::LoggerPtr getSessionLogger();
+    [[nodiscard]] fbae::LoggerPtr getSessionLogger() const;
 
 private:
     const Arguments &arguments;
