@@ -6,8 +6,6 @@
 #include "Trains.h"
 #include "../../msgTemplates.h"
 
-#include "Logger/Logger.h"
-
 using namespace std;
 
 Trains::Trains(unique_ptr<CommLayer> commLayer): 
@@ -41,12 +39,12 @@ void Trains::processTrain(string&& serializedMessagePacket) {
     while (WagonIt != waitingWagons.end()) {
         // If it is the same train that brought the wagon, and the wagon is not in the train anymore, 
         // Then it means it has done a complete loop; so every machine should have received it
-        if (train.id == WagonIt->trainId && find(train.wagons.begin(), train.wagons.end(), *WagonIt) != train.wagons.end()) {
+        if (train.id == WagonIt->trainId) {
 
             // Est-ce qu'il y a besoin de vérifier les messages du train ???
 
-            for (auto const& message : WagonIt->messages) {
-                batchNoDeadlockCallbackDeliver(WagonIt->sender, message);
+            for (auto const& message : WagonIt->batch.batchSessionMsg) {
+                batchNoDeadlockCallbackDeliver(WagonIt->batch.senderPos, message);
             }
             // Remove the waiting wagon from the list
             WagonIt = waitingWagons.erase(WagonIt);
@@ -61,7 +59,7 @@ void Trains::processTrain(string&& serializedMessagePacket) {
         waitingWagons.push_back(*trainIt);
 
         // Remove wagons which were sent by next
-        if (trainIt->sender == nextRank) {
+        if (trainIt->batch.senderPos == nextRank) {
             trainIt = train.wagons.erase(trainIt);
         }
         else { ++trainIt; }
@@ -69,23 +67,26 @@ void Trains::processTrain(string&& serializedMessagePacket) {
 
     // Add your own wagon to the train
     wagonToSend.trainId = train.id;
+    for (auto const& message : batchGetBatchMsgs(rank)->batchSessionMsg) {
+        wagonToSend.batch.batchSessionMsg.push_back(message);
+    }
     train.wagons.push_back(wagonToSend);
 
     // Clear our wagon of messages (they have already been sent to the train)
-    wagonToSend.messages = {};
+    wagonToSend.batch.batchSessionMsg = {};
 
-    clock++;
+    trainsClock[train.id]++;
     train.clock++;
 
-    //const auto serialized = serializeStruct(train);
-    //getCommLayer()->multicastMsg(serialized);
+    const auto serialized = serializeStruct(train);
+    getCommLayer()->multicastMsg(serialized);
 }
 
 void Trains::execute() {
     const rank_t rank = getSessionLayer()->getRank();
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
-    wagonToSend = { rank, 0, {} };
+    wagonToSend = { 0, { rank, {} } };
 
     std::vector<rank_t> broadcasters(sitesCount);
     std::iota(broadcasters.begin(), broadcasters.end(), 0);
@@ -94,8 +95,8 @@ void Trains::execute() {
     getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount)}, 1, this);
 }
 
-void Trains::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) noexcept {
-    wagonToSend.msgs.push_back({ sessionMsg, clock });
+void Trains::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    wagonToSend.batch.batchSessionMsg.push_back(sessionMsg);
 
     rank_t rank = getSessionLayer()->getRank();
 
@@ -110,10 +111,10 @@ void Trains::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg
     }
 }
 
-std::string Trains::toString() noexcept {
+std::string Trains::toString() {
     return "Trains";
 }
 
-void Trains::terminate() noexcept {
+void Trains::terminate() {
     getCommLayer()->terminate();
 }

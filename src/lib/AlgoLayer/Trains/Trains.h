@@ -7,18 +7,17 @@
 #include "cereal/types/vector.hpp"
 
 struct Wagon {
-    rank_t sender;
     int trainId;
-    std::vector<fbae_SessionLayer::SessionMsg> messages;
+    fbae_AlgoLayer::BatchSessionMsg batch;
 
     template<class Archive> void serialize(Archive& archive) {
-        archive(sender, messages, clock);
+        archive(trainId, batch);
     }
 
     friend std::ostream &operator<<(std::ostream &os, Wagon const& wagon) {
-        os << "Wagon: " << wagon.sender << "\n";
+        os << "Wagon: " << wagon.batch.senderPos << "\n";
 
-        for (const auto &message : wagon.messages) {
+        for (const auto &message : wagon.batch.batchSessionMsg) {
             os << static_cast<int>(message->msgId) << "\t";
         }
         os << "\n";
@@ -42,15 +41,13 @@ public:
 
     void callbackReceive(std::string && serializedMessagePacket) override;
     void execute() override;
-    void terminate() noexcept override;
-    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) noexcept override;
+    void terminate() override;
+    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) override;
     void processTrain(std::string&& serializedMessagePacket);
 
-    std::string toString() noexcept override;
+    std::string toString() override;
 
 private:
-    uint32_t clock = 0;
-
     Wagon wagonToSend{};
     std::vector<Wagon> waitingWagons{};
     std::vector<int> trainsClock{};
