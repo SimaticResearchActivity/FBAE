@@ -24,8 +24,8 @@ add_library(lib_fbae
 		AlgoLayer/Trains/Trains.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
-        CommLayer/Tcp/Tcp.cpp
-        CommLayer/Tcp/Tcp.h
+		CommLayer/Tcp/Tcp.cpp
+		CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
@@ -40,15 +40,8 @@ add_library(lib_fbae
         AlgoLayer/LCR/LCR.h
 		AlgoLayer/LCR/LCRMessage.h
         AlgoLayer/LCR/LCRTypedefs.h
-        Logger/BasicLogger.cpp
-        Logger/BasicLogger.h
-        Logger/StreamLogger.cpp
-        Logger/StreamLogger.h
-		Logger/Logger.h
         Logger/LoggerConfig.h
-		Logger/LoggerConfig.h
-)
+        Logger/LoggerConfig.cpp)
 
-find_package(log4cxx)
-target_include_directories(lib_fbae PUBLIC ./ PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
-target_link_libraries(lib_fbae PRIVATE log4cxx)
+target_include_directories(lib_fbae PUBLIC ./)
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio PRIVATE log4cxx )

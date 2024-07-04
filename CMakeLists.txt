@@ -1,7 +1,15 @@
-cmake_minimum_required(VERSION 3.15)
-cmake_policy(VERSION 3.15)
+# cmake version must be at least 3.26 to provide copy_directory_if_different
+cmake_minimum_required(VERSION 3.26)
+cmake_policy(VERSION 3.26)
 
 include(FetchContent)
+
+if(WIN32)
+  # Variable required to use libraries installed thanks to vcpkg.
+  # This variable must be set before "project" cmake instruction.
+  set(CMAKE_TOOLCHAIN_FILE C:/Softwares/vcpkg/scripts/buildsystems/vcpkg.cmake)
+endif()
+
 project(FBAE VERSION 1.0.0 LANGUAGES CXX)
 
 if(WIN32)
@@ -15,9 +23,34 @@ set (BUILD_SHARED_LIBS FALSE)
 set(CMAKE_CXX_STANDARD 20)
 
 #
-# We include the subset of Boost we will be using.
+# We include Log4cxx
 #
-include_directories(boost_1_82_0_subset)
+find_package(log4cxx CONFIG REQUIRED)
+
+#
+# We generate software using Log4cxx
+#
+
+# We want to use Log4cxx format trace capabilities ==> We must set
+# "LOG4CXX_FORMAT_NS" compilation flag to "std" value
+if (MSVC)
+    add_compile_options(/DLOG4CXX_FORMAT_NS=std)
+else()
+    add_compile_options(-DLOG4CXX_FORMAT_NS=std)
+endif()
+
+# Give access to log4cxx include directory
+include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
+
+#
+# Include the subset of Boost which FBAE uses
+#
+cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
+FetchContent_Declare(
+    boost_subset_for_asio
+    URL https://github.com/SimaticResearchActivity/boost_subset_for_asio/archive/refs/tags/v1.84.0.tar.gz
+)
+FetchContent_MakeAvailable(boost_subset_for_asio)
 if(WIN32)
     # Compilation of some of the boost sources requires the following definition
     # (which is appropriate for Windows 7 target)
@@ -25,8 +58,7 @@ if(WIN32)
 endif()
 
 #
-# Cereal : A simple FetchContent does not work ==> We generate its library
-# in the same manner as google-test
+# Include Cereal (A simple FetchContent does not work ==> We have to download it manually)
 #
 
 # Download and unpack Cereal at configure time
@@ -43,29 +75,28 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build .
 if(result)
     message(FATAL_ERROR "Build step for cereal failed: ${result}")
 endif()
-
 # Give access to cereal include directory
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
 
-#configure_file(CMakeLists_log4cxx.txt.in log4cxx-download/CMakeLists.txt)
-#execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-#        RESULT_VARIABLE result
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
-#if (result)
-#    message(FATAL_ERROR "CMake step for log4cxx failed: ${result}")
-#endif()
-#execute_process(COMMAND ${CMAKE_COMMAND} --build .
-#        RESULT_VARIABLE result
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/log4cxx-download )
-#if (result)
-#    message(FATAL_ERROR "Build step for log4cxx failed: ${result}")
-#endif()
 #
-## Give access to log4cxx include directory
-#include_directories("${CMAKE_CURRENT_BINARY_DIR}/log4cxx-src/src/main/include")
+# Include GoogleTest
+#
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+#
+# Generate FBAE targets
+#
 
 add_subdirectory(src/lib)
 add_subdirectory(src/main)
+
 # enable_testing() must be in the source directory root (see cmake documentation at https://cmake.org/cmake/help/latest/ command/enable_testing.html)
 # Otherwise, Visual Studio test explorer does not see unit tests (See ticket https://developercommunity.visualstudio.com/t/No-tests-discovered-for-googletest-and-C/1148799#T-ND1150621)
 enable_testing()

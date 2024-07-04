@@ -4,11 +4,14 @@
 #include <memory>
 #include "../Arguments.h"
 #include "../basicTypes.h"
+#include "../Logger/LoggerConfig.h"
+
 
 class AlgoLayer;
 
 class CommLayer {
 public:
+    explicit CommLayer(std::string const& logger_name);
     virtual ~CommLayer() = default;
 
     /**
@@ -24,8 +27,9 @@ public:
         [[nodiscard]] std::latch &getInitDoneCalled();
 
     /**
-     * @brief Multicast @algoMsgAsString to all peer which the process connected to (Note: The peers which
-     * connected to the process are not concerned by this multicast)
+     * @brief Multicast @algoMsgAsString to all peers if Arguments::isUsingNetworkLevelMulticast is true
+     * (network-level multicast) and only the peers which we connected to if Arguments::isUsingNetworkLevelMulticast is
+     * false (software-level multicast).
      * @param algoMsgAsString Message to be totalOrderBroadcast
      */
     virtual void multicastMsg(const std::string &algoMsgAsString) = 0;
@@ -64,6 +68,12 @@ public:
      */
     [[nodiscard]] virtual std::string toString() = 0;
 
+protected:
+    /**
+    * @brief Return the logger of the parent
+    */
+    [[nodiscard]] fbae::LoggerPtr getCommLogger() const;
+
 private:
     AlgoLayer* algoLayer{nullptr};
 
@@ -72,4 +82,9 @@ private:
      * AlgoLayer::callbackReceive() is done by threads handling communication incoming messages.
      */
     std::latch initDoneCalled{1};
+
+    /**
+    * @brief Logger used to print information
+    */
+    fbae::LoggerPtr m_logger;
 };

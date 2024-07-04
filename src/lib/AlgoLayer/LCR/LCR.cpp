@@ -1,22 +1,20 @@
-#include <iostream>
 #include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "LCR.h"
 #include "LCRMessage.h"
 #include "../../msgTemplates.h"
 
-#include "Logger/Logger.h"
-
 using namespace fbae_LCRAlgoLayer;
 
-LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept
-        :  vectorClock(), pending(), AlgoLayer(std::move(commLayer)) {
+LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept:
+    AlgoLayer{std::move(commLayer), "fbae.algo.LCR"}
+{
     // We cannot initialize the vector clock at this point in time, as we need
     // access to the session layer which is not yet initialized.
 }
 
 inline void LCR::initializeVectorClock() noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     vectorClock.reserve(sitesCount);
     for (LCRClock_t i = 0; i < sitesCount; i++)
@@ -31,7 +29,7 @@ void LCR::tryDeliver() noexcept {
 }
 
 inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket message) noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
@@ -50,7 +48,7 @@ inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket mess
 }
 
 inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(MessagePacket message) noexcept {
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
     const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
@@ -81,8 +79,7 @@ void LCR::callbackReceive(std::string &&serializedMessagePacket) noexcept {
             messageToForward = handleAcknowledgmentReceive(std::move(message));
             break;
         default: {
-            auto logger = Logger::instanceOnSite("LCR::callbackReceive", getSessionLayer()->getRank());
-            logger.fatal() << "Unexpected messageId #" << static_cast<uint32_t>(message.messageId) << Logger::endLog;
+            LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected messageId #{}", static_cast<uint32_t>(message.messageId));
             exit(EXIT_FAILURE);
         }
     }
@@ -99,7 +96,7 @@ void LCR::execute() noexcept {
     initializeVectorClock();
 
     const rank_t rank = getSessionLayer()->getRank();
-    const uint32_t sitesCount = getSessionLayer()->getArguments().getSites().size();
+    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     std::vector<rank_t> broadcasters(sitesCount);
     std::iota(broadcasters.begin(), broadcasters.end(), 0);

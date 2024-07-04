@@ -45,21 +45,20 @@ std::string Measures::asCsv()
                        / (static_cast<double>(duration.count()) / nbMillisecondsPerSecond)
                        / nbBitsPerMega;
 
-    return std::string {
-            std::to_string(pings.size()) + ","
-            + std::to_string((std::reduce(pings.begin(), pings.end()) / pings.size()).count()) + ","
-            + std::to_string(pings[0].count()) + ","
-            + std::to_string(pings[pings.size() / 4].count()) + ","
-            + std::to_string(pings[pings.size() / 2].count()) + ","
-            + std::to_string(pings[pings.size() * 3 / 4].count()) + ","
-            + std::to_string(pings[pings.size() * 99 / 100].count()) + ","
-            + std::to_string(pings[pings.size() * 999 / 1'000].count()) + ","
-            + std::to_string(pings[pings.size() * 9999 / 10'000].count()) + ","
-            + std::to_string(pings[pings.size() - 1].count()) + ","
-            + std::to_string(static_cast<double>(duration.count()) / nbMillisecondsPerSecond) + ","
-            + std::to_string(static_cast<double>(stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond) + ","
-            + std::to_string(mbps)
-    };
+    return std::format("{},{},{},{},{},{},{},{},{},{},{},{},{}",
+        pings.size(),
+        (std::reduce(pings.begin(), pings.end()) / pings.size()).count(),
+        pings[0].count(),
+        pings[pings.size() / 4].count(),
+        pings[pings.size() / 2].count(),
+        pings[pings.size() * 3 / 4].count(),
+        pings[pings.size() * 99 / 100].count(),
+        pings[pings.size() * 999 / 1'000].count(),
+        pings[pings.size() * 9999 / 10'000].count(),
+        pings[pings.size() - 1].count(),
+        static_cast<double>(duration.count()) / nbMillisecondsPerSecond,
+        static_cast<double>(stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond,
+        mbps);
 }
 
 void Measures::setStartTime() {

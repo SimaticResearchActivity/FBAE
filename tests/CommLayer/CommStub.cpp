@@ -6,6 +6,10 @@
 #include "CommStub.h"
 #include "AlgoLayer/AlgoLayer.h"
 
+CommStub::CommStub() :
+    CommLayer{ "fbae.comm.phony" }
+{}
+
 std::vector<rank_t> &CommStub::getConnectedDest() {
     return connectedDest;
 }

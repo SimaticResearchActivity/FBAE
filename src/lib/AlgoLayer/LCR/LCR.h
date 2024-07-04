@@ -4,7 +4,6 @@
 #include "LCRMessage.h"
 #include "LCRTypedefs.h"
 
-
 // Algorithm described in the following paper: https://infoscience.epfl.ch/record/149218/files/paper.pdf?version=2
 // Page 9 gives pseudocode for the algorithm.
 // Differences: messages do not contain the entire vector clock of the site that sent it,

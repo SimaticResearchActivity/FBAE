@@ -1,9 +1,8 @@
 #pragma once
+#include <log4cxx/logger.h>
 
-// Guard in case people use this macro outside of this header file.
-#ifdef LOGGER_TYPE_STREAM
-    #undef LOGGER_TYPE_STREAM
-#endif // LOGGER_TYPE_STREAM
+namespace fbae {
+    using LoggerPtr = log4cxx::LoggerPtr;
 
-// Define this to get the stream logger.
-#define LOGGER_TYPE_STREAM
+    extern auto getLogger(const std::string& name = std::string()) -> LoggerPtr;
+ } // namespace fbae

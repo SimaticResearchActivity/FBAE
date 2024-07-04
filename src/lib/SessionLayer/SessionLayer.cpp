@@ -1,10 +1,11 @@
 #include "SessionLayer.h"
 #include "../AlgoLayer/AlgoLayer.h"
 
-SessionLayer::SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
+SessionLayer::SessionLayer(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer, std::string const& logger_name)
     : arguments{arguments}
     , algoLayer{std::move(algoLayer)}
     , rank{rank}
+    , m_logger{fbae::getLogger(logger_name)}
 {
     this->algoLayer->setSessionLayer(this);
 }
@@ -25,4 +26,8 @@ const Arguments &SessionLayer::getArguments() const {
 
 rank_t SessionLayer::getRank() const {
     return rank;
+}
+
+fbae::LoggerPtr SessionLayer::getSessionLogger() const {
+    return m_logger;
 }
