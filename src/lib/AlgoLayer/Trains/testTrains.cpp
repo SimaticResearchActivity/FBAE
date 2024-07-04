@@ -11,7 +11,7 @@ namespace fbae_test_LCR {
     using namespace std;
     using namespace fbae_SessionLayer;
 
-    TEST(Trains, TrainsExecute) {
+    TEST(Trains, ExecuteWith4SitesAndRank0) {
         constexpr auto nbSites = 4;
         vector<HostTuple> sites(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
@@ -26,7 +26,7 @@ namespace fbae_test_LCR {
 
         // Check established connection
         ASSERT_EQ(1, commLayerRaw->getConnectedDest().size());
-        ASSERT_EQ(1, commLayerRaw->getConnectedDest()[0]);
+        ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getConnectedDest()[0]);
 
         // Check nbAwaitedConnections
         ASSERT_EQ(1, commLayerRaw->getNbAwaitedConnections());
