@@ -12,7 +12,7 @@ using namespace mlib;
 
 unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser, fbae::LoggerPtr logger)
 {
-    char commId = parser.getoptStringRequired('c')[0];
+    char commId = parser.getoptStringRequired('c', logger)[0];
     switch(commId)
     {
         case 't': return make_unique<Tcp>();
@@ -24,7 +24,7 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const &parser, fbae::L
 
 unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser, fbae::LoggerPtr logger)
 {
-    char algoId = parser.getoptStringRequired('a')[0];
+    char algoId = parser.getoptStringRequired('a', logger)[0];
     switch(algoId)
     {
         case 'S': return make_unique<Sequencer>(concreteCommLayer(parser, logger));
