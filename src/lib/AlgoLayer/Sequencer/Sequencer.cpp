@@ -43,7 +43,7 @@ void Sequencer::callbackReceive(std::string && algoMsgAsString)
         }
         default:
         {
-            LOG4CXX_FATAL_FMT(getAlgoLogger(), "SequencerAlgoLayer: Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
+            LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected msgId ({:d})", static_cast<uint32_t>(msgId));
             exit(EXIT_FAILURE);
         }
     }
@@ -66,7 +66,7 @@ void Sequencer::execute()
             // in a natural manner ==> We have to call it.
             getCommLayer()->terminate();
         }
-        LOG4CXX_INFO(getAlgoLogger(), "Sequencer : Finished waiting for messages ==> Giving back control to SessionLayer");
+        LOG4CXX_INFO(getAlgoLogger(), "Finished waiting for messages ==> Giving back control to SessionLayer");
     }
     else
     {
