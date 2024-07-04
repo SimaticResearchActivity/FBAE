@@ -1,4 +1,3 @@
-#include <iostream>
 #include <numeric>
 #include "../../SessionLayer/SessionLayer.h"
 #include "LCR.h"
@@ -7,8 +6,9 @@
 
 using namespace fbae_LCRAlgoLayer;
 
-LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept
-        :  AlgoLayer(std::move(commLayer)) {
+LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept:
+    AlgoLayer{std::move(commLayer), "fbae.algo.LCR"}
+{
     // We cannot initialize the vector clock at this point in time, as we need
     // access to the session layer which is not yet initialized.
 }
@@ -28,7 +28,7 @@ void LCR::tryDeliver() noexcept {
     }
 }
 
-inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket message) noexcept {
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
@@ -47,13 +47,13 @@ inline std::optional<StructBroadcastMessage> LCR::handleMessageReceive(StructBro
     return std::move(message);
 }
 
-inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(MessagePacket message) noexcept {
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
+    const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
 
-    if (const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
-        nextSiteRank == message.senderRank)
+    if (nextSiteRank == message.senderRank)
         return {};
 
     for (auto &pendingMessage : pending) {
@@ -67,10 +67,10 @@ inline std::optional<StructBroadcastMessage> LCR::handleAcknowledgmentReceive(St
     return std::move(message);
 }
 
-void LCR::callbackReceive(std::string &&algoMsgAsString) noexcept {
-    auto message = deserializeStruct<StructBroadcastMessage>(std::move(algoMsgAsString));
+void LCR::callbackReceive(std::string &&serializedMessagePacket) noexcept {
+    auto message = deserializeStruct<MessagePacket>(std::move(serializedMessagePacket));
 
-    std::optional<StructBroadcastMessage> messageToForward = {};
+    std::optional<MessagePacket> messageToForward = {};
     switch (message.messageId) {
         case MessageId::Message:
             messageToForward = handleMessageReceive(std::move(message));
@@ -79,13 +79,13 @@ void LCR::callbackReceive(std::string &&algoMsgAsString) noexcept {
             messageToForward = handleAcknowledgmentReceive(std::move(message));
             break;
         default: {
-            std::cerr << "ERROR\tLCRAlgoLayer: Unexpected messageId (" << static_cast<int>(message.messageId) << ")\n";
+            LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected messageId #{}", static_cast<uint32_t>(message.messageId));
             exit(EXIT_FAILURE);
         }
     }
 
     if (messageToForward.has_value()) {
-        const auto serialized = serializeStruct<StructBroadcastMessage>(messageToForward.value());
+        const auto serialized = serializeStruct<MessagePacket>(messageToForward.value());
         getCommLayer()->multicastMsg(serialized);
     }
 }
@@ -117,7 +117,7 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
     const rank_t currentRank = getSessionLayer()->getRank();
     vectorClock[currentRank] += 1;
 
-    const StructBroadcastMessage message = {
+    const MessagePacket message = {
             .messageId = MessageId::Message,
             .senderRank = currentRank,
             .clock = vectorClock[currentRank],
@@ -127,6 +127,6 @@ void LCR::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMessag
 
     pending.push_back(message);
 
-    const auto serialized = serializeStruct<StructBroadcastMessage>(message);
+    const auto serialized = serializeStruct<MessagePacket>(message);
     getCommLayer()->multicastMsg(serialized);
 }

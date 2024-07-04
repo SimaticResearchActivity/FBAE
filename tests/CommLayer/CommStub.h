@@ -8,6 +8,7 @@
 
 class CommStub : public CommLayer {
 public:
+    explicit CommStub();
     [[nodiscard]] std::vector<rank_t> &getConnectedDest();
     [[nodiscard]] size_t getNbAwaitedConnections() const;
     [[nodiscard]] std::vector<std::pair<rank_t, std::string>> &getSent();

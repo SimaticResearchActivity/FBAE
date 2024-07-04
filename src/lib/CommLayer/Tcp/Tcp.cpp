@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <chrono>
-#include <iostream>
 #include "../../AlgoLayer/AlgoLayer.h"
 #include "../../SessionLayer/SessionLayer.h"
 #include "Tcp.h"
@@ -21,6 +20,10 @@ using tcp_acceptor = default_token::as_default_on_t<tcp::acceptor>;
 using tcp_socket = default_token::as_default_on_t<tcp::socket>;
 namespace this_coro = boost::asio::this_coro;
 using namespace std;
+
+Tcp::Tcp() :
+    CommLayer{"fbae.comm.TCP"}
+{}
 
 /**
  * @brief Maximum number of TCP connect attempts before considering we cannot connect to desired host
@@ -102,8 +105,10 @@ awaitable<void> Tcp::coroutineIncomingMessageReceiver(
             break;
         }
         if (e1) {
-            std::cerr << "Boost error '" << e1.what() << "' not handled at: "
-                      << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Boost error '{}' not handled at: {}:{}",
+                              e1.what(),
+                              path2file(std::source_location::current().file_name()),
+                              std::source_location::current().line());
             exit(1);
         }
         assert(lenRead1 == sizeof(len));
@@ -112,12 +117,14 @@ awaitable<void> Tcp::coroutineIncomingMessageReceiver(
         std::vector<char> v(len);
         auto [e2, lenRead2] = co_await socket.async_read_some(boost::asio::buffer(v));
         if (e2 == boost::asio::error::eof) {
-            std::cerr << "ERROR : Client disconnected between receiving message length and receiving message\n";
+            LOG4CXX_FATAL(getCommLogger(), "Client disconnected between receiving message length and receiving message");
             exit(1);
         }
         if (e2) {
-            std::cerr << "Boost error '" << e2.what() << "' not handled at: "
-                      << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+            LOG4CXX_FATAL_FMT(getCommLogger(), "Boost error '{}' not handled at: {}:{}",
+                              e2.what(),
+                              path2file(std::source_location::current().file_name()),
+                              std::source_location::current().line());
             exit(1);
         }
         assert(lenRead2 == len);
@@ -134,8 +141,10 @@ awaitable<void> Tcp::coroutineServer(size_t nbAwaitedConnections)
     for (int i = 0 ; i < nbAwaitedConnections ; ++i) {
         if (auto [e, socket] = co_await acceptor.async_accept(); socket.is_open()) {
             if (e) {
-                std::cerr << "Boost exception '" << e.what() << "' not handled at: "
-                          << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+                LOG4CXX_FATAL_FMT(getCommLogger(), "Boost exception '{}' not handled at: {}:{}",
+                                  e.what(),
+                                  path2file(std::source_location::current().file_name()),
+                                  std::source_location::current().line());
                 exit(1);
 
             }
@@ -162,17 +171,19 @@ awaitable<void> Tcp::coroutineClient(rank_t rankClient) {
         catch (boost::system::system_error& e)
         {
             if (e.code() == boost::asio::error::host_not_found) {
-                std::cerr << "Error: Host '" << hostname << ":" << static_cast<unsigned short>(port) << "' does not exist.\n";
+                LOG4CXX_FATAL_FMT(getCommLogger(), "Host '{}:{:d}' does not exist.", hostname, port);
                 exit(1);
             }
             if (e.code() != boost::asio::error::connection_refused) {
-                std::cerr << "Boost exception '" << e.what() << "' not handled at: "
-                          << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+                LOG4CXX_FATAL_FMT(getCommLogger(), "Boost exception '{}' not handled at: {}:{}",
+                                  e.what(),
+                                  path2file(std::source_location::current().file_name()),
+                                  std::source_location::current().line());
                 exit(1);
             }
             ++nbTcpConnectAttempts;
             if (nbTcpConnectAttempts > maxNbTcpConnectAttempts) {
-                std::cerr << "Error: Connection to '" << hostname << ":" << static_cast<unsigned short>(port) << "' refused. Maybe no FBAE instance is running on this hostname:port?\n";
+                LOG4CXX_FATAL_FMT(getCommLogger(), "Connection to '{}:{:d}'  refused. Maybe no FBAE instance is running on this hostname:port?", hostname, port);
                 exit(1);
             }
         }
@@ -250,8 +261,10 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nb
     }
     catch (boost::system::system_error& e)
     {
-        std::cerr << "Boost exception '" << e.what() << "' not handled at: "
-                  << path2file(std::source_location::current().file_name()) << ':' << std::source_location::current().line() << "\n";
+        LOG4CXX_FATAL_FMT(getCommLogger(), "Boost exception '{}' not handled at: {}:{}",
+                          e.what(),
+                          path2file(std::source_location::current().file_name()),
+                          std::source_location::current().line());
         exit(1);
     }
 }

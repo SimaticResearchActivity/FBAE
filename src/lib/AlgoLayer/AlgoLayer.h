@@ -4,16 +4,18 @@
 #include <thread>
 #include <memory>
 #include <optional>
+#include "../Logger/LoggerConfig.h"
 #include "../Arguments.h"
 #include "../CommLayer/CommLayer.h"
 #include "AlgoLayerMsg.h"
+
 class SessionLayer;
 
 class AlgoLayer {
 public:
     virtual ~AlgoLayer() = default;
 
-    explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer);
+    explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer, std::string const& logger_name);
 
     /**
      * @brief Returns @batchWaitingSessionMsg encapsulated in a @BatchSessionMsg
@@ -114,6 +116,12 @@ public:
      */
     [[nodiscard]] virtual std::string toString() = 0;
 
+protected :
+    /**
+    * @brief Return the logger of the parent
+    */
+    [[nodiscard]] fbae::LoggerPtr getAlgoLogger() const;
+
 private:
     std::optional<fbae_AlgoLayer::BatchSessionMsg> batchGetBatchMsgsWithLock(rank_t senderPos);
 
@@ -161,4 +169,9 @@ private:
      * @brief @SessionLayer which uses this @AlgoLayer
      */
     SessionLayer *sessionLayer{nullptr};
+
+    /**
+     * @brief Logger used to print informations
+     */
+    fbae::LoggerPtr m_logger;
 };

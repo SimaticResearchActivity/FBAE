@@ -1,7 +1,15 @@
-cmake_minimum_required(VERSION 3.15)
-cmake_policy(VERSION 3.15)
+# cmake version must be at least 3.26 to provide copy_directory_if_different
+cmake_minimum_required(VERSION 3.26)
+cmake_policy(VERSION 3.26)
 
 include(FetchContent)
+
+if(WIN32)
+  # Variable required to use libraries installed thanks to vcpkg.
+  # This variable must be set before "project" cmake instruction.
+  set(CMAKE_TOOLCHAIN_FILE C:/Softwares/vcpkg/scripts/buildsystems/vcpkg.cmake)
+endif()
+
 project(FBAE VERSION 1.0.0 LANGUAGES CXX)
 
 if(WIN32)
@@ -13,6 +21,26 @@ endif()
 set (BUILD_SHARED_LIBS FALSE)
 
 set(CMAKE_CXX_STANDARD 20)
+
+#
+# We include Log4cxx
+#
+find_package(log4cxx CONFIG REQUIRED)
+
+#
+# We generate software using Log4cxx
+#
+
+# We want to use Log4cxx format trace capabilities ==> We must set
+# "LOG4CXX_FORMAT_NS" compilation flag to "std" value
+if (MSVC)
+    add_compile_options(/DLOG4CXX_FORMAT_NS=std)
+else()
+    add_compile_options(-DLOG4CXX_FORMAT_NS=std)
+endif()
+
+# Give access to log4cxx include directory
+include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
 
 #
 # Include the subset of Boost which FBAE uses
@@ -32,6 +60,7 @@ endif()
 #
 # Include Cereal (A simple FetchContent does not work ==> We have to download it manually)
 #
+
 # Download and unpack Cereal at configure time
 configure_file(CMakeLists_cereal.txt.in cereal-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
@@ -60,6 +89,10 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+#
+# Generate FBAE targets
+#
 
 add_subdirectory(src/lib)
 add_subdirectory(src/main)

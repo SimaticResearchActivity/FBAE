@@ -32,7 +32,7 @@ namespace fbae_LCRAlgoLayer {
      * @brief The structured message packet we want to send to another site.
      * Contains all of the information we want to convey.
      */
-    struct StructBroadcastMessage {
+    struct MessagePacket {
         /**
          * @brief the message type. See MessageId enum for
          * more information.
@@ -73,7 +73,7 @@ namespace fbae_LCRAlgoLayer {
             archive(messageId, senderRank, clock, sessionMessage, isStable);
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const StructBroadcastMessage &message) {
+        friend std::ostream &operator<<(std::ostream &os, const MessagePacket &message) {
             return os <<(static_cast<bool>(message.messageId) ? "Message" : "Acknowledgement")
                       << " from "
                       << static_cast<uint32_t>(message.senderRank);

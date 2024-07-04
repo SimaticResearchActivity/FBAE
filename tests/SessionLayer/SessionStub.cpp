@@ -7,7 +7,7 @@
 #include "../../src/lib/msgTemplates.h"
 
 SessionStub::SessionStub(const Arguments &arguments, rank_t rank, std::unique_ptr<AlgoLayer> algoLayer)
-        : SessionLayer(arguments, rank, std::move(algoLayer))
+        : SessionLayer(arguments, rank, std::move(algoLayer), "fbae.session.phony")
 {
 }
 

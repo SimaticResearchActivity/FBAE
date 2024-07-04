@@ -4,11 +4,14 @@
 #include <memory>
 #include "../Arguments.h"
 #include "../basicTypes.h"
+#include "../Logger/LoggerConfig.h"
+
 
 class AlgoLayer;
 
 class CommLayer {
 public:
+    explicit CommLayer(std::string const& logger_name);
     virtual ~CommLayer() = default;
 
     /**
@@ -65,6 +68,12 @@ public:
      */
     [[nodiscard]] virtual std::string toString() = 0;
 
+protected:
+    /**
+    * @brief Return the logger of the parent
+    */
+    [[nodiscard]] fbae::LoggerPtr getCommLogger() const;
+
 private:
     AlgoLayer* algoLayer{nullptr};
 
@@ -73,4 +82,9 @@ private:
      * AlgoLayer::callbackReceive() is done by threads handling communication incoming messages.
      */
     std::latch initDoneCalled{1};
+
+    /**
+    * @brief Logger used to print information
+    */
+    fbae::LoggerPtr m_logger;
 };

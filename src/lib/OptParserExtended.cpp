@@ -1,9 +1,6 @@
-#include <iostream>
+#include <format>
 #include <sstream>
 #include "OptParserExtended.h"
-
-using std::cout;
-using std::endl;
 
 namespace mlib {
 
@@ -11,38 +8,29 @@ namespace mlib {
     : OptParser{list}
     {}
 
-    std::string OptParserExtended::getoptStringRequired(char option) const {
+    std::string OptParserExtended::getoptStringRequired(char option, fbae::LoggerPtr const& logger) const {
         std::string optArg;
         if (!getopt(option, optArg)) {
-            cout << "Option -" << option << " is missing\n\n";
-            cout << "Usage:" << endl;
-            cout << synopsis() << endl;
-            cout << "Where:" << endl
-                 << description() << endl;
+            LOG4CXX_FATAL_FMT(logger, "Option -{} is missing\n\nUsage:\n{}\nWhere:\n{}",
+                              option, synopsis(), description());
             exit(1);
         }
         return optArg;
     }
 
-    int OptParserExtended::getoptIntRequired(char option) const {
+    int OptParserExtended::getoptIntRequired(char option, fbae::LoggerPtr const& logger) const {
         std::string optArg;
         if (!getopt(option, optArg)) {
-            cout << "Option -" << option << " is missing\n\n";
-            cout << "Usage:" << endl;
-            cout << synopsis() << endl;
-            cout << "Where:" << endl
-                 << description() << endl;
+            LOG4CXX_FATAL_FMT(logger, "Option -{} is missing\n\nUsage:\n{}\nWhere:\n{}",
+                              option, synopsis(), description());
             exit(1);
         }
         std::istringstream iss(optArg);
         int val;
         iss >> val;
         if (!iss) {
-            cout << "Option -" << option << " has incorrect parameter (it is not an integer)\n\n";
-            cout << "Usage:" << endl;
-            cout << synopsis() << endl;
-            cout << "Where:" << endl
-                 << description() << endl;
+            LOG4CXX_FATAL_FMT(logger, "Option -{} has incorrect parameter (it is not an integer)\n\nUsage:\n{}\nWhere:\n{}",
+                              option, synopsis(), description());
             exit(1);
         }
         return val;

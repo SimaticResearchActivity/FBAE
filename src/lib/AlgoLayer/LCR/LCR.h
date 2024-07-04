@@ -14,7 +14,7 @@ class LCR: public AlgoLayer {
 public:
     explicit LCR(std::unique_ptr<CommLayer> commLayer) noexcept;
 
-    void callbackReceive(std::string && algoMsgAsString) noexcept override;
+    void callbackReceive(std::string && serializedMessagePacket) noexcept override;
     void execute() noexcept override;
     void terminate() noexcept override;
     void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) noexcept override;
@@ -38,16 +38,16 @@ private:
      * @param message: The message we received that want to handle.
      * @return Optionally returns the message to send to the successor in the ring of sites.
     */
-    std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleMessageReceive(
-            fbae_LCRAlgoLayer::StructBroadcastMessage message) noexcept;
+    std::optional<fbae_LCRAlgoLayer::MessagePacket> handleMessageReceive(
+            fbae_LCRAlgoLayer::MessagePacket message) noexcept;
 
     /**
      * @brief Internal function for handling reception of an acknowledgement from another site.
      * @param message: The acknowledgment message we received that want to handle.
      * @return Optionally returns the acknowledgement message to send to the successor in the ring of sites.
     */
-    std::optional<fbae_LCRAlgoLayer::StructBroadcastMessage> handleAcknowledgmentReceive(
-            fbae_LCRAlgoLayer::StructBroadcastMessage message) noexcept;
+    std::optional<fbae_LCRAlgoLayer::MessagePacket> handleAcknowledgmentReceive(
+            fbae_LCRAlgoLayer::MessagePacket message) noexcept;
 
     /**
      * @brief The internal vector clock of the site.
@@ -57,6 +57,6 @@ private:
     /**
      * @brief The pending list of messages of the site.
     */
-    std::vector<fbae_LCRAlgoLayer::StructBroadcastMessage> pending;
+    std::vector<fbae_LCRAlgoLayer::MessagePacket> pending;
 };
 
