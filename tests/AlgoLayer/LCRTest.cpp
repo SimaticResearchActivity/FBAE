@@ -65,7 +65,7 @@ namespace fbae_test_LCR {
         // Check that this message was sent to process 0
         ASSERT_EQ(0, commLayerRaw->getSent()[0].first);
         // Check contents of this message
-        auto broadcastMsg{deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto broadcastMsg{deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
         ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
         ASSERT_EQ(myRank, broadcastMsg.senderRank);
         ASSERT_EQ(1, broadcastMsg.clock);
@@ -86,9 +86,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Message,
                 .senderRank = 2,
                 .clock = 1,
@@ -102,7 +102,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Message, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -117,9 +117,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
             .messageId = MessageId::Message,
             .senderRank = 0,
             .clock = 1,
@@ -133,7 +133,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(0, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -148,9 +148,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 2,
                 .clock = 1,
@@ -164,7 +164,7 @@ namespace fbae_test_LCR {
 
         ASSERT_EQ(2, commLayerRaw->getSent().size());
 
-        auto secondIncomingMessage { deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[1].second)) };
+        auto secondIncomingMessage { deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[1].second)) };
         ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
         ASSERT_EQ(2, secondIncomingMessage.senderRank);
         ASSERT_EQ(1, secondIncomingMessage.clock);
@@ -179,9 +179,9 @@ namespace fbae_test_LCR {
         algoLayerRaw->execute();
 
         // The original message that was sent (tested before).
-        auto firstIncomingMessage {deserializeStruct<StructBroadcastMessage>(std::move(commLayerRaw->getSent()[0].second))};
+        auto firstIncomingMessage {deserializeStruct<MessagePacket>(std::move(commLayerRaw->getSent()[0].second))};
 
-        auto message = StructBroadcastMessage {
+        auto message = MessagePacket {
                 .messageId = MessageId::Acknowledgement,
                 .senderRank = 1,
                 .clock = 1,

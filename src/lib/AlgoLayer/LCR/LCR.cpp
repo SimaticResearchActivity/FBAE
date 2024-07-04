@@ -28,7 +28,7 @@ void LCR::tryDeliver() noexcept {
     }
 }
 
-inline std::optional<MessagePacket> LCR::handleMessageReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleMessageReceive(MessagePacket message) noexcept {
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();
@@ -47,7 +47,7 @@ inline std::optional<MessagePacket> LCR::handleMessageReceive(StructBroadcastMes
     return std::move(message);
 }
 
-inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(StructBroadcastMessage message) noexcept {
+inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(MessagePacket message) noexcept {
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
     const rank_t currentSiteRank = getSessionLayer()->getRank();

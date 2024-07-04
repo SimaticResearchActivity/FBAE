@@ -40,4 +40,4 @@ add_library(lib_fbae
         Logger/LoggerConfig.cpp)
 
 target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PRIVATE log4cxx boost_subset_for_asio)
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio PRIVATE log4cxx )

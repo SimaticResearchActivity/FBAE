@@ -6,7 +6,7 @@
 #include "AlgoStub.h"
 
 AlgoStub::AlgoStub(std::unique_ptr<CommLayer> commLayer, InitDoneSupervisor &initDoneSupervisor)
-    : AlgoLayer::AlgoLayer{std::move(commLayer)}
+    : AlgoLayer::AlgoLayer{std::move(commLayer), "fbae.test.AlgoLayer.AlgoStub"}
     , initDoneSupervisor{initDoneSupervisor}
 {
 }
