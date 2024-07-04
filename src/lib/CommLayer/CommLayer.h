@@ -84,7 +84,7 @@ private:
     std::latch initDoneCalled{1};
 
     /**
-    * @brief Logger used to print informations
+    * @brief Logger used to print information
     */
     fbae::LoggerPtr m_logger;
 };

@@ -1,12 +1,11 @@
 #include "Arguments.h"
 #include <fstream>
-#include <iostream>
 #include <format>
 #include "cereal/archives/json.hpp"
 #include "cereal/types/tuple.hpp"
 #include "cereal/types/vector.hpp"
 
-auto networkLevelMulticastAddressForTests{"239.255.0.1"};
+const std::string_view networkLevelMulticastAddressForTests{"239.255.0.1"};
 
 Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
     : sites{sites}
@@ -18,13 +17,13 @@ Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLev
 }
 
 Arguments::Arguments(mlib::OptParserExtended const& parser)
-: nbMsg{parser.getoptIntRequired('n')}
-, rank{static_cast<rank_t>(parser.getoptIntRequired('r'))}
-, sizeMsg{parser.getoptIntRequired('s')}
-, siteFile{parser.getoptStringRequired('S')}
+: nbMsg{parser.getoptIntRequired('n', logger)}
+, rank{static_cast<rank_t>(parser.getoptIntRequired('r', logger))}
+, sizeMsg{parser.getoptIntRequired('s', logger)}
+, siteFile{parser.getoptStringRequired('S', logger)}
 {
     if (parser.hasopt('f')) {
-        frequency = parser.getoptIntRequired('f');
+        frequency = parser.getoptIntRequired('f', logger);
         if (frequency == 0) {
             LOG4CXX_FATAL_FMT(logger, "Argument for frequency must be greater than 0 (zero) \n {}", parser.synopsis());
             exit(EXIT_FAILURE);
@@ -32,7 +31,7 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
     }
 
     if (parser.hasopt('m')) {
-        maxBatchSize = parser.getoptIntRequired('m');
+        maxBatchSize = parser.getoptIntRequired('m', logger);
         if (maxBatchSize < sizeMsg) {
             LOG4CXX_FATAL_FMT(logger, "Argument for maxBatchSize must be greater than argument for sizeMsg \n {}", parser.synopsis());
             exit(EXIT_FAILURE);
@@ -41,22 +40,18 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 
     if (parser.hasopt('M')) {
         if (!parser.getopt('M', networkLevelMulticastAddress)) {
-            std::cout << "Option -M is missing\n\n";
-            std::cout << "Usage:" << std::endl;
-            std::cout << parser.synopsis() << std::endl;
-            std::cout << "Where:" << std::endl
-                      << parser.description() << std::endl;
+            LOG4CXX_FATAL_FMT(logger, "Option -M is missing\n\nUsage:\n{}\nWhere:\n{}\n", parser.synopsis(), parser.description());
             exit(1);
         }
         usingNetworkLevelMulticast = true;
     }
 
     if (parser.hasopt('P')) {
-        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('P'));
+        networkLevelMulticastPort = static_cast<uint16_t>(parser.getoptIntRequired('P', logger));
     }
 
     if (parser.hasopt('w')) {
-        warmupCooldown = parser.getoptIntRequired('w');
+        warmupCooldown = parser.getoptIntRequired('w', logger);
         if (warmupCooldown > 99) {
             LOG4CXX_FATAL_FMT(logger, "Argument for warmupCooldown must be in [0,99] \n {}", parser.synopsis());
             exit(EXIT_FAILURE);
@@ -87,8 +82,11 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
     // Check that rank value is consistent with contents of site file
     if ((rank != specialRankToRequestExecutionInTasks) && (rank > sites.size() - 1))
     {
-        std::cerr << "ERROR: You specifed a rank of " << rank << ", but there are only " << sites.size() << " sites specified in JSON file \"" << siteFile << "\"\n"
-                << parser.synopsis () << std::endl;
+        LOG4CXX_FATAL_FMT(logger, "You specified a rank of {}, but there are only {} sites specified in JSON file \"{}\"\n{}",
+                          rank,
+                          sites.size(),
+                          siteFile,
+                          parser.synopsis());
         exit(EXIT_FAILURE);
     }
 }
