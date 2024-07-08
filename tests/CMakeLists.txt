@@ -5,6 +5,7 @@
 # Note: enable_testing() already done in top CMakeLists.txt
 
 add_executable(tests
+        ArgumentsTest.cpp
         SerializationOverheadTest.cpp
         SessionLayer/SessionStub.cpp
         SessionLayer/SessionStub.h

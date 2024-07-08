@@ -7,8 +7,10 @@
 
 const std::string_view networkLevelMulticastAddressForTests{"239.255.0.1"};
 
-Arguments::Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast)
-    : sites{sites}
+Arguments::Arguments(std::vector<HostTuple> const& sites, std::string_view algoArgument, std::string_view commArgument, bool isUsingNetworkLevelMulticast)
+    : algoArgument{algoArgument}
+    , commArgument{commArgument}
+    , sites{sites}
     , usingNetworkLevelMulticast{isUsingNetworkLevelMulticast}
 {
     if (isUsingNetworkLevelMulticast) {
@@ -22,6 +24,14 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 , sizeMsg{parser.getoptIntRequired('s', logger)}
 , siteFile{parser.getoptStringRequired('S', logger)}
 {
+    if (parser.hasopt('A')) {
+        algoArgument = parser.getoptStringRequired('A', logger);
+    }
+
+    if (parser.hasopt('C')) {
+        algoArgument = parser.getoptStringRequired('C', logger);
+    }
+
     if (parser.hasopt('f')) {
         frequency = parser.getoptIntRequired('f', logger);
         if (frequency == 0) {
@@ -94,9 +104,11 @@ Arguments::Arguments(mlib::OptParserExtended const& parser)
 [[nodiscard]] std::string
 Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const
 {
-    return std::format("{},{},{},{},{},{:d},{}%,{},{},{}",
+    return std::format("{},{},{},{},{},{},{},{:d},{}%,{},{},{}",
         algoStr,
+        algoArgument,
         commLayerStr,
+        commArgument,
         (usingNetworkLevelMulticast ? "true" : "false"),
         frequency,
         maxBatchSize,
@@ -110,7 +122,41 @@ Arguments::asCsv(std::string const &algoStr, std::string const &commLayerStr, st
 
 std::string Arguments::csvHeadline()
 {
-    return std::string { "algoLayer,commLayer,isUsingNetworkLevelMulticast,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
+    return std::string { "algoLayer,algoArgument,commLayer,commArgument,isUsingNetworkLevelMulticast,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile"};
+}
+
+int Arguments::genericGetIntInArgument(std::string_view searchedArgument, int defaultIntValue, std::string_view arg,
+                                       std::string_view argName) const {
+
+    std::string argWithoutSpace{arg};
+    std::erase(argWithoutSpace, ' ');
+    auto posSearchedArgument{argWithoutSpace.find(searchedArgument)};
+    if (posSearchedArgument == std::string::npos) {
+        LOG4CXX_INFO_FMT(logger, "Option --{} does not contain {} argument ==> Using default value {}",
+                         argName, searchedArgument, defaultIntValue);
+        return defaultIntValue;
+    }
+    auto posVal = posSearchedArgument + searchedArgument.size() + 1; // + 1 to take into account size of '='
+    auto valAsString{argWithoutSpace.substr(posVal, argWithoutSpace.size() - posVal)};
+    std::istringstream iss(valAsString);
+    int val;
+    iss >> val;
+    if (!iss) {
+        LOG4CXX_WARN_FMT(logger, "Option --{} contains {} argument which is not followed by numeric value ==> Using default value {}",
+                         argName, searchedArgument, defaultIntValue);
+        return defaultIntValue;
+    }
+    LOG4CXX_INFO_FMT(logger, "Option --{} contains {} argument with value {} which will be used",
+                     argName, searchedArgument, val);
+    return val;
+}
+
+int Arguments::getIntInAlgoArgument(std::string_view searchedArgument, int defaultIntValue) const {
+    return genericGetIntInArgument(searchedArgument, defaultIntValue, algoArgument, "AlgoArgument");
+}
+
+int Arguments::getIntInCommArgument(std::string_view searchedArgument, int defaultIntValue) const {
+    return genericGetIntInArgument(searchedArgument, defaultIntValue, commArgument, "CommArgument");
 }
 
 int Arguments::getFrequency() const {
