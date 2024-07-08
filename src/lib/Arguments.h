@@ -26,6 +26,8 @@ constexpr int PORT{1};
 
 class Arguments {
 private:
+    std::string algoArgument;
+    std::string commArgument;
     int frequency{0};
     /**
      * @brief True if participant must use network multicast
@@ -42,13 +44,37 @@ private:
     int warmupCooldown{0};
     fbae::LoggerPtr logger{ fbae::getLogger("fbae.arg") };
 
+    /**
+     * @brief Searches @searchedArgument in @arg.
+     * @param searchedArgument Searched argument
+     * @param defaultIntValue Value to be returned if @searchedArgument is not found
+     * @param arg Argument where to search @searchedArgument
+     * @param argName Name for @arg
+     * @return Argument value corresponding to @searchedArgument or @defaultIntValue if it is not found
+     */
+    [[nodiscard]] int genericGetIntInArgument(std::string_view searchedArgument, int defaultIntValue, std::string_view arg, std::string_view argName) const;
+
 public:
     explicit Arguments(mlib::OptParserExtended const& parser);
-    explicit Arguments(std::vector<HostTuple> const& sites, bool isUsingNetworkLevelMulticast = false); // Constructor used only for tests.
+    explicit Arguments(std::vector<HostTuple> const& sites, std::string_view algoArgument = "", std::string_view commArgument = "", bool isUsingNetworkLevelMulticast = false); // Constructor used only for tests.
     [[nodiscard]] std::string
     asCsv(std::string const &algoStr, std::string const &commLayerStr, std::string const &rankStr) const;
     static std::string csvHeadline();
     [[nodiscard]] int getFrequency() const;
+    /**
+     * @brief Searches @searchedArgument in @algoArgument.
+     * @param searchedArgument Searched argument
+     * @param defaultIntValue Value to be returned if @searchedArgument is not found
+     * @return Argument value corresponding to @searchedArgument or @defaultIntValue if it is not found
+     */
+    [[nodiscard]] int getIntInAlgoArgument(std::string_view searchedArgument, int defaultIntValue) const;
+    /**
+     * @brief Searches @searchedArgument in @commArgument.
+     * @param searchedArgument Searched argument
+     * @param defaultIntValue Value to be returned if @searchedArgument is not found
+     * @return Argument value corresponding to @searchedArgument or @defaultIntValue if it is not found
+     */
+    [[nodiscard]] int getIntInCommArgument(std::string_view searchedArgument, int defaultIntValue) const;
     [[nodiscard]] int getMaxBatchSize() const;
     [[nodiscard]] int64_t getNbMsg() const;
     [[nodiscard]] std::string_view getNetworkLevelMulticastAddress() const;

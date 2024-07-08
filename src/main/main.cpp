@@ -47,7 +47,9 @@ int main(int argc, char* argv[])
     //
     OptParserExtended parser{
             "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = LCR\n\t\t\t\t\t\tT = Trains",
+            "A:algoArgument string \t [optional] String to specify an argument to be used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that Trains algorithm must use 2 trains in parallel)",
             "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\tt = TCP",
+            "C:commArgument string \t [optional] String to specify an argument to be used by a specific communication layer (e.g. tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer will send a message and its length inside a single message as long as message length is below 32768 bytes)",
             "f:frequency number \t [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)",
             "h|help \t Show help message",
             "m:maxBatchSize number_of_messages \t [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)",
