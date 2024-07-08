@@ -49,4 +49,24 @@ private:
     * @brief Logical clocks of the trains
      */
     std::vector<int> trainsClock = std::vector<int>(nbTrains, 0);
+
+    /**
+    * @brief Rank of machine
+    */
+    rank_t rank;
+
+    /**
+    * @brief Number of machines
+    */
+    uint32_t sitesCount;
+
+    /**
+    * @brief Rank of next machine in loop
+    */
+    rank_t nextRank;
+
+    /**
+    * @brief True when @disconnect() method has been called.
+    */
+    bool algoTerminated{ false };
 };

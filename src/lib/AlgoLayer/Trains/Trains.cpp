@@ -8,14 +8,16 @@
 
 using namespace std;
 
-Trains::Trains(unique_ptr<CommLayer> commLayer): 
+Trains::Trains(unique_ptr<CommLayer> commLayer) :
     AlgoLayer(move(commLayer), "fbae.algo.Trains")
 {}
 
 void Trains::callbackReceive(string&& serializedMessagePacket) {
     auto trainId{ static_cast<int>(serializedMessagePacket[0]) };
     if (trainId <= nbTrains - 1) {
-        processTrain(move(serializedMessagePacket));
+        if (!algoTerminated) {
+            processTrain(move(serializedMessagePacket));
+        }
     }
     else {
         LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected Train with id {}. Max trains id: {}", trainId, nbTrains - 1);
@@ -32,21 +34,10 @@ void Trains::processTrain(string&& serializedMessagePacket) {
         exit(EXIT_FAILURE);
     }
 
-    const rank_t rank = getSessionLayer()->getRank();
-    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
-    const rank_t nextRank = (rank + 1) % sitesCount;
-
     /* DELEVER MESSAGES 
     If it is the same train that brought the batches 
     Then it means it has done a complete loop; so every machine should have received it */
     auto batchesToDeliver = previousTrainsBatches[train.id];
-
-    /*
-    for (auto const& batch : previousTrainsBatches[train.id]) {
-        for (auto const& message : batch.batchSessionMsg) {
-            batchNoDeadlockCallbackDeliver(batch.senderPos, message);
-        }
-    }*/
     previousTrainsBatches[train.id].clear();
 
     // Add train's batches to the previous trains' batches vector
@@ -76,9 +67,12 @@ void Trains::processTrain(string&& serializedMessagePacket) {
     train.clock++;
     trainsClock[train.id] = train.clock;
 
-    const auto serialized = serializeStruct(train);
-    getCommLayer()->send(nextRank, serialized);
+    if (!algoTerminated) {
+        const auto serialized = serializeStruct(train);
+        getCommLayer()->send(nextRank, serialized);
+    }
 
+    // Deliver the messages that should be delivered
     for (auto const& batch : batchesToDeliver) {
         for (auto const& message : batch.batchSessionMsg) {
             batchNoDeadlockCallbackDeliver(batch.senderPos, message);
@@ -87,9 +81,11 @@ void Trains::processTrain(string&& serializedMessagePacket) {
 }
 
 void Trains::execute() {
-    const rank_t rank = getSessionLayer()->getRank();
-    const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
+    rank = getSessionLayer()->getRank();
+    sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
+    nextRank = (rank + 1) % sitesCount;
 
+    nbTrains = getSessionLayer()->getArguments().getIntInAlgoArgument("trainsNb", nbTrains);
     previousTrainsBatches = std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>(nbTrains);
     trainsClock = std::vector<int>(nbTrains, 0);
 
@@ -97,9 +93,9 @@ void Trains::execute() {
     std::iota(broadcasters.begin(), broadcasters.end(), 0);
     setBroadcastersGroup(std::move(broadcasters));
 
-    LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank: {:d} Next rank: {:d}", rank, (rank + 1) % sitesCount);
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank: {:d} Next rank: {:d}", rank, nextRank);
 
-    getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount) }, 1, this);
+    getCommLayer()->openDestAndWaitIncomingMsg({ nextRank }, 1, this);
 }
 
 int Trains::getClock(int trainId) const { return trainsClock[trainId]; }
@@ -109,12 +105,12 @@ string Trains::toString() {
 }
 
 void Trains::terminate() {
+    algoTerminated = true;
     getCommLayer()->terminate();
 }
 
 void Trains::callbackInitDone() {
     AlgoLayer::callbackInitDone();
-    trainsClock = vector<int>(nbTrains, 0);
 
     if (getSessionLayer()->getRank() == 0) {
         for (int i = 0; i < nbTrains; i++) {
