@@ -9,20 +9,17 @@
 using namespace std;
 
 Trains::Trains(unique_ptr<CommLayer> commLayer): 
-    AlgoLayer(move(commLayer))
+    AlgoLayer(move(commLayer), "fbae.algo.Trains")
 {}
 
 void Trains::callbackReceive(string&& serializedMessagePacket) {
-
     auto trainId{ static_cast<int>(serializedMessagePacket[0]) };
-    auto trainClock{ static_cast<int>(serializedMessagePacket[1]) };
-
-    if (trainClock > trainsClock[trainId]) {
+    if (trainId <= nbTrains - 1) {
         processTrain(move(serializedMessagePacket));
     }
     else {
-        cerr << "ERROR\tLost train\n";
-        // LOG4CXX_ERROR
+        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected Train with id {}. Max trains id: {}", trainId, nbTrains - 1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -30,50 +27,48 @@ void Trains::processTrain(string&& serializedMessagePacket) {
 
     auto train = deserializeStruct<Train>(std::move(serializedMessagePacket));
 
+    if (train.clock < trainsClock[train.id]) {
+        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Lost train #{} with clock: {}. Intern clock: {}", train.id, train.clock, trainsClock[train.id]);
+        exit(EXIT_FAILURE);
+    }
+
     const rank_t rank = getSessionLayer()->getRank();
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
     const rank_t nextRank = (rank + 1) % sitesCount;
 
-    // Deliver messages that are not in the train anymore
-    auto WagonIt = waitingWagons.begin();
-    while (WagonIt != waitingWagons.end()) {
-        // If it is the same train that brought the wagon, and the wagon is not in the train anymore, 
-        // Then it means it has done a complete loop; so every machine should have received it
-        if (train.id == WagonIt->trainId) {
-
-            // Est-ce qu'il y a besoin de vérifier les messages du train ???
-
-            for (auto const& message : WagonIt->batch.batchSessionMsg) {
-                batchNoDeadlockCallbackDeliver(WagonIt->batch.senderPos, message);
-            }
-            // Remove the waiting wagon from the list
-            WagonIt = waitingWagons.erase(WagonIt);
+    /* DELEVER MESSAGES 
+    If it is the same train that brought the batches 
+    Then it means it has done a complete loop; so every machine should have received it */
+    for (auto const& batch : previousTrainsBatches[train.id]) {
+        for (auto const& message : batch.batchSessionMsg) {
+            batchNoDeadlockCallbackDeliver(batch.senderPos, message);
         }
-        else { ++WagonIt; }
     }
+    previousTrainsBatches[train.id] = {};
 
+    // Add train's batches to the previous trains' batches vector
+    previousTrainsBatches[train.id] = train.batches;
 
-    auto trainIt = train.wagons.begin();
-    while (trainIt != train.wagons.end()) {
-        // Add the train's wagons to waiting wagons
-        waitingWagons.push_back(*trainIt);
-
-        // Remove wagons which were sent by next
-        if (trainIt->batch.senderPos == nextRank) {
-            trainIt = train.wagons.erase(trainIt);
+    // Remove train's batches which were sent by next
+    auto it = train.batches.begin();
+    while (it != train.batches.end()) {
+        if (it->senderPos == nextRank) {
+            LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d} removed batch from #{:d} in train {}", rank, nextRank, train.id);
+            it = train.batches.erase(it);
+            break;
         }
-        else { ++trainIt; }
+        else { ++it; }
     }
 
-    // Add your own wagon to the train
-    wagonToSend.trainId = train.id;
-    for (auto const& message : batchGetBatchMsgs(rank)->batchSessionMsg) {
-        wagonToSend.batch.batchSessionMsg.push_back(message);
+    // Add your own batch of messages to the train and your waiting messages
+    if (auto batch{ batchGetBatchMsgs(rank) }; batch.has_value()) {
+        train.batches.emplace_back(batch.value());
+        previousTrainsBatches[train.id].push_back(batch.value());
+        LOG4CXX_INFO_FMT(getAlgoLogger(), "Batch added to train with {} messages", batch.value().batchSessionMsg.size());
     }
-    train.wagons.push_back(wagonToSend);
-
-    // Clear our wagon of messages (they have already been sent to the train)
-    wagonToSend.batch.batchSessionMsg = {};
+    else {
+        LOG4CXX_INFO(getAlgoLogger(), "No batch added to train");
+    }
 
     trainsClock[train.id]++;
     train.clock++;
@@ -86,35 +81,61 @@ void Trains::execute() {
     const rank_t rank = getSessionLayer()->getRank();
     const auto sitesCount = static_cast<uint32_t>(getSessionLayer()->getArguments().getSites().size());
 
-    wagonToSend = { 0, { rank, {} } };
+    previousTrainsBatches = std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>(nbTrains);
+    trainsClock = std::vector<int>(nbTrains, 0);
 
     std::vector<rank_t> broadcasters(sitesCount);
     std::iota(broadcasters.begin(), broadcasters.end(), 0);
     setBroadcastersGroup(std::move(broadcasters));
 
-    getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount)}, 1, this);
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank: {:d} Next rank: {:d}", rank, (rank + 1) % sitesCount);
+
+    getCommLayer()->openDestAndWaitIncomingMsg({ static_cast<rank_t>((rank + 1) % sitesCount) }, 1, this);
 }
 
-void Trains::totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) {
-    wagonToSend.batch.batchSessionMsg.push_back(sessionMsg);
+int Trains::getClock(int trainId) const { return trainsClock[trainId]; }
 
-    rank_t rank = getSessionLayer()->getRank();
-
-    if (rank == 0 && sessionMsg->msgId == fbae_SessionLayer::SessionMsgId::FirstBroadcast) {
-        const Train train = {
-                .id = 0,
-                .clock = 0,
-                .wagons = { }
-        };
-
-        callbackReceive(serializeStruct(train));
-    }
-}
-
-std::string Trains::toString() {
+string Trains::toString() {
     return "Trains";
 }
 
 void Trains::terminate() {
     getCommLayer()->terminate();
+}
+
+void Trains::callbackInitDone() {
+    AlgoLayer::callbackInitDone();
+
+    if (getSessionLayer()->getRank() == 0) {
+        for (int i = 0; i < nbTrains; i++) {
+            Train train{
+                .id = i,
+                .clock = 0,
+                .batches = {}
+            };
+
+            auto serialized = serializeStruct(train);
+            callbackReceive(std::move(serialized));
+        }
+    }
+    trainsClock = vector<int>(nbTrains, 0);
+    LOG4CXX_INFO(getAlgoLogger(), "Init Done");
+}
+
+void Trains::setNbTrains(int newNbTrains) { nbTrains = newNbTrains; }
+
+vector<vector<fbae_AlgoLayer::BatchSessionMsg >> Trains::getPreviousTrainsBatches() const {
+    return previousTrainsBatches;
+}
+
+int Trains::getWaitingBatchesNb() const {
+    int i = 0;
+    for (auto const& batches : previousTrainsBatches) {
+        i += batches.size();
+    }
+    return i;
+}
+
+void Trains::addWaitingBatch(int trainId, fbae_AlgoLayer::BatchSessionMsg const& batch) {
+    previousTrainsBatches[trainId].push_back(batch);
 }

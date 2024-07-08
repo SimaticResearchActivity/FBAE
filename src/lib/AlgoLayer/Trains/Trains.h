@@ -6,32 +6,14 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/vector.hpp"
 
-struct Wagon {
-    int trainId;
-    fbae_AlgoLayer::BatchSessionMsg batch;
-
-    template<class Archive> void serialize(Archive& archive) {
-        archive(trainId, batch);
-    }
-
-    friend std::ostream &operator<<(std::ostream &os, Wagon const& wagon) {
-        os << "Wagon: " << wagon.batch.senderPos << "\n";
-
-        for (const auto &message : wagon.batch.batchSessionMsg) {
-            os << static_cast<int>(message->msgId) << "\t";
-        }
-        os << "\n";
-        return os;
-    }
-};
 
 struct Train {
     int id;
     int clock;
-    std::vector<Wagon> wagons;
+    std::vector<fbae_AlgoLayer::BatchSessionMsg> batches;
 
     template<class Archive> void serialize(Archive& archive) {
-        archive(id, clock, wagons);
+        archive(id, clock, batches);
     }
 };
 
@@ -42,13 +24,29 @@ public:
     void callbackReceive(std::string && serializedMessagePacket) override;
     void execute() override;
     void terminate() override;
-    void totalOrderBroadcast(const fbae_SessionLayer::SessionMsg &sessionMsg) override;
     void processTrain(std::string&& serializedMessagePacket);
-
+    int getClock(int trainId) const;
+    void callbackInitDone() override;
     std::string toString() override;
 
+    void setNbTrains(int newNbTrains);
+    std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>> getPreviousTrainsBatches() const;
+    int getWaitingBatchesNb() const;
+    void addWaitingBatch(int trainId, fbae_AlgoLayer::BatchSessionMsg const& batch);
+
 private:
-    Wagon wagonToSend{};
-    std::vector<Wagon> waitingWagons{};
-    std::vector<int> trainsClock{};
+    /**
+    * @brief Number of trains
+     */
+    int nbTrains{ 3 };
+
+    /**
+     * @brief Vector to keep the batches brought by the trains 
+     */
+    std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>> previousTrainsBatches = std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>(nbTrains);
+
+    /**
+    * @brief Logical clocks of the trains
+     */
+    std::vector<int> trainsClock = std::vector<int>(nbTrains, 0);
 };

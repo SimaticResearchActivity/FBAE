@@ -96,3 +96,7 @@ void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {
 fbae::LoggerPtr AlgoLayer::getAlgoLogger() const {
     return m_logger;
 }
+
+vector<fbae_SessionLayer::SessionMsg> AlgoLayer::getBatchWaitingSessionMsg() const {
+    return batchWaitingSessionMsg;
+}

@@ -116,6 +116,8 @@ public:
      */
     [[nodiscard]] virtual std::string toString() = 0;
 
+    std::vector<fbae_SessionLayer::SessionMsg> getBatchWaitingSessionMsg() const;
+
 protected :
     /**
     * @brief Return the logger of the parent

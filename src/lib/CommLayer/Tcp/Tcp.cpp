@@ -233,6 +233,7 @@ void Tcp::multicastMsg(const std::string &algoMsgAsString) {
 
 void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const & dest, size_t nbAwaitedConnections, AlgoLayer *aAlgoLayer) {
     setAlgoLayer(aAlgoLayer);
+
     const auto arguments = getAlgoLayer()->getSessionLayer()->getArguments();
     const auto sites = arguments.getSites();
     const auto usingNetworkLevelMulticast = arguments.isUsingNetworkLevelMulticast();

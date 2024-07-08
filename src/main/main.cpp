@@ -8,8 +8,6 @@
 #include "AlgoLayer/BBOBB/BBOBB.h"
 #include "AlgoLayer/Trains/Trains.h"
 
-#include "Logger/Logger.h"
-
 using namespace std;
 using namespace mlib;
 
@@ -30,10 +28,10 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser, fbae::L
     char algoId = parser.getoptStringRequired('a', logger)[0];
     switch(algoId)
     {
-        case 'S': return make_unique<Sequencer>(concreteCommLayer(parser));
-        case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser));
-        case 'L' : return make_unique<LCR>(concreteCommLayer(parser));
-        case 'T' : return make_unique<Trains>(concreteCommLayer(parser));
+        case 'S': return make_unique<Sequencer>(concreteCommLayer(parser, logger));
+        case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser, logger));
+        case 'L' : return make_unique<LCR>(concreteCommLayer(parser, logger));
+        case 'T' : return make_unique<Trains>(concreteCommLayer(parser, logger));
         default:
             LOG4CXX_FATAL_FMT(logger, "Argument for Broadcast Algorithm is \"{}\" which is not the identifier of a defined algorithm. \n{}", algoId, parser.synopsis());
             exit(EXIT_FAILURE);
