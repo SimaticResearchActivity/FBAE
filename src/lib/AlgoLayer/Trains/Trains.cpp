@@ -39,12 +39,15 @@ void Trains::processTrain(string&& serializedMessagePacket) {
     /* DELEVER MESSAGES 
     If it is the same train that brought the batches 
     Then it means it has done a complete loop; so every machine should have received it */
+    auto batchesToDeliver = previousTrainsBatches[train.id];
+
+    /*
     for (auto const& batch : previousTrainsBatches[train.id]) {
         for (auto const& message : batch.batchSessionMsg) {
             batchNoDeadlockCallbackDeliver(batch.senderPos, message);
         }
-    }
-    previousTrainsBatches[train.id] = {};
+    }*/
+    previousTrainsBatches[train.id].clear();
 
     // Add train's batches to the previous trains' batches vector
     previousTrainsBatches[train.id] = train.batches;
@@ -74,7 +77,13 @@ void Trains::processTrain(string&& serializedMessagePacket) {
     trainsClock[train.id] = train.clock;
 
     const auto serialized = serializeStruct(train);
-    getCommLayer()->multicastMsg(serialized);
+    getCommLayer()->send(nextRank, serialized);
+
+    for (auto const& batch : batchesToDeliver) {
+        for (auto const& message : batch.batchSessionMsg) {
+            batchNoDeadlockCallbackDeliver(batch.senderPos, message);
+        }
+    }
 }
 
 void Trains::execute() {
