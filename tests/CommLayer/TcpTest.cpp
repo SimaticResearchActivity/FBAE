@@ -69,8 +69,8 @@ namespace fbae_test_Tcp {
                 {"localhost", initialPort + 2},
                 {"localhost", initialPort + 3}
         };
-        Arguments arguments023{ sites, true};
-        Arguments arguments1{ sites, false};
+        Arguments arguments023{ sites, "", "", true};
+        Arguments arguments1{ sites, "", "", false};
 
         // Using a vector of Host does not compile ==> We use host0, host1, etc. instead of host[i].
         Host host0{0, {1}, 1, arguments023, initDoneSupervisor};
