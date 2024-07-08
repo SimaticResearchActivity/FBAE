@@ -70,8 +70,8 @@ void Trains::processTrain(string&& serializedMessagePacket) {
         LOG4CXX_INFO(getAlgoLogger(), "No batch added to train");
     }
 
-    trainsClock[train.id]++;
     train.clock++;
+    trainsClock[train.id] = train.clock;
 
     const auto serialized = serializeStruct(train);
     getCommLayer()->multicastMsg(serialized);
@@ -105,6 +105,7 @@ void Trains::terminate() {
 
 void Trains::callbackInitDone() {
     AlgoLayer::callbackInitDone();
+    trainsClock = vector<int>(nbTrains, 0);
 
     if (getSessionLayer()->getRank() == 0) {
         for (int i = 0; i < nbTrains; i++) {
@@ -118,7 +119,6 @@ void Trains::callbackInitDone() {
             callbackReceive(std::move(serialized));
         }
     }
-    trainsClock = vector<int>(nbTrains, 0);
     LOG4CXX_INFO(getAlgoLogger(), "Init Done");
 }
 
