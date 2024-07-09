@@ -22,6 +22,7 @@ public :
     void execute() override;
     void terminate() override;
     std::string toString() override;
+
 private :
     /**
      * @brief Method called when a wave begins

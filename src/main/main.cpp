@@ -6,6 +6,7 @@
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
+#include "AlgoLayer/Trains/Trains.h"
 
 using namespace std;
 using namespace mlib;
@@ -30,6 +31,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const &parser, fbae::L
         case 'S': return make_unique<Sequencer>(concreteCommLayer(parser, logger));
         case 'B' : return make_unique<BBOBB>(concreteCommLayer(parser, logger));
         case 'L' : return make_unique<LCR>(concreteCommLayer(parser, logger));
+        case 'T' : return make_unique<Trains>(concreteCommLayer(parser, logger));
         default:
             LOG4CXX_FATAL_FMT(logger, "Argument for Broadcast Algorithm is \"{}\" which is not the identifier of a defined algorithm. \n{}", algoId, parser.synopsis());
             exit(EXIT_FAILURE);
@@ -44,7 +46,7 @@ int main(int argc, char* argv[])
     // Take care of program arguments
     //
     OptParserExtended parser{
-            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = LCR",
+            "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = LCR\n\t\t\t\t\t\tT = Trains",
             "A:algoArgument string \t [optional] String to specify an argument to be used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that Trains algorithm must use 2 trains in parallel)",
             "c:comm communicationLayer_identifier \t Communication layer to be used\n\t\t\t\t\t\tt = TCP",
             "C:commArgument string \t [optional] String to specify an argument to be used by a specific communication layer (e.g. tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer will send a message and its length inside a single message as long as message length is below 32768 bytes)",

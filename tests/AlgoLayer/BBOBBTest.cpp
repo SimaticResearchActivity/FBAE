@@ -143,7 +143,7 @@ namespace fbae_test_BBOBB {
         nbSites = 4;
         sites = vector<HostTuple>(nbSites, HostTuple{"", 0});
         Arguments arguments{sites};
-        myRank = nbSites - 1;
+        myRank = static_cast<rank_t>(nbSites - 1);
         SessionStub sessionStub{arguments, myRank, std::move(algoLayer)};
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests

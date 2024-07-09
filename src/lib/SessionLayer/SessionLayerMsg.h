@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "../adaptCereal.h"
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/archives/binary.hpp"

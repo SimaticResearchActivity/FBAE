@@ -14,6 +14,7 @@ add_executable(tests
         AlgoLayer/SequencerTest.cpp
         AlgoLayer/BBOBBTest.cpp
         AlgoLayer/LCRTest.cpp
+        AlgoLayer/TrainsTest.cpp
         AlgoLayer/AlgoStub.cpp
         AlgoLayer/AlgoStub.h
         AlgoLayer/InitDoneSupervisor.cpp

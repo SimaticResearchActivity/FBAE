@@ -6,6 +6,7 @@
 #include <future>
 #include <syncstream>
 #include "PerfMeasures.h"
+#include "Logger/LoggerConfig.h"
 
 using namespace std;
 using namespace fbae_SessionLayer;
@@ -94,7 +95,6 @@ void PerfMeasures::processFinishedPerfMeasuresMsg(rank_t senderPos)
     ++nbReceivedFinishedPerfMeasures;
     LOG4CXX_INFO_FMT(getSessionLogger(), "PerfMeasures pos #{:d} : Deliver FinishedPerfMeasures from sender pos #{:d}, (nbReceivedFinishedPerfMeasures = {:d})", getAlgoLayer()->getPosInBroadcastersGroup().value(), senderPos, nbReceivedFinishedPerfMeasures);
     
-
     if (nbReceivedFinishedPerfMeasures > getAlgoLayer()->getBroadcastersGroup().size()) {
         LOG4CXX_FATAL(getSessionLogger(), "Delivering a FinishedPerfMeasures message while we already have received all FinishedPerfMeasures messages we were waiting for.");
         exit(EXIT_FAILURE);

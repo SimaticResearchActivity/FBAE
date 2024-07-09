@@ -48,6 +48,7 @@ void BBOBB::beginWave() {
     lastSentStepMsg.step = 0;
     lastSentStepMsg.batchesBroadcast.clear();
     if (auto batch{batchGetBatchMsgs(senderPos)} ; batch.has_value()) {
+        LOG4CXX_INFO(getAlgoLogger(), "Batch added");
         lastSentStepMsg.batchesBroadcast.emplace_back(batch.value());
     }
 
