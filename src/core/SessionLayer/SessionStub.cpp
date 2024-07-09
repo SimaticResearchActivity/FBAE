@@ -6,7 +6,7 @@
 
 #include <cassert>
 
-#include "../core/msgTemplates.h"
+#include "msgTemplates.h"
 
 namespace fbae::core::SessionLayer {
 

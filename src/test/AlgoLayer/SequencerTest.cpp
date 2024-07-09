@@ -4,10 +4,10 @@
 
 #include <gtest/gtest.h>
 
-#include "../CommLayer/CommStub.h"
-#include "../SessionLayer/SessionStub.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "AlgoLayer/Sequencer/SequencerMsg.h"
+#include "CommLayer/CommStub.h"
+#include "SessionLayer/SessionStub.h"
 #include "msgTemplates.h"
 
 namespace fbae::test::AlgoLayer {

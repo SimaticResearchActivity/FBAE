@@ -13,10 +13,13 @@ add_library(lib_fbae
         AlgoLayer/AlgoLayer.cpp
         AlgoLayer/AlgoLayer.h
         AlgoLayer/AlgoLayerMsg.h
+		AlgoLayer/AlgoStub.cpp
+		AlgoLayer/AlgoStub.h
         AlgoLayer/BBOBB/BBOBB.cpp
         AlgoLayer/BBOBB/BBOBB.h
         AlgoLayer/BBOBB/BBOBBMsg.h
-        AlgoLayer/BBOBB/BBOBBMsg.h
+		AlgoLayer/InitDoneSupervisor.cpp
+		AlgoLayer/InitDoneSupervisor.h
         AlgoLayer/Sequencer/Sequencer.cpp
         AlgoLayer/Sequencer/Sequencer.h
         AlgoLayer/Sequencer/SequencerMsg.h
@@ -24,12 +27,16 @@ add_library(lib_fbae
 		AlgoLayer/Trains/Trains.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
+		CommLayer/CommStub.cpp
+		CommLayer/CommStub.h
 		CommLayer/Tcp/Tcp.cpp
 		CommLayer/Tcp/Tcp.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
         SessionLayer/SessionLayerMsg.h
+		SessionLayer/SessionStub.cpp
+		SessionLayer/SessionStub.h
         SessionLayer/PerfMeasures/Measures.cpp
 	    SessionLayer/PerfMeasures/Measures.h
         SessionLayer/PerfMeasures/PerfMeasures.cpp

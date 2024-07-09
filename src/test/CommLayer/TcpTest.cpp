@@ -6,9 +6,9 @@
 
 #include <future>
 
-#include "../AlgoLayer/AlgoStub.h"
-#include "../SessionLayer/SessionStub.h"
+#include "AlgoLayer/AlgoStub.h"
 #include "CommLayer/Tcp/Tcp.h"
+#include "SessionLayer/SessionStub.h"
 
 namespace fbae::test::CommLayer {
 

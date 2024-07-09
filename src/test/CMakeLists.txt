@@ -7,18 +7,10 @@
 add_executable(tests
         ArgumentsTest.cpp
         SerializationOverheadTest.cpp
-        SessionLayer/SessionStub.cpp
-        SessionLayer/SessionStub.h
-        CommLayer/CommStub.cpp
-        CommLayer/CommStub.h
         AlgoLayer/SequencerTest.cpp
         AlgoLayer/BBOBBTest.cpp
         AlgoLayer/LCRTest.cpp
         AlgoLayer/TrainsTest.cpp
-        AlgoLayer/AlgoStub.cpp
-        AlgoLayer/AlgoStub.h
-        AlgoLayer/InitDoneSupervisor.cpp
-        AlgoLayer/InitDoneSupervisor.h
         CommLayer/TcpTest.cpp
 )
 target_link_libraries(tests GTest::gtest_main lib_fbae)

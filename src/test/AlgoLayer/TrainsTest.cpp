@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "../CommLayer/CommStub.h"
-#include "../SessionLayer/SessionStub.h"
 #include "AlgoLayer/Trains/Trains.h"
+#include "CommLayer/CommStub.h"
+#include "SessionLayer/SessionStub.h"
 #include "msgTemplates.h"
 
 namespace fbae::test::AlgoLayer {
