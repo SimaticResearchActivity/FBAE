@@ -12,7 +12,7 @@ using namespace fbae::core::AlgoLayer::LCR;
 namespace fbae::core::AlgoLayer::LCR {
 
 LCR::LCR(std::unique_ptr<CommLayer::CommLayer> commLayer) noexcept
-    : AlgoLayer{std::move(commLayer), "fbae.algo.LCR"} {
+    : AlgoLayer{std::move(commLayer), "fbae.core.AlgoLayer.LCR"} {
   // We cannot initialize the vector clock at this point in time, as we need
   // access to the session layer which is not yet initialized.
 }

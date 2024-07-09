@@ -18,7 +18,7 @@ using namespace fbae::core;
 namespace fbae::core::AlgoLayer::BBOBB {
 
 BBOBB::BBOBB(std::unique_ptr<CommLayer::CommLayer> commLayer)
-    : AlgoLayer{std::move(commLayer), "fbae.algo.BBOBB"} {}
+    : AlgoLayer{std::move(commLayer), "fbae.core.AlgoLayer.BBOBB"} {}
 
 void BBOBB::callbackReceive(std::string&& algoMsgAsString) {
   auto msgId{static_cast<MsgId>(algoMsgAsString[0])};

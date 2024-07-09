@@ -13,7 +13,7 @@ using namespace fbae::core;
 AlgoStub::AlgoStub(std::unique_ptr<CommLayer::CommLayer> commLayer,
                    InitDoneSupervisor &initDoneSupervisor)
     : AlgoLayer::AlgoLayer{std::move(commLayer),
-                           "fbae.test.AlgoLayer.AlgoStub"},
+                           "fbae.core.AlgoLayer.AlgoStub"},
       initDoneSupervisor{initDoneSupervisor} {}
 
 void AlgoStub::callbackReceive(std::string &&algoMsgAsString) {

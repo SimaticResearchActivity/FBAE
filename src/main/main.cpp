@@ -50,7 +50,7 @@ unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& pars
 }
 
 int main(int argc, char* argv[]) {
-  auto logger = Logger::getLogger("fbae");
+  auto logger = Logger::getLogger("fbae.main");
 
   //
   // Take care of program arguments

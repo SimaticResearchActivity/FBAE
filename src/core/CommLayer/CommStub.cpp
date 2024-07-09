@@ -10,7 +10,7 @@
 
 namespace fbae::core::CommLayer {
 
-CommStub::CommStub() : CommLayer{"fbae.comm.phony"} {}
+CommStub::CommStub() : CommLayer{"fbae.core.CommLayer.CommStub"} {}
 
 std::vector<rank_t> &CommStub::getConnectedDest() { return connectedDest; }
 

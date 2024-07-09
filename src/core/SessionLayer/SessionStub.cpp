@@ -20,7 +20,7 @@ using fbae::core::AlgoLayer::AlgoLayer;
 SessionStub::SessionStub(const Arguments &arguments, rank_t rank,
                          std::unique_ptr<AlgoLayer> algoLayer)
     : SessionLayer(arguments, rank, std::move(algoLayer),
-                   "fbae.session.phony") {}
+                   "fbae.core.SessionLayer.SessionStub") {}
 
 void SessionStub::callbackDeliver(rank_t senderPos,
                                   SessionMsg msg) {

@@ -46,7 +46,7 @@ class Arguments {
   std::vector<HostTuple> sites;
   bool usingNetworkLevelMulticast{false};
   int warmupCooldown{0};
-  fbae::core::Logger::LoggerPtr logger{fbae::core::Logger::getLogger("fbae.arg")};
+  fbae::core::Logger::LoggerPtr logger{fbae::core::Logger::getLogger("fbae.core.arg")};
 
   /**
    * @brief Searches @searchedArgument in @arg.

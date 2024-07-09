@@ -12,7 +12,7 @@ using namespace std;
 namespace fbae::core::AlgoLayer::Trains {
 
 Trains::Trains(unique_ptr<fbae::core::CommLayer::CommLayer> commLayer)
-    : AlgoLayer(std::move(commLayer), "fbae.algo.Trains") {}
+    : AlgoLayer(std::move(commLayer), "fbae.core.AlgoLayer.Trains") {}
 
 void Trains::callbackReceive(string&& serializedMessagePacket) {
   if (algoTerminated) {

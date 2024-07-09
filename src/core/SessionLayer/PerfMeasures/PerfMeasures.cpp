@@ -16,7 +16,7 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
                            std::unique_ptr<AlgoLayer::AlgoLayer> algoLayer)
     : SessionLayer{arguments, rank, std::move(algoLayer),
-                   "fbae.session.PerfMeasures"},
+                   "fbae.core.SessionLayer.PerfMeasures"},
       measures{static_cast<size_t>(arguments.getNbMsg() *
                                    (100 - arguments.getWarmupCooldown()) /
                                    100) +

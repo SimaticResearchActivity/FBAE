@@ -25,7 +25,7 @@ using namespace fbae::core;
 
 namespace fbae::core::CommLayer::Tcp {
 
-Tcp::Tcp() : CommLayer{"fbae.comm.TCP"} {}
+Tcp::Tcp() : CommLayer{"fbae.core.CommLayer.Tcp"} {}
 
 /**
  * @brief Maximum number of TCP connect attempts before considering we cannot
