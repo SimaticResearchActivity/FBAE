@@ -28,6 +28,32 @@ class BBOBBTest : public testing::Test {
     algoLayerRaw = algoLayer.get();
   }
 
+  void commonChecks() {
+    // Check FirstBroadcast message was broadcast and thus sent.
+    ASSERT_EQ(1, commLayerRaw->getSent().size());
+    // Check that this message was sent to successor
+    EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
+    // Check contents of this message
+    auto stepMsg{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+                std::move(commLayerRaw->getSent()[0].second))};
+    EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg.msgId);
+    EXPECT_EQ(myRank, stepMsg.senderPos);
+    EXPECT_EQ(0, stepMsg.wave);
+    EXPECT_EQ(0, stepMsg.step);
+    ASSERT_EQ(1, stepMsg.batchesBroadcast.size());  // Just 1 batch message
+    EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0]
+                .senderPos);  // Sender of this batch messages is 0
+    EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
+                  stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
+
+    // Check @AlgoLayer:broadcastersGroup is correct
+    ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
+    EXPECT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
+    EXPECT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
+    EXPECT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
+    EXPECT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
+  }
+
   int nbSites;
   vector<HostTuple> sites;
   unique_ptr<CommStub> commLayer;
@@ -53,29 +79,7 @@ TEST_F(BBOBBTest, ExecuteWith4SitesAndRank0) {
   // Check nbAwaitedConnections
   EXPECT_EQ(2, commLayerRaw->getNbAwaitedConnections());
 
-  // Check FirstBroadcast message was broadcast and thus sent.
-  ASSERT_EQ(1, commLayerRaw->getSent().size());
-  // Check that this message was sent to successor
-  EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
-  // Check contents of this message
-  auto stepMsg{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
-      std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg.msgId);
-  EXPECT_EQ(myRank, stepMsg.senderPos);
-  EXPECT_EQ(0, stepMsg.wave);
-  EXPECT_EQ(0, stepMsg.step);
-  ASSERT_EQ(1, stepMsg.batchesBroadcast.size());  // Just 1 batch message
-  EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0]
-                        .senderPos);  // Sender of this batch messages is 0
-  EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
-            stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
-
-  // Check @AlgoLayer:broadcastersGroup is correct
-  ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
-  EXPECT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
-  EXPECT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
-  EXPECT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
-  EXPECT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
+  commonChecks();
 
   // Check Participant is broadcasting messages
   EXPECT_TRUE(algoLayerRaw->isBroadcastingMessages());
@@ -105,29 +109,7 @@ TEST_F(BBOBBTest, ExecuteWith9SitesAndRank8) {
   // Check nbAwaitedConnections
   EXPECT_EQ(4, commLayerRaw->getNbAwaitedConnections());
 
-  // Check FirstBroadcast message was broadcast and thus sent.
-  ASSERT_EQ(1, commLayerRaw->getSent().size());
-  // Check that this message was sent to successor
-  EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
-  // Check contents of this message
-  auto stepMsg{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
-      std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg.msgId);
-  EXPECT_EQ(myRank, stepMsg.senderPos);
-  EXPECT_EQ(0, stepMsg.wave);
-  EXPECT_EQ(0, stepMsg.step);
-  ASSERT_EQ(1, stepMsg.batchesBroadcast.size());  // Just 1 batch message
-  EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0]
-                        .senderPos);  // Sender of this batch messages is 0
-  EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
-            stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
-
-  // Check @AlgoLayer:broadcastersGroup is correct
-  ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
-  EXPECT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
-  EXPECT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
-  EXPECT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
-  EXPECT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
+  commonChecks();
   EXPECT_EQ(4, algoLayerRaw->getBroadcastersGroup()[4]);
   EXPECT_EQ(5, algoLayerRaw->getBroadcastersGroup()[5]);
   EXPECT_EQ(6, algoLayerRaw->getBroadcastersGroup()[6]);
