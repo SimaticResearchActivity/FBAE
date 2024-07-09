@@ -8,14 +8,13 @@
 
 **/
 
-#include <cassert>
 #include "SessionLayerMsg.h"
 
+#include <cassert>
+
 std::string fbae_SessionLayer::SessionBaseClass::getPayload() {
-    assert(false);
-    return "SessionBaseClass::getPayload() should never be called";
+  assert(false);
+  return "SessionBaseClass::getPayload() should never be called";
 }
 
-std::string fbae_SessionLayer::SessionTest::getPayload() {
-    return payload;
-}
+std::string fbae_SessionLayer::SessionTest::getPayload() { return payload; }
