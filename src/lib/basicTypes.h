@@ -17,4 +17,4 @@ using rank_t = uint8_t;
  */
 using MsgId_t = uint8_t;
 
-#endif //FBAE_BASIC_TYPES_H
+#endif  // FBAE_BASIC_TYPES_H

@@ -4,10 +4,6 @@
 
 #include "InitDoneSupervisor.h"
 
-void InitDoneSupervisor::callbackInitDone() {
-    waitCallbackInitDone.release();
-}
+void InitDoneSupervisor::callbackInitDone() { waitCallbackInitDone.release(); }
 
-void InitDoneSupervisor::waitInitDone() {
-    waitCallbackInitDone.acquire();
-}
+void InitDoneSupervisor::waitInitDone() { waitCallbackInitDone.acquire(); }
