@@ -7,7 +7,11 @@
 #include "../Logger/LoggerConfig.h"
 #include "../basicTypes.h"
 
+namespace fbae::core::AlgoLayer {
 class AlgoLayer;
+}
+
+namespace fbae::core::CommLayer {
 
 class CommLayer {
  public:
@@ -18,7 +22,7 @@ class CommLayer {
    * @brief Getter for @algoLayer.
    * @return @algoLayer.
    */
-  [[nodiscard]] AlgoLayer* getAlgoLayer() const;
+  [[nodiscard]] fbae::core::AlgoLayer::AlgoLayer* getAlgoLayer() const;
 
   /**
    * @brief Getter for @commLayerReady
@@ -49,13 +53,13 @@ class CommLayer {
    */
   virtual void openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
                                           size_t nbAwaitedConnections,
-                                          AlgoLayer* aAlgoLayer) = 0;
+                                          fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) = 0;
 
   /**
    * @brief Setter for @algoLayer.
    * @param aAlgoLayer The value to give to @algoLayer.
    */
-  void setAlgoLayer(AlgoLayer* aAlgoLayer);
+  void setAlgoLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer);
 
   /**
    * @brief Sends @algoMsgAsString to outgoing peer of rank @r.
@@ -79,10 +83,10 @@ class CommLayer {
   /**
    * @brief Return the logger of the parent
    */
-  [[nodiscard]] fbae::LoggerPtr getCommLogger() const;
+  [[nodiscard]] fbae::core::Logger::LoggerPtr getCommLogger() const;
 
  private:
-  AlgoLayer* algoLayer{nullptr};
+  fbae::core::AlgoLayer::AlgoLayer* algoLayer{nullptr};
 
   /**
    * @brief Latch used to guarantee that AlgoLayer::callbackInitDone() has been
@@ -94,5 +98,7 @@ class CommLayer {
   /**
    * @brief Logger used to print information
    */
-  fbae::LoggerPtr m_logger;
+  fbae::core::Logger::LoggerPtr m_logger;
 };
+
+}  // namespace fbae::core::CommLayer

@@ -28,7 +28,7 @@ can be also written as --longorshort",
 #include "defs.h"
 #endif
 
-namespace mlib {
+namespace fbae::core {
 
 class OptParser {
  public:
@@ -130,4 +130,4 @@ inline int OptParser::getopt(char option,
 }
 ///@}
 
-}  // namespace mlib
+}  // namespace fbae::core

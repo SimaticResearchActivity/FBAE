@@ -3,7 +3,7 @@
 #include "../../SessionLayer/SessionLayerMsg.h"
 #include "LCRTypedefs.h"
 
-namespace fbae_LCRAlgoLayer {
+namespace fbae::core::AlgoLayer::LCR {
 /**
  * @brief The message ID that allows us to differentiate between
  * a classic message and an acknowledgement message.
@@ -57,7 +57,7 @@ struct MessagePacket {
    * @brief The actual message that was sent from the session
    * layer.
    */
-  fbae_SessionLayer::SessionMsg sessionMessage;
+  fbae::core::SessionLayer::SessionMsg sessionMessage;
 
   /**
    * @brief flag used to check if the message is stable.
@@ -80,4 +80,5 @@ struct MessagePacket {
               << " from " << static_cast<uint32_t>(message.senderRank);
   }
 };
-}  // namespace fbae_LCRAlgoLayer
+
+}  // namespace fbae::core::AlgoLayer::LCR

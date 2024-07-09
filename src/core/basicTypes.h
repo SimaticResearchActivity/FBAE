@@ -7,6 +7,8 @@
 
 #include <cstdint>
 
+namespace fbae::core {
+
 /**
  * @brief Type for storing ranks of participants to protocol
  */
@@ -16,5 +18,7 @@ using rank_t = uint8_t;
  * @brief Type for storing message identifiers
  */
 using MsgId_t = uint8_t;
+
+}  // namespace fbae::core
 
 #endif  // FBAE_BASIC_TYPES_H

@@ -8,6 +8,8 @@
 #include "OptParserExtended.h"
 #include "basicTypes.h"
 
+namespace fbae::core {
+
 // The following value has been found experimentally when filler field of
 // SessionPerf has size 0 (See TEST(SerializationOverhead,
 // CheckMinSizeClientMessageToBroadcast) in @testSerializationOverhead.cpp
@@ -44,7 +46,7 @@ class Arguments {
   std::vector<HostTuple> sites;
   bool usingNetworkLevelMulticast{false};
   int warmupCooldown{0};
-  fbae::LoggerPtr logger{fbae::getLogger("fbae.arg")};
+  fbae::core::Logger::LoggerPtr logger{fbae::core::Logger::getLogger("fbae.arg")};
 
   /**
    * @brief Searches @searchedArgument in @arg.
@@ -62,7 +64,7 @@ class Arguments {
                                             std::string_view argName) const;
 
  public:
-  explicit Arguments(mlib::OptParserExtended const &parser);
+  explicit Arguments(fbae::core::OptParserExtended const &parser);
   explicit Arguments(std::vector<HostTuple> const &sites,
                      std::string_view algoArgument = "",
                      std::string_view commArgument = "",
@@ -103,3 +105,5 @@ class Arguments {
   [[nodiscard]] int getWarmupCooldown() const;
   [[nodiscard]] bool isUsingNetworkLevelMulticast() const;
 };
+
+}  // namespace fbae::core

@@ -4,14 +4,16 @@
 #include "./Logger/LoggerConfig.h"
 #include "options.h"
 
-namespace mlib {
+namespace fbae::core {
+
 class OptParserExtended : public OptParser {
  public:
   OptParserExtended(std::initializer_list<const char*> list);
 
   [[nodiscard]] std::string getoptStringRequired(
-      char option, fbae::LoggerPtr const& logger) const;
+      char option, fbae::core::Logger::LoggerPtr const& logger) const;
   [[nodiscard]] int getoptIntRequired(char option,
-                                      fbae::LoggerPtr const& logger) const;
+                                      fbae::core::Logger::LoggerPtr const& logger) const;
 };
-}  // namespace mlib
+
+}  // namespace fbae::core

@@ -6,14 +6,18 @@
 #include "../basicTypes.h"
 #include "SessionLayerMsg.h"
 
+namespace fbae::core::AlgoLayer {
 class AlgoLayer;
+}
+
+namespace fbae::core::SessionLayer {
 
 class SessionLayer {
  public:
   virtual ~SessionLayer() = default;
 
   explicit SessionLayer(const Arguments &arguments, rank_t rank,
-                        std::unique_ptr<AlgoLayer> algoLayer,
+                        std::unique_ptr<fbae::core::AlgoLayer::AlgoLayer> algoLayer,
                         std::string const &logger_name);
 
   /**
@@ -30,7 +34,7 @@ class SessionLayer {
    * @param msg Message to be delivered.
    */
   virtual void callbackDeliver(rank_t senderPos,
-                               fbae_SessionLayer::SessionMsg msg) = 0;
+                               SessionMsg msg) = 0;
 
   /**
    * @brief Callback called by @AlgoLayer when @AlgoLayer is initialized
@@ -47,7 +51,7 @@ class SessionLayer {
    * @brief Getter for @algolayer.
    * @return @algolayer
    */
-  [[nodiscard]] AlgoLayer *getAlgoLayer() const;
+  [[nodiscard]] fbae::core::AlgoLayer::AlgoLayer *getAlgoLayer() const;
 
   /**
    * @brief Getter for @arguments.
@@ -65,15 +69,17 @@ class SessionLayer {
   /**
    * @brief Return the logger of the parent
    */
-  [[nodiscard]] fbae::LoggerPtr getSessionLogger() const;
+  [[nodiscard]] fbae::core::Logger::LoggerPtr getSessionLogger() const;
 
  private:
   const Arguments &arguments;
-  std::unique_ptr<AlgoLayer> algoLayer;
+  std::unique_ptr<fbae::core::AlgoLayer::AlgoLayer> algoLayer;
   const rank_t rank;
 
   /**
    * @brief Logger used to print informations
    */
-  fbae::LoggerPtr m_logger;
+  fbae::core::Logger::LoggerPtr m_logger;
 };
+
+}  // namespace fbae::core::SessionLayer

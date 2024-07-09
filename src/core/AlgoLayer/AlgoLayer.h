@@ -10,13 +10,17 @@
 #include "../Logger/LoggerConfig.h"
 #include "AlgoLayerMsg.h"
 
+namespace fbae::core::SessionLayer {
 class SessionLayer;
+}
+
+namespace fbae::core::AlgoLayer {
 
 class AlgoLayer {
  public:
   virtual ~AlgoLayer() = default;
 
-  explicit AlgoLayer(std::unique_ptr<CommLayer> commLayer,
+  explicit AlgoLayer(std::unique_ptr<fbae::core::CommLayer::CommLayer> commLayer,
                      std::string const &logger_name);
 
   /**
@@ -24,7 +28,7 @@ class AlgoLayer {
    * @param senderPos position of sender of @batchWaitingSessionMsg
    * @return @batchWaitingSessionMsg encapsulated in a @BatchSessionMsg
    */
-  [[nodiscard]] std::optional<fbae_AlgoLayer::BatchSessionMsg>
+  [[nodiscard]] std::optional<BatchSessionMsg>
   batchGetBatchMsgs(rank_t senderPos);
 
   /**
@@ -35,7 +39,7 @@ class AlgoLayer {
    */
   void batchNoDeadlockCallbackDeliver(
       rank_t senderPos,
-      std::shared_ptr<fbae_SessionLayer::SessionBaseClass> const &msg);
+      std::shared_ptr<fbae::core::SessionLayer::SessionBaseClass> const &msg);
 
   /**
    * @brief Register that current thread accepts that it is not concerned by
@@ -72,7 +76,7 @@ class AlgoLayer {
    * @brief Getter for @commlayer.
    * @return @commlayer
    */
-  [[nodiscard]] CommLayer *getCommLayer() const;
+  [[nodiscard]] fbae::core::CommLayer::CommLayer *getCommLayer() const;
 
   /**
    * @brief Returns position of a broadcasting participant in @broadcasters
@@ -87,7 +91,7 @@ class AlgoLayer {
    * @brief Getter for @sessionLayer
    * @return @sessionLayer
    */
-  [[nodiscard]] SessionLayer *getSessionLayer() const;
+  [[nodiscard]] fbae::core::SessionLayer::SessionLayer *getSessionLayer() const;
 
   /**
    * @brief Indicates whether @AlgoLayer is broadcasting messages or not.
@@ -108,7 +112,7 @@ class AlgoLayer {
    * @brief Setter for @sessionLayer
    * @param aSessionLayer
    */
-  void setSessionLayer(SessionLayer *aSessionLayer);
+  void setSessionLayer(fbae::core::SessionLayer::SessionLayer *aSessionLayer);
 
   /**
    * @brief Broadcasts message in a total-order manner. Note: If this method is
@@ -117,7 +121,7 @@ class AlgoLayer {
    * @param sessionMsg Message to totally-order totalOrderBroadcast.
    */
   virtual void totalOrderBroadcast(
-      const fbae_SessionLayer::SessionMsg &sessionMsg);
+      const fbae::core::SessionLayer::SessionMsg &sessionMsg);
 
   /**
    * @brief Terminates execution of concrete totalOrderBroadcast algorithm.
@@ -131,16 +135,16 @@ class AlgoLayer {
    */
   [[nodiscard]] virtual std::string toString() = 0;
 
-  std::vector<fbae_SessionLayer::SessionMsg> getBatchWaitingSessionMsg() const;
+  [[nodiscard]] std::vector<fbae::core::SessionLayer::SessionMsg> getBatchWaitingSessionMsg() const;
 
  protected:
   /**
    * @brief Return the logger of the parent
    */
-  [[nodiscard]] fbae::LoggerPtr getAlgoLogger() const;
+  [[nodiscard]] fbae::core::Logger::LoggerPtr getAlgoLogger() const;
 
  private:
-  std::optional<fbae_AlgoLayer::BatchSessionMsg> batchGetBatchMsgsWithLock(
+  std::optional<BatchSessionMsg> batchGetBatchMsgsWithLock(
       rank_t senderPos);
 
   /**
@@ -175,7 +179,7 @@ class AlgoLayer {
   /**
    * @brief PerfMeasures messages waiting to be broadcast.
    */
-  std::vector<fbae_SessionLayer::SessionMsg> batchWaitingSessionMsg;
+  std::vector<fbae::core::SessionLayer::SessionMsg> batchWaitingSessionMsg;
 
   /**
    * @brief Rank of @sites which are indeed doing broadcasts.
@@ -185,15 +189,17 @@ class AlgoLayer {
   /**
    * @brief @CommLayer used by this @AlgoLayer
    */
-  std::unique_ptr<CommLayer> commLayer;
+  std::unique_ptr<fbae::core::CommLayer::CommLayer> commLayer;
 
   /**
    * @brief @SessionLayer which uses this @AlgoLayer
    */
-  SessionLayer *sessionLayer{nullptr};
+  fbae::core::SessionLayer::SessionLayer *sessionLayer{nullptr};
 
   /**
    * @brief Logger used to print informations
    */
-  fbae::LoggerPtr m_logger;
+  fbae::core::Logger::LoggerPtr m_logger;
 };
+
+}  // namespace fbae::core::AlgoLayer

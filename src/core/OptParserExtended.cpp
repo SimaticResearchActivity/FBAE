@@ -3,13 +3,13 @@
 #include <format>
 #include <sstream>
 
-namespace mlib {
+namespace fbae::core {
 
 OptParserExtended::OptParserExtended(std::initializer_list<const char*> list)
     : OptParser{list} {}
 
 std::string OptParserExtended::getoptStringRequired(
-    char option, fbae::LoggerPtr const& logger) const {
+    char option, Logger::LoggerPtr const& logger) const {
   std::string optArg;
   if (!getopt(option, optArg)) {
     LOG4CXX_FATAL_FMT(logger, "Option -{} is missing\n\nUsage:\n{}\nWhere:\n{}",
@@ -20,7 +20,7 @@ std::string OptParserExtended::getoptStringRequired(
 }
 
 int OptParserExtended::getoptIntRequired(char option,
-                                         fbae::LoggerPtr const& logger) const {
+                                         Logger::LoggerPtr const& logger) const {
   std::string optArg;
   if (!getopt(option, optArg)) {
     LOG4CXX_FATAL_FMT(logger, "Option -{} is missing\n\nUsage:\n{}\nWhere:\n{}",
@@ -39,4 +39,4 @@ int OptParserExtended::getoptIntRequired(char option,
   }
   return val;
 }
-}  // namespace mlib
+}  // namespace fbae::core

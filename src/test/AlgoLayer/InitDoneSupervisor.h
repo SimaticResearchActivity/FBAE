@@ -7,6 +7,8 @@
 
 #include <semaphore>
 
+namespace fbae::core::AlgoLayer {
+
 /**
  * @brief Class interfacing AlgoStub instances and a CommLayerTest instance.
  */
@@ -34,5 +36,7 @@ class InitDoneSupervisor {
   std::counting_semaphore<maximumNumberAlgoLayerInstancesDuringTests>
       waitCallbackInitDone{initialWaitCallbackInitDone};
 };
+
+}  // namespace fbae::core::AlgoLayer
 
 #endif  // FBAE_INIT_DONE_SUPERVISOR_H

@@ -9,11 +9,19 @@
 #include "AlgoLayer/LCR/LCR.h"
 #include "msgTemplates.h"
 
-namespace fbae_test_LCR {
+namespace fbae::test::AlgoLayer {
 
 using namespace std;
-using namespace fbae_SessionLayer;
-using namespace fbae_LCRAlgoLayer;
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer;
+using namespace fbae::core::AlgoLayer::LCR;
+using namespace fbae::core::SessionLayer;
+
+using enum fbae::core::SessionLayer::SessionMsgId;
+
+using fbae::core::AlgoLayer::LCR::LCR;
+using fbae::core::CommLayer::CommStub;
+using fbae::core::SessionLayer::SessionStub;
 
 constexpr auto nbSites = 4;
 
@@ -69,7 +77,7 @@ TEST_F(LCRTest, LCRExecute) {
   ASSERT_EQ(MessageId::Message, broadcastMsg.messageId);
   ASSERT_EQ(myRank, broadcastMsg.senderRank);
   ASSERT_EQ(1, broadcastMsg.clock);
-  ASSERT_EQ(SessionMsgId::FirstBroadcast, broadcastMsg.sessionMessage->msgId);
+  ASSERT_EQ(FirstBroadcast, broadcastMsg.sessionMessage->msgId);
 
   // Check @SessionLayer::callbackInitDone() was called
   ASSERT_TRUE(sessionStub.isCallbackInitDoneCalled());
@@ -107,7 +115,7 @@ TEST_F(LCRTest, MessageToMessage) {
   ASSERT_EQ(MessageId::Message, secondIncomingMessage.messageId);
   ASSERT_EQ(2, secondIncomingMessage.senderRank);
   ASSERT_EQ(1, secondIncomingMessage.clock);
-  ASSERT_EQ(SessionMsgId::FirstBroadcast,
+  ASSERT_EQ(FirstBroadcast,
             secondIncomingMessage.sessionMessage->msgId);
 }
 
@@ -140,7 +148,7 @@ TEST_F(LCRTest, MessageToAcknowledgement) {
   ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
   ASSERT_EQ(0, secondIncomingMessage.senderRank);
   ASSERT_EQ(1, secondIncomingMessage.clock);
-  ASSERT_EQ(SessionMsgId::FirstBroadcast,
+  ASSERT_EQ(FirstBroadcast,
             secondIncomingMessage.sessionMessage->msgId);
 }
 
@@ -173,7 +181,7 @@ TEST_F(LCRTest, AcknowledgementToAcknowledgement) {
   ASSERT_EQ(MessageId::Acknowledgement, secondIncomingMessage.messageId);
   ASSERT_EQ(2, secondIncomingMessage.senderRank);
   ASSERT_EQ(1, secondIncomingMessage.clock);
-  ASSERT_EQ(SessionMsgId::FirstBroadcast,
+  ASSERT_EQ(FirstBroadcast,
             secondIncomingMessage.sessionMessage->msgId);
 }
 
@@ -201,4 +209,5 @@ TEST_F(LCRTest, AcknowledgmentToNothing) {
 
   ASSERT_EQ(2, commLayerRaw->getSent().size());
 }
-}  // namespace fbae_test_LCR
+
+}  // namespace fbae::test::AlgoLayer

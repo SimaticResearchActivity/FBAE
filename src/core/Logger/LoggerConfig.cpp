@@ -4,9 +4,9 @@
 #include <log4cxx/logmanager.h>
 #include <log4cxx/propertyconfigurator.h>
 
-namespace fbae {
+namespace fbae::core::Logger {
 
-auto getLogger(const std::string& name) -> LoggerPtr {
+auto getLogger(const std::string& name) -> fbae::core::Logger::LoggerPtr {
   using namespace log4cxx;
 
   struct log4cxx_initializer {
@@ -25,4 +25,5 @@ auto getLogger(const std::string& name) -> LoggerPtr {
   return name.empty() ? LogManager::getRootLogger()
                       : LogManager::getLogger(name);
 }
-}  // namespace fbae
+
+}  // namespace fbae::core::Logger

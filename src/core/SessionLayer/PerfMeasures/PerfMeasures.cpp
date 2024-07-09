@@ -8,13 +8,13 @@
 #include <mutex>
 #include <syncstream>
 
-#include "Logger/LoggerConfig.h"
-
 using namespace std;
-using namespace fbae_SessionLayer;
+using namespace fbae::core;
+
+namespace fbae::core::SessionLayer::PerfMeasures {
 
 PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
-                           std::unique_ptr<AlgoLayer> algoLayer)
+                           std::unique_ptr<AlgoLayer::AlgoLayer> algoLayer)
     : SessionLayer{arguments, rank, std::move(algoLayer),
                    "fbae.session.PerfMeasures"},
       measures{static_cast<size_t>(arguments.getNbMsg() *
@@ -46,7 +46,7 @@ void PerfMeasures::broadcastPerfMeasure() {
 }
 
 void PerfMeasures::callbackDeliver(rank_t senderPos,
-                                   fbae_SessionLayer::SessionMsg msg) {
+                                   SessionMsg msg) {
   switch (msg->msgId) {
     using enum SessionMsgId;
     case FinishedPerfMeasures:
@@ -169,7 +169,7 @@ void PerfMeasures::processFirstBroadcastMsg(rank_t senderPos) {
 }
 
 void PerfMeasures::processPerfMeasureMsg(
-    rank_t senderPos, const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    rank_t senderPos, const SessionMsg &sessionMsg) {
   auto nakedSessionMsg = dynamic_cast<SessionPerf *>(sessionMsg.get());
 
   LOG4CXX_INFO_FMT(getSessionLogger(),
@@ -202,7 +202,7 @@ void PerfMeasures::processPerfMeasureMsg(
 }
 
 void PerfMeasures::processPerfResponseMsg(
-    rank_t senderPos, const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    rank_t senderPos, const SessionMsg &sessionMsg) {
   auto nakedSessionMsg = dynamic_cast<SessionPerf *>(sessionMsg.get());
   LOG4CXX_INFO_FMT(
       getSessionLogger(),
@@ -276,3 +276,5 @@ void PerfMeasures::sendPeriodicPerfMessage() {
     std::this_thread::sleep_for(sleepDuration);
   }
 }
+
+}  // namespace fbae::core::SessionLayer::PerfMeasures

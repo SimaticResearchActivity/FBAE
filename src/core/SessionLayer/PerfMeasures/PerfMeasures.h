@@ -12,13 +12,15 @@
 #include "../SessionLayer.h"
 #include "Measures.h"
 
+namespace fbae::core::SessionLayer::PerfMeasures {
+
 class PerfMeasures : public SessionLayer {
  public:
   PerfMeasures(const Arguments &arguments, rank_t rank,
-               std::unique_ptr<AlgoLayer> algoLayer);
+               std::unique_ptr<fbae::core::AlgoLayer::AlgoLayer> algoLayer);
 
   void callbackDeliver(rank_t senderPos,
-                       fbae_SessionLayer::SessionMsg msg) override;
+                       SessionMsg msg) override;
   void callbackInitDone() override;
   void execute() override;
 
@@ -53,7 +55,7 @@ class PerfMeasures : public SessionLayer {
    * @param sessionMsg Message to process.
    */
   void processPerfMeasureMsg(rank_t senderPos,
-                             const fbae_SessionLayer::SessionMsg &sessionMsg);
+                             const SessionMsg &sessionMsg);
 
   /**
    * @brief Called by @callbackDeliver to process @PerfMeasure message
@@ -61,12 +63,14 @@ class PerfMeasures : public SessionLayer {
    * @param sessionMsg Message to process.
    */
   void processPerfResponseMsg(rank_t senderPos,
-                              const fbae_SessionLayer::SessionMsg &sessionMsg);
+                              const SessionMsg &sessionMsg);
 
   /**
    * @brief Thread to send PerfMessage at @Param::frequency per second.
    */
   void sendPeriodicPerfMessage();
 };
+
+}  // namespace fbae::core::SessionLayer::PerfMeasures
 
 #endif  // FBAE_PERF_MEASURES_H

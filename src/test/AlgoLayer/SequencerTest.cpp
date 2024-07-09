@@ -10,10 +10,19 @@
 #include "AlgoLayer/Sequencer/SequencerMsg.h"
 #include "msgTemplates.h"
 
-namespace fbae_test_Sequencer {
+namespace fbae::test::AlgoLayer {
 
 using namespace std;
-using namespace fbae_SessionLayer;
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer;
+using namespace fbae::core::AlgoLayer::Sequencer;
+using namespace fbae::core::SessionLayer;
+
+using enum fbae::core::SessionLayer::SessionMsgId;
+
+using fbae::core::AlgoLayer::Sequencer::Sequencer;
+using fbae::core::CommLayer::CommStub;
+using fbae::core::SessionLayer::SessionStub;
 
 constexpr auto nbSites = 4;
 
@@ -88,13 +97,13 @@ TEST_F(SequencerTest, BroadcasterExecute) {
   EXPECT_EQ(sequencerRank, commLayerRaw->getSent()[0].first);
   // Check contents of this message
   auto broadcastMsg{
-      deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(
+      deserializeStruct<StructBroadcastMessage>(
           std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest,
+  EXPECT_EQ(MsgId::BroadcastRequest,
             broadcastMsg.msgId);
   EXPECT_EQ(myRank - 1, broadcastMsg.senderPos);  // myRank-1 because senderPos
                                                   // is 1 less than senderRank
-  EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             broadcastMsg.sessionMsg->msgId);
 
   // Check @AlgoLayer:broadcastersGroup is correct
@@ -122,7 +131,7 @@ TEST_F(SequencerTest, TotalOrderBroadcast) {
   commLayerRaw->getSent()
       .clear();  // We clear FirstBroadcast information which we already tested
                  // in previous execute() tests
-  auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg = make_shared<SessionTest>(TestMessage, "A");
   algoLayerRaw->totalOrderBroadcast(sessionMsg);
 
   // Check that 1 message was sent
@@ -131,9 +140,9 @@ TEST_F(SequencerTest, TotalOrderBroadcast) {
   EXPECT_EQ(sequencerRank, commLayerRaw->getSent()[0].first);
   // Check contents of this message
   auto broadcastRequestMsg{
-      deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(
+      deserializeStruct<StructBroadcastMessage>(
           std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::BroadcastRequest,
+  EXPECT_EQ(MsgId::BroadcastRequest,
             broadcastRequestMsg.msgId);
   EXPECT_EQ(
       myRank - 1,
@@ -156,12 +165,12 @@ TEST_F(SequencerTest, SequencerReceivesBroadcastRequest) {
   commLayerRaw->getSent()
       .clear();  // We clear FirstBroadcast information which we already tested
                  // in previous execute() tests
-  auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg = make_shared<SessionTest>(TestMessage, "A");
   constexpr rank_t senderPos = 42;
   auto algoMsgAsString{
-      serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(
-          fbae_SequencerAlgoLayer::StructBroadcastMessage{
-              fbae_SequencerAlgoLayer::MsgId::BroadcastRequest, senderPos,
+      serializeStruct<StructBroadcastMessage>(
+          StructBroadcastMessage{
+              MsgId::BroadcastRequest, senderPos,
               sessionMsg})};
   algoLayerRaw->callbackReceive(std::move(algoMsgAsString));
 
@@ -178,9 +187,9 @@ TEST_F(SequencerTest, SequencerReceivesBroadcastRequest) {
             commLayerRaw->getSent()[2].second);
   // Check contents of the first message
   auto broadcastMsg{
-      deserializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(
+      deserializeStruct<StructBroadcastMessage>(
           std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_SequencerAlgoLayer::MsgId::Broadcast, broadcastMsg.msgId);
+  EXPECT_EQ(MsgId::Broadcast, broadcastMsg.msgId);
   EXPECT_EQ(senderPos, broadcastMsg.senderPos);
   EXPECT_EQ(sessionMsg->msgId, broadcastMsg.sessionMsg->msgId);
   EXPECT_EQ(sessionMsg->getPayload(), broadcastMsg.sessionMsg->getPayload());
@@ -198,12 +207,12 @@ TEST_F(SequencerTest, ParticipantReceivesBroadcast) {
   commLayerRaw->getSent()
       .clear();  // We clear FirstBroadcast information which we already tested
                  // in previous execute() tests
-  auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg = make_shared<SessionTest>(TestMessage, "A");
   constexpr rank_t senderPos = 42;
   auto algoMsgAsString{
-      serializeStruct<fbae_SequencerAlgoLayer::StructBroadcastMessage>(
-          fbae_SequencerAlgoLayer::StructBroadcastMessage{
-              fbae_SequencerAlgoLayer::MsgId::Broadcast, senderPos,
+      serializeStruct<StructBroadcastMessage>(
+          StructBroadcastMessage{
+              MsgId::Broadcast, senderPos,
               sessionMsg})};
   algoLayerRaw->callbackReceive(std::move(algoMsgAsString));
 
@@ -237,4 +246,5 @@ TEST_F(SequencerTest, ParticipantReceivesUnknownMessage) {
       ".*Unexpected msgId.*");  // Syntax of matcher is presented at
                                 // https://google.github.io/googletest/advanced.html#regular-expression-syntax
 }
-}  // namespace fbae_test_Sequencer
+
+}  // namespace fbae::test::AlgoLayer

@@ -6,6 +6,8 @@
 
 #include "get_cpu_time.h"
 
+namespace fbae::core::SessionLayer::PerfMeasures {
+
 class Measures {
  public:
   explicit Measures(size_t nbPingMax);
@@ -27,3 +29,5 @@ class Measures {
   unsigned long long startTimeCpu{0};
   unsigned long long stopTimeCpu{0};
 };
+
+}  // namespace fbae::core::SessionLayer::PerfMeasures

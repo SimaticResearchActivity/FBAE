@@ -14,7 +14,7 @@
 
 #include "Arguments.h"
 
-namespace fbae_test_arguments {
+namespace fbae::core {
 
 using namespace std;
 
@@ -65,4 +65,4 @@ TEST_F(ArgumentsTest, commArgumentNonsense) {
             arguments.getIntInCommArgument("tcpMaxSizeForOneWrite",
                                            expectedTcpMaxSizeForOneWrite));
 }
-}  // namespace fbae_test_arguments
+}  // namespace fbae::core

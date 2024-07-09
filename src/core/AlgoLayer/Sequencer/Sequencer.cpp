@@ -9,9 +9,11 @@
 #include "SequencerMsg.h"
 
 using namespace std;
-using namespace fbae_SequencerAlgoLayer;
+using namespace fbae::core;
 
-Sequencer::Sequencer(std::unique_ptr<CommLayer> commLayer)
+namespace fbae::core::AlgoLayer::Sequencer {
+
+Sequencer::Sequencer(std::unique_ptr<CommLayer::CommLayer> commLayer)
     : AlgoLayer{std::move(commLayer), "fbae.algo.Sequencer"} {}
 
 void Sequencer::callbackReceive(std::string &&algoMsgAsString) {
@@ -86,10 +88,12 @@ void Sequencer::terminate() { getCommLayer()->terminate(); }
 std::string Sequencer::toString() { return "Sequencer"; }
 
 void Sequencer::totalOrderBroadcast(
-    const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    const SessionLayer::SessionMsg &sessionMsg) {
   // Send BroadcastRequest to sequencer
   auto s{serializeStruct<StructBroadcastMessage>(
       StructBroadcastMessage{MsgId::BroadcastRequest,
                              getPosInBroadcastersGroup().value(), sessionMsg})};
   getCommLayer()->send(sequencerRank, s);
 }
+
+}  // namespace fbae::core::AlgoLayer::Sequencer

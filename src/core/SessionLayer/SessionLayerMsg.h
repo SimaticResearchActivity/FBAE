@@ -8,10 +8,8 @@
 #include "cereal/types/chrono.hpp"
 #include "cereal/types/polymorphic.hpp"
 
-/**
- * @brief Namespace for SessionLayer.
- */
-namespace fbae_SessionLayer {
+namespace fbae::core::SessionLayer {
+
 //---------------------------------------------------
 // Messages totalOrderBroadcast between any instances of SessionLayer (or
 // subclasses)
@@ -125,8 +123,9 @@ struct SessionTest : SessionBaseClass {
 /**
  * @brief Shortcut for std::shared_ptr<fbae_SessionLayer::SessionBase>
  */
-using SessionMsg = std::shared_ptr<fbae_SessionLayer::SessionBaseClass>;
-}  // namespace fbae_SessionLayer
+using SessionMsg = std::shared_ptr<SessionBaseClass>;
+
+}  // namespace fbae::core::SessionLayer
 
 // Cereal polymorphic registration must be done outside fbae_SessionLayer
 // namespace scope We register all of these types with very short names, so that
@@ -134,9 +133,9 @@ using SessionMsg = std::shared_ptr<fbae_SessionLayer::SessionBaseClass>;
 // in serialized data. Note: The name is stored in serialized data as soon as
 // the pointer used is defined as a pointer to the base class and not the
 // pointed subclass.
-CEREAL_REGISTER_TYPE_WITH_NAME(fbae_SessionLayer::SessionBaseClass, "A")
-CEREAL_REGISTER_TYPE_WITH_NAME(fbae_SessionLayer::SessionPerf, "B")
-CEREAL_REGISTER_TYPE_WITH_NAME(fbae_SessionLayer::SessionTest, "C")
+CEREAL_REGISTER_TYPE_WITH_NAME(fbae::core::SessionLayer::SessionBaseClass, "A")
+CEREAL_REGISTER_TYPE_WITH_NAME(fbae::core::SessionLayer::SessionPerf, "B")
+CEREAL_REGISTER_TYPE_WITH_NAME(fbae::core::SessionLayer::SessionTest, "C")
 
 // We do not need to call CEREAL_REGISTER_POLYMORPHIC_RELATION() macro because
 // we call cereal::base_class in the different subclasses (see documentation of

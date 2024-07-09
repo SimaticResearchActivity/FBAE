@@ -6,10 +6,12 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/vector.hpp"
 
+namespace fbae::core::AlgoLayer::Trains {
+
 struct Train {
   uint8_t id;
   uint8_t clock;
-  std::vector<fbae_AlgoLayer::BatchSessionMsg> batches;
+  std::vector<BatchSessionMsg> batches;
 
   template <class Archive>
   void serialize(Archive& archive) {
@@ -19,7 +21,7 @@ struct Train {
 
 class Trains : public AlgoLayer {
  public:
-  explicit Trains(std::unique_ptr<CommLayer> commLayer);
+  explicit Trains(std::unique_ptr<fbae::core::CommLayer::CommLayer> commLayer);
 
   void callbackReceive(std::string&& serializedMessagePacket) override;
   void execute() override;
@@ -31,11 +33,11 @@ class Trains : public AlgoLayer {
   bool isTrainRecent(uint8_t trainId, uint8_t trainClock);
 
   void setNbTrains(int newNbTrains);
-  std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>
+  std::vector<std::vector<BatchSessionMsg>>
   getPreviousTrainsBatches() const;
   int getWaitingBatchesNb() const;
   void addWaitingBatch(int trainId,
-                       fbae_AlgoLayer::BatchSessionMsg const& batch);
+                       BatchSessionMsg const& batch);
 
  private:
   /**
@@ -46,9 +48,9 @@ class Trains : public AlgoLayer {
   /**
    * @brief Vector to keep the batches brought by the trains
    */
-  std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>
+  std::vector<std::vector<BatchSessionMsg>>
       previousTrainsBatches =
-          std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>(nbTrains);
+          std::vector<std::vector<BatchSessionMsg>>(nbTrains);
 
   /**
    * @brief Logical clocks of the trains
@@ -77,3 +79,5 @@ class Trains : public AlgoLayer {
 
   int lastTrainId = -1;
 };
+
+}  // namespace fbae::core::AlgoLayer::Trains

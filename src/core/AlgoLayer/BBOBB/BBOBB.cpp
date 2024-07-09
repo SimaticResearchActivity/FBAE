@@ -13,9 +13,11 @@
 #include "BBOBBMsg.h"
 
 using namespace std;
-using namespace fbae_BBOBBAlgoLayer;
+using namespace fbae::core;
 
-BBOBB::BBOBB(std::unique_ptr<CommLayer> commLayer)
+namespace fbae::core::AlgoLayer::BBOBB {
+
+BBOBB::BBOBB(std::unique_ptr<CommLayer::CommLayer> commLayer)
     : AlgoLayer{std::move(commLayer), "fbae.algo.BBOBB"} {}
 
 void BBOBB::callbackReceive(std::string&& algoMsgAsString) {
@@ -105,7 +107,7 @@ void BBOBB::deliverBatchSessionMsg() {
   // Note that to append currentWaveReceivedStepMsg[nbStepsInWave -
   // 1].batchesBroadcast to batches, we do not use batches.insert() but a for
   // loop in order to be able to use std::move()
-  vector<fbae_AlgoLayer::BatchSessionMsg> batches{
+  vector<BatchSessionMsg> batches{
       std::move(lastSentStepMsg.batchesBroadcast)};
   for (auto& batch :
        currentWaveReceivedStepMsg[nbStepsInWave - 1].batchesBroadcast)
@@ -195,3 +197,5 @@ void BBOBB::terminate() {
 }
 
 std::string BBOBB::toString() { return "BBOBB"; }
+
+}  // namespace fbae::core::AlgoLayer::BBOBB

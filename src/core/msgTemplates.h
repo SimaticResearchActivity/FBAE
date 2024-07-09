@@ -3,6 +3,8 @@
 #include "adaptCereal.h"
 #include "cereal/archives/binary.hpp"
 
+namespace fbae::core {
+
 /**
  * @brief Returns structure @S deserialized from @msgString
  * @details
@@ -38,3 +40,5 @@ std::string serializeStruct(S structure) {
   }  // archive goes out of scope, ensuring all contents are flushed
   return o_stream.str();
 }
+
+}  // namespace fbae::core

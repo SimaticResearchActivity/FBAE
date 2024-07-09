@@ -4,11 +4,14 @@
 
 #include "../../SessionLayer/SessionLayer.h"
 #include "../../msgTemplates.h"
-#include "LCRMessage.h"
+#include "LCR.h"
 
-using namespace fbae_LCRAlgoLayer;
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer::LCR;
 
-LCR::LCR(std::unique_ptr<CommLayer> commLayer) noexcept
+namespace fbae::core::AlgoLayer::LCR {
+
+LCR::LCR(std::unique_ptr<CommLayer::CommLayer> commLayer) noexcept
     : AlgoLayer{std::move(commLayer), "fbae.algo.LCR"} {
   // We cannot initialize the vector clock at this point in time, as we need
   // access to the session layer which is not yet initialized.
@@ -121,7 +124,7 @@ void LCR::terminate() noexcept { getCommLayer()->terminate(); }
 std::string LCR::toString() noexcept { return "LCR"; }
 
 void LCR::totalOrderBroadcast(
-    const fbae_SessionLayer::SessionMsg &sessionMessage) noexcept {
+    const fbae::core::SessionLayer::SessionMsg &sessionMessage) noexcept {
   const rank_t currentRank = getSessionLayer()->getRank();
   vectorClock[currentRank] += 1;
 
@@ -138,3 +141,5 @@ void LCR::totalOrderBroadcast(
   const auto serialized = serializeStruct<MessagePacket>(message);
   getCommLayer()->multicastMsg(serialized);
 }
+
+}  // namespace fbae::core::AlgoLayer::LCR

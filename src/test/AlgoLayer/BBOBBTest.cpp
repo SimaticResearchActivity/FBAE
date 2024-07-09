@@ -9,10 +9,19 @@
 #include "AlgoLayer/BBOBB/BBOBB.h"
 #include "msgTemplates.h"
 
-namespace fbae_test_BBOBB {
+namespace fbae::test::AlgoLayer {
 
 using namespace std;
-using namespace fbae_SessionLayer;
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer;
+using namespace fbae::core::AlgoLayer::BBOBB;
+using namespace fbae::core::SessionLayer;
+
+using enum fbae::core::SessionLayer::SessionMsgId;
+
+using fbae::core::AlgoLayer::BBOBB::BBOBB;
+using fbae::core::CommLayer::CommStub;
+using fbae::core::SessionLayer::SessionStub;
 
 auto constexpr payloadA{"A"};
 auto constexpr payloadB{"B"};
@@ -34,16 +43,16 @@ class BBOBBTest : public testing::Test {
     // Check that this message was sent to successor
     EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
     // Check contents of this message
-    auto stepMsg{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+    auto stepMsg{deserializeStruct<StepMsg>(
                 std::move(commLayerRaw->getSent()[0].second))};
-    EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg.msgId);
+    EXPECT_EQ(MsgId::Step, stepMsg.msgId);
     EXPECT_EQ(myRank, stepMsg.senderPos);
     EXPECT_EQ(0, stepMsg.wave);
     EXPECT_EQ(0, stepMsg.step);
     ASSERT_EQ(1, stepMsg.batchesBroadcast.size());  // Just 1 batch message
     EXPECT_EQ(myRank, stepMsg.batchesBroadcast[0]
                 .senderPos);  // Sender of this batch messages is 0
-    EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
+    EXPECT_EQ(FirstBroadcast,
                   stepMsg.batchesBroadcast[0].batchSessionMsg[0]->msgId);
 
     // Check @AlgoLayer:broadcastersGroup is correct
@@ -137,7 +146,7 @@ TEST_F(BBOBBTest, TotalOrderBroadcast) {
       .clear();  // We clear FirstBroadcast information which we already tested
                  // in previous execute() tests
 
-  auto sessionMsg = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg = make_shared<SessionTest>(TestMessage, "A");
   algoLayerRaw->totalOrderBroadcast(sessionMsg);
 
   // Check that no message was sent as message is stored in
@@ -149,77 +158,77 @@ TEST_F(BBOBBTest, TotalOrderBroadcast) {
 }
 
 static string buildStepMsg(rank_t stepSender, uint8_t wave, uint8_t step,
-                           vector<fbae_AlgoLayer::BatchSessionMsg> const& v) {
-  return serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
-      fbae_BBOBBAlgoLayer::StepMsg{fbae_BBOBBAlgoLayer::MsgId::Step, stepSender,
+                           vector<AlgoLayer::BatchSessionMsg> const& v) {
+  return serializeStruct<StepMsg>(
+      StepMsg{MsgId::Step, stepSender,
                                    wave, step, v});
 }
 
 static string buildStepMsg(rank_t stepSender, uint8_t wave, uint8_t step,
                            rank_t batchSender, string const& payload) {
   auto sessionMsg =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload);
-  fbae_AlgoLayer::BatchSessionMsg batch{batchSender,
+      make_shared<SessionTest>(TestMessage, payload);
+  AlgoLayer::BatchSessionMsg batch{batchSender,
                                         vector<SessionMsg>{sessionMsg}};
 
   return buildStepMsg(stepSender, wave, step,
-                      vector<fbae_AlgoLayer::BatchSessionMsg>{batch});
+                      vector<AlgoLayer::BatchSessionMsg>{batch});
 }
 
 static string buildStepMsg(rank_t stepSender, uint8_t wave, uint8_t step,
                            rank_t batchSender, string const& payload1,
                            string const& payload2) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
+      make_shared<SessionTest>(TestMessage, payload1);
   auto sessionMsg2 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload2);
-  fbae_AlgoLayer::BatchSessionMsg batch{
+      make_shared<SessionTest>(TestMessage, payload2);
+  AlgoLayer::BatchSessionMsg batch{
       batchSender, vector<SessionMsg>{sessionMsg1, sessionMsg2}};
 
   return buildStepMsg(stepSender, wave, step,
-                      vector<fbae_AlgoLayer::BatchSessionMsg>{batch});
+                      vector<AlgoLayer::BatchSessionMsg>{batch});
 }
 
 static string buildStepMsg(rank_t stepSender, uint8_t wave, uint8_t step,
                            rank_t batch1Sender, string const& payload1,
                            rank_t batch2Sender, string const& payload2) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
-  fbae_AlgoLayer::BatchSessionMsg batch1{batch1Sender,
+      make_shared<SessionTest>(TestMessage, payload1);
+  AlgoLayer::BatchSessionMsg batch1{batch1Sender,
                                          vector<SessionMsg>{sessionMsg1}};
 
   auto sessionMsg2 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload2);
-  fbae_AlgoLayer::BatchSessionMsg batch2{batch2Sender,
+      make_shared<SessionTest>(TestMessage, payload2);
+  AlgoLayer::BatchSessionMsg batch2{batch2Sender,
                                          vector<SessionMsg>{sessionMsg2}};
 
   return buildStepMsg(stepSender, wave, step,
-                      vector<fbae_AlgoLayer::BatchSessionMsg>{batch1, batch2});
+                      vector<AlgoLayer::BatchSessionMsg>{batch1, batch2});
 }
 
 static string buildComplexStepMsg(rank_t stepSender, uint8_t wave, uint8_t step,
                                   rank_t batch1Sender, rank_t batch2Sender,
                                   rank_t batch3Sender) {
   auto sessionMsg11 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payloadA);
+      make_shared<SessionTest>(TestMessage, payloadA);
   auto sessionMsg12 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payloadB);
-  fbae_AlgoLayer::BatchSessionMsg batch1{
+      make_shared<SessionTest>(TestMessage, payloadB);
+  AlgoLayer::BatchSessionMsg batch1{
       batch1Sender, vector<SessionMsg>{sessionMsg11, sessionMsg12}};
 
   auto sessionMsg2 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payloadD);
-  fbae_AlgoLayer::BatchSessionMsg batch2{batch2Sender,
+      make_shared<SessionTest>(TestMessage, payloadD);
+  AlgoLayer::BatchSessionMsg batch2{batch2Sender,
                                          vector<SessionMsg>{sessionMsg2}};
 
   auto sessionMsg3 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payloadC);
-  fbae_AlgoLayer::BatchSessionMsg batch3{batch3Sender,
+      make_shared<SessionTest>(TestMessage, payloadC);
+  AlgoLayer::BatchSessionMsg batch3{batch3Sender,
                                          vector<SessionMsg>{sessionMsg3}};
 
   return buildStepMsg(
       stepSender, wave, step,
-      vector<fbae_AlgoLayer::BatchSessionMsg>{batch1, batch2, batch3});
+      vector<AlgoLayer::BatchSessionMsg>{batch1, batch2, batch3});
 }
 
 TEST_F(BBOBBTest, ExecuteWith2SitesAndRank1ReceiveStepInWave) {
@@ -239,24 +248,24 @@ TEST_F(BBOBBTest, ExecuteWith2SitesAndRank1ReceiveStepInWave) {
   // Check all messages are delivered in the correct order
   ASSERT_EQ(3, sessionStub.getDelivered().size());
   EXPECT_EQ(0, sessionStub.getDelivered()[0].first);
-  EXPECT_EQ(SessionMsgId::TestMessage,
+  EXPECT_EQ(TestMessage,
             sessionStub.getDelivered()[0].second->msgId);
   EXPECT_EQ(payloadA, sessionStub.getDelivered()[0].second->getPayload());
   EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
-  EXPECT_EQ(SessionMsgId::TestMessage,
+  EXPECT_EQ(TestMessage,
             sessionStub.getDelivered()[1].second->msgId);
   EXPECT_EQ(payloadB, sessionStub.getDelivered()[1].second->getPayload());
   EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
-  EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             sessionStub.getDelivered()[2].second->msgId);
 
   // Check a new Step message has been sent
   ASSERT_EQ(1, commLayerRaw->getSent().size());
   EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
   // Check contents of this message
-  auto stepMsg{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg.msgId);
   EXPECT_EQ(myRank, stepMsg.senderPos);
   EXPECT_EQ(1, stepMsg.wave);
   EXPECT_EQ(0, stepMsg.step);
@@ -298,7 +307,7 @@ TEST_F(BBOBBTest,
   EXPECT_EQ(0, sessionStub.getDelivered()[1].first);
   EXPECT_EQ(payloadB, sessionStub.getDelivered()[1].second->getPayload());
   EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
-  EXPECT_EQ(fbae_SessionLayer::SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             sessionStub.getDelivered()[2].second->msgId);
   EXPECT_EQ(0, sessionStub.getDelivered()[3].first);
   EXPECT_EQ(payloadC, sessionStub.getDelivered()[3].second->getPayload());
@@ -310,9 +319,9 @@ TEST_F(BBOBBTest,
   // Check message 0, i.e. first sent message
   EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
   // Check contents of message 0
-  auto stepMsg0{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg0{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg0.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg0.msgId);
   EXPECT_EQ(myRank, stepMsg0.senderPos);
   EXPECT_EQ(1, stepMsg0.wave);
   EXPECT_EQ(0, stepMsg0.step);
@@ -320,9 +329,9 @@ TEST_F(BBOBBTest,
   // Check message 1, i.e. second sent message3
   EXPECT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[1].first);
   // Check contents of message 1
-  auto stepMsg1{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg1{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[1].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg1.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg1.msgId);
   EXPECT_EQ(myRank, stepMsg1.senderPos);
   EXPECT_EQ(2, stepMsg1.wave);
   EXPECT_EQ(0, stepMsg1.step);
@@ -415,9 +424,9 @@ TEST_F(
   algoLayerRaw->callbackReceive(buildStepMsg(0, 0, 0, 0, payloadA, payloadB));
 
   EXPECT_EQ(3, commLayerRaw->getSent()[0].first);
-  auto stepMsg0{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg0{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[0].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg0.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg0.msgId);
   EXPECT_EQ(myRank, stepMsg0.senderPos);
   EXPECT_EQ(0, stepMsg0.wave);
   EXPECT_EQ(1, stepMsg0.step);
@@ -428,7 +437,7 @@ TEST_F(
 
   EXPECT_EQ(myRank, stepMsg0.batchesBroadcast[0].senderPos);
   ASSERT_EQ(1, stepMsg0.batchesBroadcast[0].batchSessionMsg.size());
-  EXPECT_EQ(SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             stepMsg0.batchesBroadcast[0].batchSessionMsg[0]->msgId);
 
   EXPECT_EQ(0, stepMsg0.batchesBroadcast[1].senderPos);
@@ -464,9 +473,9 @@ TEST_F(
   //                                              0 & SessionMsg 'G' from 7 &
   //                                              SessionMsg 'D' from sender 5)
   EXPECT_EQ(5, commLayerRaw->getSent()[1].first);
-  auto stepMsg02{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg02{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[1].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg02.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg02.msgId);
   EXPECT_EQ(myRank, stepMsg02.senderPos);
   EXPECT_EQ(0, stepMsg02.wave);
   EXPECT_EQ(2, stepMsg02.step);
@@ -474,7 +483,7 @@ TEST_F(
 
   EXPECT_EQ(myRank, stepMsg02.batchesBroadcast[0].senderPos);
   ASSERT_EQ(1, stepMsg02.batchesBroadcast[0].batchSessionMsg.size());
-  EXPECT_EQ(SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             stepMsg02.batchesBroadcast[0].batchSessionMsg[0]->msgId);
 
   EXPECT_EQ(0, stepMsg02.batchesBroadcast[1].senderPos);
@@ -511,7 +520,7 @@ TEST_F(
   EXPECT_EQ(payloadB, sessionStub.getDelivered()[1].second->getPayload());
 
   EXPECT_EQ(myRank, sessionStub.getDelivered()[2].first);
-  EXPECT_EQ(SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             sessionStub.getDelivered()[2].second->msgId);
 
   EXPECT_EQ(3, sessionStub.getDelivered()[3].first);
@@ -525,9 +534,9 @@ TEST_F(
 
   // Check c. sends step 0 message to 2 in wave 1 (empty)
   EXPECT_EQ(2, commLayerRaw->getSent()[2].first);
-  auto stepMsg10{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg10{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[2].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg10.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg10.msgId);
   EXPECT_EQ(myRank, stepMsg10.senderPos);
   EXPECT_EQ(1, stepMsg10.wave);
   EXPECT_EQ(0, stepMsg10.step);
@@ -535,9 +544,9 @@ TEST_F(
 
   // Check d. sends step 1 message to 3 in wave 1 (SessionMsg 'E' from sender 0)
   EXPECT_EQ(3, commLayerRaw->getSent()[3].first);
-  auto stepMsg11{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg11{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[3].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg11.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg11.msgId);
   EXPECT_EQ(myRank, stepMsg11.senderPos);
   EXPECT_EQ(1, stepMsg11.wave);
   EXPECT_EQ(1, stepMsg11.step);
@@ -552,9 +561,9 @@ TEST_F(
   //                                               & SessionMsg 'F' from sender
   //                                               7)
   EXPECT_EQ(5, commLayerRaw->getSent()[4].first);
-  auto stepMsg12{deserializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
+  auto stepMsg12{deserializeStruct<StepMsg>(
       std::move(commLayerRaw->getSent()[4].second))};
-  EXPECT_EQ(fbae_BBOBBAlgoLayer::MsgId::Step, stepMsg12.msgId);
+  EXPECT_EQ(MsgId::Step, stepMsg12.msgId);
   EXPECT_EQ(myRank, stepMsg12.senderPos);
   EXPECT_EQ(1, stepMsg12.wave);
   EXPECT_EQ(2, stepMsg12.step);
@@ -583,14 +592,14 @@ TEST_F(BBOBBTest, ExecuteWith2SitesAndRank1ReceiveStepInIncorrectWave) {
                  // in previous execute() tests
 
   // Prepare Step message to be received in incorrect wave from sender 0
-  auto sessionMsgE = make_shared<SessionTest>(SessionMsgId::TestMessage, "E");
-  auto sessionMsgF = make_shared<SessionTest>(SessionMsgId::TestMessage, "E");
+  auto sessionMsgE = make_shared<SessionTest>(TestMessage, "E");
+  auto sessionMsgF = make_shared<SessionTest>(TestMessage, "E");
   std::vector<SessionMsg> vWave2{sessionMsgE, sessionMsgF};
-  fbae_AlgoLayer::BatchSessionMsg batchSessionMsgWave2{0, vWave2};
-  auto sStepWave2{serializeStruct<fbae_BBOBBAlgoLayer::StepMsg>(
-      fbae_BBOBBAlgoLayer::StepMsg{
-          fbae_BBOBBAlgoLayer::MsgId::Step, 0, 2, 0,
-          vector<fbae_AlgoLayer::BatchSessionMsg>{batchSessionMsgWave2}})};
+  AlgoLayer::BatchSessionMsg batchSessionMsgWave2{0, vWave2};
+  auto sStepWave2{serializeStruct<StepMsg>(
+      StepMsg{
+          MsgId::Step, 0, 2, 0,
+          vector<fbae::core::AlgoLayer::BatchSessionMsg>{batchSessionMsgWave2}})};
   EXPECT_DEATH(
       { algoLayerRaw->callbackReceive(std::move(sStepWave2)); },
       ".*Unexpected wave.*");  // Syntax of matcher is presented at
@@ -616,4 +625,5 @@ TEST_F(BBOBBTest, ExecuteWith2SitesAndRank1ReceiveUnknownMessage) {
       ".*Unexpected msgId.*");  // Syntax of matcher is presented at
                                 // https://google.github.io/googletest/advanced.html#regular-expression-syntax
 }
-}  // namespace fbae_test_BBOBB
+
+}  // namespace fbae::test::AlgoLayer

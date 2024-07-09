@@ -8,13 +8,22 @@
 
 #include "../core/msgTemplates.h"
 
+namespace fbae::core::SessionLayer {
+
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer;
+
+using enum fbae::core::SessionLayer::SessionMsgId;
+
+using fbae::core::AlgoLayer::AlgoLayer;
+
 SessionStub::SessionStub(const Arguments &arguments, rank_t rank,
                          std::unique_ptr<AlgoLayer> algoLayer)
     : SessionLayer(arguments, rank, std::move(algoLayer),
                    "fbae.session.phony") {}
 
 void SessionStub::callbackDeliver(rank_t senderPos,
-                                  fbae_SessionLayer::SessionMsg msg) {
+                                  SessionMsg msg) {
   delivered.emplace_back(senderPos, msg);
 }
 
@@ -23,8 +32,8 @@ void SessionStub::callbackInitDone() {
   // We simulate the sending fo FirstBroadcast as done in @PerfMeasures class.
   if (getAlgoLayer()->isBroadcastingMessages()) {
     auto sessionMsg =
-        std::make_shared<fbae_SessionLayer::SessionFirstBroadcast>(
-            fbae_SessionLayer::SessionMsgId::FirstBroadcast);
+        std::make_shared<SessionFirstBroadcast>(
+            FirstBroadcast);
     getAlgoLayer()->totalOrderBroadcast(sessionMsg);
   }
 }
@@ -34,7 +43,7 @@ void SessionStub::execute() {
   assert(false);
 }
 
-std::vector<std::pair<rank_t, fbae_SessionLayer::SessionMsg>>
+std::vector<std::pair<rank_t, SessionMsg>>
     &SessionStub::getDelivered() {
   return delivered;
 }
@@ -42,3 +51,6 @@ std::vector<std::pair<rank_t, fbae_SessionLayer::SessionMsg>>
 bool SessionStub::isCallbackInitDoneCalled() const {
   return callbackInitDoneCalled;
 }
+
+}  // namespace fbae::core::SessionLayer
+

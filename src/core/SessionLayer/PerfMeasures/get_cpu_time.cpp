@@ -12,7 +12,7 @@
 // WARNING: Under Windows, you must have a different an elapsed time of at least
 // 100 milliseconds,
 //          otherwaise values returned by get_cpu_time() are not precise enough.
-unsigned long long get_cpu_time() {
+unsigned long long fbae::core::SessionLayer::PerfMeasures::get_cpu_time() {
   FILETIME start;
   FILETIME exit;
   FILETIME kernel;
@@ -35,5 +35,5 @@ unsigned long long get_cpu_time() {
 #else
 #include <ctime>
 
-unsigned long long get_cpu_time() { return (unsigned long long)clock(); }
+unsigned long long fbae::core::SessionLayer::PerfMeasures::get_cpu_time() { return (unsigned long long)clock(); }
 #endif

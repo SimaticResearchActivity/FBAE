@@ -6,6 +6,8 @@
 #define FBAE_COMM_STUB_H
 #include "CommLayer/CommLayer.h"
 
+namespace fbae::core::CommLayer {
+
 class CommStub : public CommLayer {
  public:
   explicit CommStub();
@@ -15,7 +17,7 @@ class CommStub : public CommLayer {
   void multicastMsg(const std::string &algoMsgAsString) override;
   void openDestAndWaitIncomingMsg(std::vector<rank_t> const &dest,
                                   size_t aNbAwaitedConnections,
-                                  AlgoLayer *aAlgoLayer) override;
+                                  fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) override;
   void send(rank_t r, const std::string &algoMsgAsString) override;
   void terminate() override;
   std::string toString() override;
@@ -37,5 +39,7 @@ class CommStub : public CommLayer {
    */
   std::vector<std::pair<rank_t, std::string>> sent;
 };
+
+}  // namespace fbae::core::CommLayer
 
 #endif  // FBAE_COMM_STUB_H

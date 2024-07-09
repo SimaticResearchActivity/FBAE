@@ -13,9 +13,11 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
 
+namespace fbae::core::AlgoLayer::BBOBB {
+
 class BBOBB : public AlgoLayer {
  public:
-  explicit BBOBB(std::unique_ptr<CommLayer> commLayer);
+  explicit BBOBB(std::unique_ptr<fbae::core::CommLayer::CommLayer> commLayer);
   void callbackReceive(std::string&& algoMsgAsString) override;
   void callbackInitDone() override;
   void execute() override;
@@ -42,7 +44,7 @@ class BBOBB : public AlgoLayer {
   /**
    * @brief Received @Step messages which belong to current wave.
    */
-  std::map<int, fbae_BBOBBAlgoLayer::StepMsg> currentWaveReceivedStepMsg;
+  std::map<int, StepMsg> currentWaveReceivedStepMsg;
 
   /**
    * @brief Delivers all SessionMsg contained in the different batches of
@@ -53,7 +55,7 @@ class BBOBB : public AlgoLayer {
   /**
    * @brief Last @Step message which has been sent.
    */
-  fbae_BBOBBAlgoLayer::StepMsg lastSentStepMsg;
+  StepMsg lastSentStepMsg;
 
   /**
    * @brief The number of steps in each wave is also the number of peers this
@@ -65,7 +67,7 @@ class BBOBB : public AlgoLayer {
   /**
    * @brief Received @Step messages which belong to next wave.
    */
-  std::map<int, fbae_BBOBBAlgoLayer::StepMsg> nextWaveReceivedStepMsg;
+  std::map<int, StepMsg> nextWaveReceivedStepMsg;
 
   /**
    * @brief Vectors of positions of outgoing peers
@@ -78,4 +80,7 @@ class BBOBB : public AlgoLayer {
    */
   void processStepMsg(std::string&& algoMsgAsString);
 };
+
+}  // namespace fbae::core::AlgoLayer::BBOBB
+
 #endif  // FBAE_BBOBB_H

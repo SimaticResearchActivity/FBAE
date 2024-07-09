@@ -91,7 +91,7 @@ arguments
 
 using namespace std;
 
-namespace mlib {
+namespace fbae::core {
 
 ///  Initialize parser
 OptParser::OptParser() : nextop(cmd.begin()) {}
@@ -613,4 +613,4 @@ void OptParser::format_arg(std::string& str, const opt& option,
   }
 }
 
-}  // namespace mlib
+}  // namespace fbae::core

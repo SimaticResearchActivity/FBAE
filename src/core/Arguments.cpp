@@ -7,6 +7,8 @@
 #include "cereal/types/tuple.hpp"
 #include "cereal/types/vector.hpp"
 
+namespace fbae::core {
+
 const std::string_view networkLevelMulticastAddressForTests{"239.255.0.1"};
 
 Arguments::Arguments(std::vector<HostTuple> const& sites,
@@ -22,7 +24,7 @@ Arguments::Arguments(std::vector<HostTuple> const& sites,
   }
 }
 
-Arguments::Arguments(mlib::OptParserExtended const& parser)
+Arguments::Arguments(fbae::core::OptParserExtended const& parser)
     : nbMsg{parser.getoptIntRequired('n', logger)},
       rank{static_cast<rank_t>(parser.getoptIntRequired('r', logger))},
       sizeMsg{parser.getoptIntRequired('s', logger)},
@@ -208,3 +210,5 @@ int Arguments::getWarmupCooldown() const { return warmupCooldown; }
 bool Arguments::isUsingNetworkLevelMulticast() const {
   return usingNetworkLevelMulticast;
 }
+
+}  // namespace fbae::core

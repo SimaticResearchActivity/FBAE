@@ -13,13 +13,15 @@
 #include "../CommLayer.h"
 #include "boost/asio.hpp"
 
+namespace fbae::core::CommLayer::Tcp {
+
 class Tcp : public CommLayer {
  public:
   explicit Tcp();
   void multicastMsg(const std::string &algoMsgAsString) override;
   void openDestAndWaitIncomingMsg(std::vector<rank_t> const &dest,
                                   size_t nbAwaitedConnections,
-                                  AlgoLayer *aAlgoLayer) override;
+                                  fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) override;
   void send(rank_t r, const std::string &algoMsgAsString) override;
   void terminate() override;
   std::string toString() override;
@@ -115,3 +117,5 @@ class Tcp : public CommLayer {
    */
   std::map<rank_t, std::unique_ptr<boost::asio::ip::tcp::socket>> rank2sock;
 };
+
+}  // namespace fbae::core::CommLayer::Tcp

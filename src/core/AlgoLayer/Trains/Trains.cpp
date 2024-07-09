@@ -9,8 +9,10 @@
 
 using namespace std;
 
-Trains::Trains(unique_ptr<CommLayer> commLayer)
-    : AlgoLayer(move(commLayer), "fbae.algo.Trains") {}
+namespace fbae::core::AlgoLayer::Trains {
+
+Trains::Trains(unique_ptr<fbae::core::CommLayer::CommLayer> commLayer)
+    : AlgoLayer(std::move(commLayer), "fbae.algo.Trains") {}
 
 void Trains::callbackReceive(string&& serializedMessagePacket) {
   if (algoTerminated) {
@@ -29,7 +31,7 @@ void Trains::callbackReceive(string&& serializedMessagePacket) {
     exit(EXIT_FAILURE);
   }
   if (isTrainRecent(trainId, trainClock)) {
-    processTrain(move(serializedMessagePacket));
+    processTrain(std::move(serializedMessagePacket));
   } else {
     LOG4CXX_FATAL_FMT(
         getAlgoLogger(),
@@ -46,7 +48,7 @@ void Trains::processTrain(string&& serializedMessagePacket) {
   If it is the same train that brought the batches
   Then it means it has done a complete loop; so every machine should have
   received it */
-  vector<fbae_AlgoLayer::BatchSessionMsg> batchesToDeliver =
+  vector<BatchSessionMsg> batchesToDeliver =
       previousTrainsBatches[train.id];
   previousTrainsBatches[train.id].clear();
 
@@ -110,7 +112,7 @@ void Trains::execute() {
   }
 
   previousTrainsBatches =
-      std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>>(nbTrains);
+      std::vector<std::vector<BatchSessionMsg>>(nbTrains);
   trainsClock = std::vector<uint8_t>(nbTrains, 0);
 
   std::vector<rank_t> broadcasters(sitesCount);
@@ -170,7 +172,7 @@ bool Trains::isTrainRecent(uint8_t trainId, uint8_t trainClock) {
 
 void Trains::setNbTrains(int newNbTrains) { nbTrains = newNbTrains; }
 
-vector<vector<fbae_AlgoLayer::BatchSessionMsg>>
+vector<vector<fbae::core::AlgoLayer::BatchSessionMsg>>
 Trains::getPreviousTrainsBatches() const {
   return previousTrainsBatches;
 }
@@ -184,6 +186,8 @@ int Trains::getWaitingBatchesNb() const {
 }
 
 void Trains::addWaitingBatch(int trainId,
-                             fbae_AlgoLayer::BatchSessionMsg const& batch) {
+                             BatchSessionMsg const& batch) {
   previousTrainsBatches[trainId].push_back(batch);
 }
+
+}  // namespace fbae::core::AlgoLayer::Trains

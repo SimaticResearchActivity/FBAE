@@ -10,9 +10,16 @@
 #include "../SessionLayer/SessionStub.h"
 #include "CommLayer/Tcp/Tcp.h"
 
-using namespace std;
+namespace fbae::test::CommLayer {
 
-namespace fbae_test_Tcp {
+using namespace std;
+using namespace fbae::core;
+
+using fbae::core::AlgoLayer::AlgoStub;
+using fbae::core::CommLayer::CommLayer;
+using fbae::core::CommLayer::Tcp::Tcp;
+using fbae::core::SessionLayer::SessionStub;
+using fbae::core::AlgoLayer::InitDoneSupervisor;
 
 /**
  * @brief Delay to wait between message sending and receive variable content
@@ -139,4 +146,4 @@ TEST(TcpTest, Main) {
   host3.waitAsync();
 }
 
-}  // namespace fbae_test_Tcp
+}  // namespace fbae::test::CommLayer

@@ -19,9 +19,11 @@ using boost::asio::use_awaitable_t;
 using boost::asio::ip::tcp;
 using default_token = as_tuple_t<use_awaitable_t<>>;
 using tcp_acceptor = default_token::as_default_on_t<tcp::acceptor>;
-using tcp_socket = default_token::as_default_on_t<tcp::socket>;
 namespace this_coro = boost::asio::this_coro;
 using namespace std;
+using namespace fbae::core;
+
+namespace fbae::core::CommLayer::Tcp {
 
 Tcp::Tcp() : CommLayer{"fbae.comm.TCP"} {}
 
@@ -259,7 +261,7 @@ void Tcp::multicastMsg(const std::string& algoMsgAsString) {
 
 void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
                                      size_t nbAwaitedConnections,
-                                     AlgoLayer* aAlgoLayer) {
+                                     AlgoLayer::AlgoLayer* aAlgoLayer) {
   setAlgoLayer(aAlgoLayer);
 
   const auto arguments = getAlgoLayer()->getSessionLayer()->getArguments();
@@ -340,3 +342,5 @@ void Tcp::terminate() {
 }
 
 std::string Tcp::toString() { return "TCP"; }
+
+}  // namespace fbae::core::CommLayer::Tcp

@@ -6,7 +6,11 @@
 
 #include <cassert>
 
-AlgoStub::AlgoStub(std::unique_ptr<CommLayer> commLayer,
+namespace fbae::core::AlgoLayer {
+
+using namespace fbae::core;
+
+AlgoStub::AlgoStub(std::unique_ptr<CommLayer::CommLayer> commLayer,
                    InitDoneSupervisor &initDoneSupervisor)
     : AlgoLayer::AlgoLayer{std::move(commLayer),
                            "fbae.test.AlgoLayer.AlgoStub"},
@@ -26,7 +30,7 @@ void AlgoStub::execute() {
 std::vector<std::string> &AlgoStub::getReceived() { return received; }
 
 void AlgoStub::totalOrderBroadcast(
-    const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    const SessionLayer::SessionMsg &sessionMsg) {
   // No sense to call this method in the context of tests.
   assert(false);
 }
@@ -41,3 +45,5 @@ std::string AlgoStub::toString() {
   assert(false);
   return "AlgoStub";
 }
+
+}  // namespace fbae::core::AlgoLayer

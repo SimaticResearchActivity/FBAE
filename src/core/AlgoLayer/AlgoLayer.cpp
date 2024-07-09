@@ -5,11 +5,13 @@
 #include "../SessionLayer/SessionLayer.h"
 
 using namespace std;
-using namespace fbae_AlgoLayer;
+using namespace fbae::core;
 
-AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer> commLayer,
+namespace fbae::core::AlgoLayer {
+
+AlgoLayer::AlgoLayer(std::unique_ptr<CommLayer::CommLayer> commLayer,
                      std::string const &logger_name)
-    : commLayer{std::move(commLayer)}, m_logger{fbae::getLogger(logger_name)} {
+    : commLayer{std::move(commLayer)}, m_logger{Logger::getLogger(logger_name)} {
   this->commLayer->setAlgoLayer(this);
 }
 
@@ -19,7 +21,7 @@ const std::vector<rank_t> &AlgoLayer::getBroadcastersGroup() const {
   return broadcastersGroup;
 }
 
-CommLayer *AlgoLayer::getCommLayer() const { return commLayer.get(); }
+CommLayer::CommLayer *AlgoLayer::getCommLayer() const { return commLayer.get(); }
 
 std::optional<rank_t> AlgoLayer::getPosInBroadcastersGroup() const {
   auto rank = sessionLayer->getRank();
@@ -30,7 +32,7 @@ std::optional<rank_t> AlgoLayer::getPosInBroadcastersGroup() const {
              : std::nullopt;
 }
 
-SessionLayer *AlgoLayer::getSessionLayer() const { return sessionLayer; }
+SessionLayer::SessionLayer *AlgoLayer::getSessionLayer() const { return sessionLayer; }
 
 bool AlgoLayer::isBroadcastingMessages() const {
   return getPosInBroadcastersGroup().has_value();
@@ -43,13 +45,13 @@ void AlgoLayer::setBroadcastersGroup(std::vector<rank_t> &&aBroadcastersGroup) {
   std::ranges::sort(broadcastersGroup);
 }
 
-void AlgoLayer::setSessionLayer(SessionLayer *aSessionLayer) {
+void AlgoLayer::setSessionLayer(SessionLayer::SessionLayer *aSessionLayer) {
   sessionLayer = aSessionLayer;
 }
 
 void AlgoLayer::batchNoDeadlockCallbackDeliver(
     rank_t senderPos,
-    std::shared_ptr<fbae_SessionLayer::SessionBaseClass> const &msg) {
+    std::shared_ptr<SessionLayer::SessionBaseClass> const &msg) {
   // We surround the call to @callbackDeliver method with shortcutBatchCtrl =
   // true; and shortcutBatchCtrl = false; This is because callbackDeliver() may
   // lead to a call to
@@ -62,20 +64,20 @@ void AlgoLayer::batchNoDeadlockCallbackDeliver(
   batchCtrlShortcut = false;
 }
 
-std::optional<fbae_AlgoLayer::BatchSessionMsg>
+std::optional<BatchSessionMsg>
 AlgoLayer::batchGetBatchMsgsWithLock(rank_t senderPos) {
   lock_guard lck(batchCtrlMtx);
   if (batchWaitingSessionMsg.empty()) {
     return std::nullopt;
   } else {
-    auto msg = std::make_optional<fbae_AlgoLayer::BatchSessionMsg>(
+    auto msg = std::make_optional<BatchSessionMsg>(
         {senderPos, std::move(batchWaitingSessionMsg)});
     batchWaitingSessionMsg.clear();
     return msg;
   }
 }
 
-std::optional<fbae_AlgoLayer::BatchSessionMsg> AlgoLayer::batchGetBatchMsgs(
+std::optional<BatchSessionMsg> AlgoLayer::batchGetBatchMsgs(
     rank_t senderPos) {
   auto msg{batchGetBatchMsgsWithLock(senderPos)};
   batchCtrlCondVar.notify_one();
@@ -83,7 +85,7 @@ std::optional<fbae_AlgoLayer::BatchSessionMsg> AlgoLayer::batchGetBatchMsgs(
 }
 
 void AlgoLayer::totalOrderBroadcast(
-    const fbae_SessionLayer::SessionMsg &sessionMsg) {
+    const SessionLayer::SessionMsg &sessionMsg) {
   unique_lock lck(batchCtrlMtx);
   batchCtrlCondVar.wait(lck, [this] {
     return (batchWaitingSessionMsg.size() <
@@ -101,9 +103,11 @@ void AlgoLayer::batchRegisterThreadForFullBatchCtrl() {
       std::this_thread::get_id());
 }
 
-fbae::LoggerPtr AlgoLayer::getAlgoLogger() const { return m_logger; }
+Logger::LoggerPtr AlgoLayer::getAlgoLogger() const { return m_logger; }
 
-vector<fbae_SessionLayer::SessionMsg> AlgoLayer::getBatchWaitingSessionMsg()
+vector<SessionLayer::SessionMsg> AlgoLayer::getBatchWaitingSessionMsg()
     const {
   return batchWaitingSessionMsg;
 }
+
+}  // namespace fbae::core::AlgoLayer

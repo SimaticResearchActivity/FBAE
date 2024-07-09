@@ -4,6 +4,8 @@
 #include <cassert>
 #include <numeric>
 
+namespace fbae::core::SessionLayer::PerfMeasures {
+
 Measures::Measures(size_t nbPingMax) : pings(nbPingMax) {}
 
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed) {
@@ -68,3 +70,5 @@ void Measures::setStopTime() {
   stopTimeCpu = get_cpu_time();
   measuresUndergoing = true;
 }
+
+}  // namespace fbae::core::SessionLayer::PerfMeasures

@@ -5,10 +5,19 @@
 #include "AlgoLayer/Trains/Trains.h"
 #include "msgTemplates.h"
 
-namespace fbae_test_Trains {
+namespace fbae::test::AlgoLayer {
 
 using namespace std;
-using namespace fbae_SessionLayer;
+using namespace fbae::core;
+using namespace fbae::core::AlgoLayer;
+using namespace fbae::core::AlgoLayer::Trains;
+using namespace fbae::core::SessionLayer;
+
+using enum fbae::core::SessionLayer::SessionMsgId;
+
+using fbae::core::AlgoLayer::Trains::Trains;
+using fbae::core::CommLayer::CommStub;
+using fbae::core::SessionLayer::SessionStub;
 
 auto constexpr payloadA{"A"};
 auto constexpr payloadB{"B"};
@@ -79,10 +88,10 @@ TEST_F(TrainsTest, ExecuteWith4SitesAndRank0And1Train) {
   ASSERT_EQ(2, train.clock);
   ASSERT_EQ(1, train.batches.size());
 
-  fbae_AlgoLayer::BatchSessionMsg batch = train.batches[0];
+  BatchSessionMsg batch = train.batches[0];
   ASSERT_EQ(myRank, batch.senderPos);
-  fbae_SessionLayer::SessionMsg message = batch.batchSessionMsg[0];
-  ASSERT_EQ(SessionMsgId::FirstBroadcast, message->msgId);
+  SessionMsg message = batch.batchSessionMsg[0];
+  ASSERT_EQ(FirstBroadcast, message->msgId);
 
   // Check if TotalOrderBroadcast is empty
   ASSERT_EQ(0, algoLayerRaw->getBatchWaitingSessionMsg().size());
@@ -117,10 +126,10 @@ TEST_F(TrainsTest, ExecuteWith4SitesAndRank0And4Train) {
   ASSERT_EQ(2, trainInit.clock);
   ASSERT_EQ(1, trainInit.batches.size());
 
-  fbae_AlgoLayer::BatchSessionMsg batch = trainInit.batches[0];
+  BatchSessionMsg batch = trainInit.batches[0];
   ASSERT_EQ(myRank, batch.senderPos);
-  fbae_SessionLayer::SessionMsg message = batch.batchSessionMsg[0];
-  ASSERT_EQ(SessionMsgId::FirstBroadcast, message->msgId);
+  SessionMsg message = batch.batchSessionMsg[0];
+  ASSERT_EQ(FirstBroadcast, message->msgId);
 
   // Check contents of the other trains
   for (int i = 1; i < nbTrains; i++) {
@@ -201,7 +210,7 @@ static string buildTrain(uint8_t trainId) {
 }
 
 static string buildTrain(
-    uint8_t trainId, vector<fbae_AlgoLayer::BatchSessionMsg> const& batches) {
+    uint8_t trainId, vector<BatchSessionMsg> const& batches) {
   return serializeStruct<Train>(Train{trainId, 3, batches});
   // 3 because the train should have at least go to another machine
 }
@@ -209,43 +218,43 @@ static string buildTrain(
 static string buildTrain(uint8_t trainId, rank_t batchSender1,
                          string const& payload1) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
-  fbae_AlgoLayer::BatchSessionMsg batch{batchSender1,
+      make_shared<SessionTest>(TestMessage, payload1);
+  BatchSessionMsg batch{batchSender1,
                                         vector<SessionMsg>{sessionMsg1}};
 
-  return buildTrain(trainId, vector<fbae_AlgoLayer::BatchSessionMsg>{batch});
+  return buildTrain(trainId, vector<BatchSessionMsg>{batch});
 }
 
 static string buildTrain(uint8_t trainId, rank_t batchSender1,
                          string const& payload1, rank_t batchSender2,
                          string const& payload2) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
+      make_shared<SessionTest>(TestMessage, payload1);
   auto sessionMsg2 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload2);
-  fbae_AlgoLayer::BatchSessionMsg batch1{batchSender1,
+      make_shared<SessionTest>(TestMessage, payload2);
+  BatchSessionMsg batch1{batchSender1,
                                          vector<SessionMsg>{sessionMsg1}};
-  fbae_AlgoLayer::BatchSessionMsg batch2{batchSender2,
+  BatchSessionMsg batch2{batchSender2,
                                          vector<SessionMsg>{sessionMsg2}};
 
   return buildTrain(trainId,
-                    vector<fbae_AlgoLayer::BatchSessionMsg>{batch1, batch2});
+                    vector<BatchSessionMsg>{batch1, batch2});
 }
 
-static fbae_AlgoLayer::BatchSessionMsg buildBatch(rank_t batchSender,
+static BatchSessionMsg buildBatch(rank_t batchSender,
                                                   string const& payload1) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
+      make_shared<SessionTest>(TestMessage, payload1);
   return {batchSender, vector<SessionMsg>{sessionMsg1}};
 }
 
-static fbae_AlgoLayer::BatchSessionMsg buildBatch(rank_t batchSender,
+static BatchSessionMsg buildBatch(rank_t batchSender,
                                                   string const& payload1,
                                                   string const& payload2) {
   auto sessionMsg1 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload1);
+      make_shared<SessionTest>(TestMessage, payload1);
   auto sessionMsg2 =
-      make_shared<SessionTest>(SessionMsgId::TestMessage, payload2);
+      make_shared<SessionTest>(TestMessage, payload2);
   return {batchSender, vector<SessionMsg>{sessionMsg1, sessionMsg2}};
 }
 
@@ -287,7 +296,7 @@ TEST_F(TrainsTest, DeliverMessages) {
   ASSERT_EQ(4, sessionStub.getDelivered().size());
 
   EXPECT_EQ(myRank, sessionStub.getDelivered()[0].first);
-  EXPECT_EQ(SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             sessionStub.getDelivered()[0].second->msgId);
 
   EXPECT_EQ(myRank, sessionStub.getDelivered()[1].first);
@@ -407,9 +416,9 @@ TEST_F(TrainsTest, AddBatchToTrain) {
                  // in previous execute() tests
 
   // Add messages to append to train
-  auto sessionMsg1 = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg1 = make_shared<SessionTest>(TestMessage, "A");
   algoLayerRaw->totalOrderBroadcast(sessionMsg1);
-  auto sessionMsg2 = make_shared<SessionTest>(SessionMsgId::TestMessage, "C");
+  auto sessionMsg2 = make_shared<SessionTest>(TestMessage, "C");
   algoLayerRaw->totalOrderBroadcast(sessionMsg2);
 
   algoLayerRaw->callbackReceive(buildTrain(0));
@@ -468,9 +477,9 @@ TEST_F(TrainsTest, FullTrainProcess) {
   ASSERT_EQ(4, algoLayerRaw->getWaitingBatchesNb());
 
   // Add messages to append to train
-  auto sessionMsg1 = make_shared<SessionTest>(SessionMsgId::TestMessage, "A");
+  auto sessionMsg1 = make_shared<SessionTest>(TestMessage, "A");
   algoLayerRaw->totalOrderBroadcast(sessionMsg1);
-  auto sessionMsg2 = make_shared<SessionTest>(SessionMsgId::TestMessage, "C");
+  auto sessionMsg2 = make_shared<SessionTest>(TestMessage, "C");
   algoLayerRaw->totalOrderBroadcast(sessionMsg2);
 
   algoLayerRaw->callbackReceive(buildTrain(0, (myRank + 2) % nbSites, payloadD,
@@ -484,7 +493,7 @@ TEST_F(TrainsTest, FullTrainProcess) {
   ASSERT_EQ(4, sessionStub.getDelivered().size());
 
   EXPECT_EQ(myRank, sessionStub.getDelivered()[0].first);
-  EXPECT_EQ(SessionMsgId::FirstBroadcast,
+  EXPECT_EQ(FirstBroadcast,
             sessionStub.getDelivered()[0].second->msgId);
 
   EXPECT_EQ(myRank, sessionStub.getDelivered()[1].first);
@@ -598,4 +607,5 @@ TEST_F(TrainsTest, UnrecognizeTrain) {
   ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(2)),
                "Unexpected Train #2. Max trains id: 1");
 }
-}  // namespace fbae_test_Trains
+
+}  // namespace fbae::test::AlgoLayer

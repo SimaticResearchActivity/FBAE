@@ -1,5 +1,7 @@
-#ifndef _GET_CPU_TIME_H
-#define _GET_CPU_TIME_H
+#ifndef _FBAE_GET_CPU_TIME_H
+#define _FBAE_GET_CPU_TIME_H
+
+namespace fbae::core::SessionLayer::PerfMeasures {
 
 /**
  * @brief Returns CPU time (in microseconds).
@@ -10,4 +12,6 @@
  */
 unsigned long long get_cpu_time();
 
-#endif /* _GET_CPU_TIME_H */
+}  // namespace fbae::core::SessionLayer::PerfMeasures
+
+#endif /* _FBAE_GET_CPU_TIME_H */

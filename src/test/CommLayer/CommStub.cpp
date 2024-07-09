@@ -8,6 +8,8 @@
 
 #include "AlgoLayer/AlgoLayer.h"
 
+namespace fbae::core::CommLayer {
+
 CommStub::CommStub() : CommLayer{"fbae.comm.phony"} {}
 
 std::vector<rank_t> &CommStub::getConnectedDest() { return connectedDest; }
@@ -28,7 +30,7 @@ void CommStub::multicastMsg(const std::string &algoMsgAsString) {
 
 void CommStub::openDestAndWaitIncomingMsg(const std::vector<rank_t> &dest,
                                           size_t aNbAwaitedConnections,
-                                          AlgoLayer *aAlgoLayer) {
+                                          fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) {
   connectedDest = dest;
   nbAwaitedConnections = aNbAwaitedConnections;
   getAlgoLayer()->callbackInitDone();
@@ -50,3 +52,5 @@ std::string CommStub::toString() {
   assert(false);
   return "CommStub";
 }
+
+}  // namespace fbae::core::CommLayer

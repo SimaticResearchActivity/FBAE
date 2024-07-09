@@ -7,7 +7,7 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/vector.hpp"
 
-namespace fbae_BBOBBAlgoLayer {
+namespace fbae::core::AlgoLayer::BBOBB {
 
 /**
  * @brief Message Id used by BBOBB algorithm.
@@ -25,7 +25,7 @@ struct StepMsg {
   rank_t senderPos{};
   uint8_t wave;
   uint8_t step;
-  std::vector<fbae_AlgoLayer::BatchSessionMsg> batchesBroadcast;
+  std::vector<fbae::core::AlgoLayer::BatchSessionMsg> batchesBroadcast;
 
   // This method lets cereal know which data members to serialize
   template <class Archive>
@@ -36,6 +36,6 @@ struct StepMsg {
   }
 };
 
-}  // namespace fbae_BBOBBAlgoLayer
+}  // namespace fbae::core::AlgoLayer::BBOBB
 
 #endif  // FBAE_BBOBBMSG_H

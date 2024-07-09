@@ -12,9 +12,13 @@
 
 #include <cassert>
 
-std::string fbae_SessionLayer::SessionBaseClass::getPayload() {
+namespace fbae::core::SessionLayer {
+
+std::string SessionBaseClass::getPayload() {
   assert(false);
   return "SessionBaseClass::getPayload() should never be called";
 }
 
-std::string fbae_SessionLayer::SessionTest::getPayload() { return payload; }
+std::string SessionTest::getPayload() { return payload; }
+
+}  // namespace fbae::core::SessionLayer
