@@ -13,6 +13,10 @@ Trains::Trains(unique_ptr<CommLayer> commLayer) :
 {}
 
 void Trains::callbackReceive(string&& serializedMessagePacket) {
+    if (algoTerminated) { 
+        return; 
+    }
+
     char trainId{ serializedMessagePacket[0] };
     char trainClock{ serializedMessagePacket[1] };
     LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Train #{:d} with clock {:d}", rank, trainId, trainClock);
@@ -21,14 +25,11 @@ void Trains::callbackReceive(string&& serializedMessagePacket) {
         LOG4CXX_FATAL_FMT(getAlgoLogger(), "Unexpected Train #{:d}. Max trains id: {}", trainId, nbTrains - 1);
         exit(EXIT_FAILURE);
     }
-
     if (isTrainRecent(trainId, trainClock)) {
-        if (!algoTerminated) {
-            processTrain(move(serializedMessagePacket));
-        }
+        processTrain(move(serializedMessagePacket));
     }
     else {
-        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Rank #{:d}: Late train #{:d} with clock {:d}. Algo clock: {}", rank, trainId, trainClock, trainsClock[trainId]);
+        LOG4CXX_FATAL_FMT(getAlgoLogger(), "Rank #{:d}: Unexpected train #{:d} with clock {:d}. Algo clock: {}", rank, trainId, trainClock, trainsClock[trainId]);
         exit(EXIT_FAILURE);
     }
 }
@@ -140,7 +141,7 @@ bool Trains::isTrainRecent(uint8_t trainId, uint8_t trainClock) {
     const int16_t M = 256;
     auto idExpected = static_cast<short>((lastTrainId + 1) % nbTrains);
 
-    if (trainId == idExpected || algoTerminated) {
+    if (trainId == idExpected) {
         uint8_t diff = trainClock - trainsClock[trainId];
 
         if (diff > 0) { 
