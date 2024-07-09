@@ -530,7 +530,7 @@ namespace fbae_test_Trains {
 
         algoLayerRaw->callbackReceive(buildTrain(0));
         commLayerRaw->getSent().clear(); // We clear the first train information which we already tested in previous execute() tests
-        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(0)), "Late train #0 with clock 3. Algo clock: 4");
+        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(0)), "Unexpected train #0 with clock 3. Algo clock: 4");
     }
 
     TEST_F(TrainsTest, UnrecognizeTrain) {

@@ -138,7 +138,7 @@ void Trains::callbackInitDone() {
 }
 
 bool Trains::isTrainRecent(uint8_t trainId, uint8_t trainClock) {
-    const int16_t M = 256;
+    const int16_t M = 256; // See explanation of M in section 6.1.1.2 at page 123 of PhD thesis https://theses.hal.science/tel-00787598
     auto idExpected = static_cast<short>((lastTrainId + 1) % nbTrains);
 
     if (trainId == idExpected) {
