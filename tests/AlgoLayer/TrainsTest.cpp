@@ -72,7 +72,7 @@ namespace fbae_test_Trains {
         // Check contents of this message
         auto train{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[0].second)) };
         ASSERT_EQ(0, train.id);
-        ASSERT_EQ(1, train.clock);
+        ASSERT_EQ(2, train.clock);
         ASSERT_EQ(1, train.batches.size());
 
         fbae_AlgoLayer::BatchSessionMsg batch = train.batches[0];
@@ -90,7 +90,7 @@ namespace fbae_test_Trains {
         ASSERT_EQ(0, sessionStub.getDelivered().size());
 
         // Check clocks
-        ASSERT_EQ(1, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(0));
     }
 
     TEST_F(TrainsTest, ExecuteWith4SitesAndRank0And4Train) {
@@ -130,7 +130,7 @@ namespace fbae_test_Trains {
         // Check contents of the first train
         auto trainInit{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[0].second)) };
         ASSERT_EQ(0, trainInit.id);
-        ASSERT_EQ(1, trainInit.clock);
+        ASSERT_EQ(2, trainInit.clock);
         ASSERT_EQ(1, trainInit.batches.size());
 
         fbae_AlgoLayer::BatchSessionMsg batch = trainInit.batches[0];
@@ -142,7 +142,7 @@ namespace fbae_test_Trains {
         for (int i = 1; i < nbTrains; i++) {
             auto train{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[i].second)) };
             ASSERT_EQ(i, train.id);
-            ASSERT_EQ(1, train.clock);
+            ASSERT_EQ(2, train.clock);
             ASSERT_EQ(0, train.batches.size());
         }
 
@@ -156,10 +156,10 @@ namespace fbae_test_Trains {
         ASSERT_EQ(0, sessionStub.getDelivered().size());
 
         // Check clocks
-        ASSERT_EQ(1, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
-        ASSERT_EQ(1, algoLayerRaw->getClock(2));
-        ASSERT_EQ(1, algoLayerRaw->getClock(3));
+        ASSERT_EQ(2, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
+        ASSERT_EQ(2, algoLayerRaw->getClock(2));
+        ASSERT_EQ(2, algoLayerRaw->getClock(3));
     }
 
     TEST_F(TrainsTest, ExecuteWith9SitesAndRank8And1Train) {
@@ -211,15 +211,16 @@ namespace fbae_test_Trains {
         ASSERT_EQ(0, algoLayerRaw->getClock(0));
     }
 
-    static string buildTrain(int trainId) {
-        return serializeStruct<Train>(Train{ trainId, 1, {} });
+    static string buildTrain(uint8_t trainId) {
+        return serializeStruct<Train>(Train{ trainId, 3, {} });
     }
 
-    static string buildTrain(int trainId, vector<fbae_AlgoLayer::BatchSessionMsg> const& batches) {
-        return serializeStruct<Train>(Train{ trainId, 1, batches });
+    static string buildTrain(uint8_t trainId, vector<fbae_AlgoLayer::BatchSessionMsg> const& batches) {
+        return serializeStruct<Train>(Train{ trainId, 3, batches });
+        // 3 because the train should have at least go to another machine
     }
 
-    static string buildTrain(int trainId, rank_t batchSender1, string const& payload1) {
+    static string buildTrain(uint8_t trainId, rank_t batchSender1, string const& payload1) {
         auto sessionMsg1 = make_shared<SessionTest>(
             SessionMsgId::TestMessage,
             payload1);
@@ -230,7 +231,7 @@ namespace fbae_test_Trains {
         return buildTrain(trainId, vector<fbae_AlgoLayer::BatchSessionMsg>{ batch });
     }
 
-    static string buildTrain(int trainId, rank_t batchSender1, string const& payload1, rank_t batchSender2, string const& payload2) {
+    static string buildTrain(uint8_t trainId, rank_t batchSender1, string const& payload1, rank_t batchSender2, string const& payload2) {
         auto sessionMsg1 = make_shared<SessionTest>(
             SessionMsgId::TestMessage,
             payload1);
@@ -313,8 +314,8 @@ namespace fbae_test_Trains {
         EXPECT_EQ(payloadD, algoLayerRaw->getPreviousTrainsBatches()[1][0].batchSessionMsg[0]->getPayload());
 
         // Check algo clocks
-        ASSERT_EQ(2, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
+        ASSERT_EQ(4, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
     }
 
     TEST_F(TrainsTest, ReceiveBatches) {
@@ -343,8 +344,8 @@ namespace fbae_test_Trains {
         EXPECT_EQ(payloadA, algoLayerRaw->getPreviousTrainsBatches()[0][1].batchSessionMsg[0]->getPayload());
 
         // Check algo clocks
-        ASSERT_EQ(2, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
+        ASSERT_EQ(4, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
     }
 
     TEST_F(TrainsTest, RemoveBatchFromTrain) {
@@ -368,15 +369,15 @@ namespace fbae_test_Trains {
         // Check train content
         auto train{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[0].second)) };
         ASSERT_EQ(0, train.id);
-        ASSERT_EQ(2, train.clock);
+        ASSERT_EQ(4, train.clock);
         ASSERT_EQ(1, train.batches.size());
 
         EXPECT_EQ((myRank + 2) % nbSites, train.batches[0].senderPos);
         EXPECT_EQ(payloadD, train.batches[0].batchSessionMsg[0]->getPayload());
 
         // Check algo clocks
-        ASSERT_EQ(2, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
+        ASSERT_EQ(4, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
     }
 
     TEST_F(TrainsTest, AddBatchToTrain) {
@@ -406,7 +407,7 @@ namespace fbae_test_Trains {
         // Check train content
         auto train{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[0].second)) };
         ASSERT_EQ(0, train.id);
-        ASSERT_EQ(2, train.clock);
+        ASSERT_EQ(4, train.clock);
         ASSERT_EQ(1, train.batches.size());
 
         ASSERT_EQ(2, train.batches[0].batchSessionMsg.size());
@@ -416,8 +417,8 @@ namespace fbae_test_Trains {
         EXPECT_EQ(payloadC, train.batches[0].batchSessionMsg[1]->getPayload());
 
         // Check algo clocks
-        ASSERT_EQ(2, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
+        ASSERT_EQ(4, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
     }
 
     TEST_F(TrainsTest, FullTrainProcess) {
@@ -454,8 +455,8 @@ namespace fbae_test_Trains {
         algoLayerRaw->callbackReceive(buildTrain(0, (myRank + 2) % nbSites, payloadD, (myRank + 1) % nbSites, payloadA));
 
         // Check algo clocks
-        ASSERT_EQ(2, algoLayerRaw->getClock(0));
-        ASSERT_EQ(1, algoLayerRaw->getClock(1));
+        ASSERT_EQ(4, algoLayerRaw->getClock(0));
+        ASSERT_EQ(2, algoLayerRaw->getClock(1));
 
         // Check all messages are delivered in the correct order
         ASSERT_EQ(4, sessionStub.getDelivered().size());
@@ -501,7 +502,7 @@ namespace fbae_test_Trains {
         // Check train content
         auto train{ deserializeStruct<Train>(std::move(commLayerRaw->getSent()[0].second)) };
         ASSERT_EQ(0, train.id);
-        ASSERT_EQ(2, train.clock);
+        ASSERT_EQ(4, train.clock);
         ASSERT_EQ(2, train.batches.size());
 
         ASSERT_EQ(1, train.batches[0].batchSessionMsg.size());
@@ -529,7 +530,7 @@ namespace fbae_test_Trains {
 
         algoLayerRaw->callbackReceive(buildTrain(0));
         commLayerRaw->getSent().clear(); // We clear the first train information which we already tested in previous execute() tests
-        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(0)), "Lost train #0 with clock: 1. Intern clock: 2");
+        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(0)), "Late train #0 with clock 3. Algo clock: 4");
     }
 
     TEST_F(TrainsTest, UnrecognizeTrain) {
@@ -544,6 +545,6 @@ namespace fbae_test_Trains {
         algoLayerRaw->execute();
         commLayerRaw->getSent().clear(); // We clear FirstBroadcast information which we already tested in previous execute() tests
         
-        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(2)), "Unexpected Train with id 2. Max trains id: 1");
+        ASSERT_DEATH(algoLayerRaw->callbackReceive(buildTrain(2)), "Unexpected Train #2. Max trains id: 1");
     }
 }

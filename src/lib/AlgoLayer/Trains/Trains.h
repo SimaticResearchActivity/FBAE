@@ -8,8 +8,8 @@
 
 
 struct Train {
-    int id;
-    int clock;
+    uint8_t id;
+    uint8_t clock;
     std::vector<fbae_AlgoLayer::BatchSessionMsg> batches;
 
     template<class Archive> void serialize(Archive& archive) {
@@ -28,6 +28,7 @@ public:
     int getClock(int trainId) const;
     void callbackInitDone() override;
     std::string toString() override;
+    bool isTrainRecent(uint8_t trainId, uint8_t trainClock);
 
     void setNbTrains(int newNbTrains);
     std::vector<std::vector<fbae_AlgoLayer::BatchSessionMsg>> getPreviousTrainsBatches() const;
@@ -48,25 +49,27 @@ private:
     /**
     * @brief Logical clocks of the trains
      */
-    std::vector<int> trainsClock = std::vector<int>(nbTrains, 0);
+    std::vector<uint8_t> trainsClock = std::vector<uint8_t>(nbTrains, 0);
 
     /**
     * @brief Rank of machine
     */
-    rank_t rank;
+    rank_t rank = 0;
 
     /**
     * @brief Number of machines
     */
-    uint32_t sitesCount;
+    uint32_t sitesCount = 0;
 
     /**
     * @brief Rank of next machine in loop
     */
-    rank_t nextRank;
+    rank_t nextRank = 0;
 
     /**
     * @brief True when @disconnect() method has been called.
     */
     bool algoTerminated{ false };
+
+    int lastTrainId = -1;
 };
