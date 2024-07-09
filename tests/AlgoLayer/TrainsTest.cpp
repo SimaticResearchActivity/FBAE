@@ -24,6 +24,31 @@ class TrainsTest : public testing::Test {
     algoLayerRaw = algoLayer.get();
   }
 
+  void commonChecks() {
+    // Check established connection
+    ASSERT_EQ(1, commLayerRaw->getConnectedDest().size());
+    ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getConnectedDest()[0]);
+
+    // Check nbAwaitedConnections
+    ASSERT_EQ(1, commLayerRaw->getNbAwaitedConnections());
+
+    // Check @AlgoLayer:broadcastersGroup is correct
+    ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
+    ASSERT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
+    ASSERT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
+    ASSERT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
+    ASSERT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
+
+    // Check Process is broadcasting messages
+    ASSERT_TRUE(algoLayerRaw->isBroadcastingMessages());
+
+    // Check FirstBroadcast message was broadcast and thus sent.
+    ASSERT_EQ(nbTrains, commLayerRaw->getSent().size());
+
+    // Check that this message was sent to process 1
+    ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
+  }
+
   int nbSites;
   int nbTrains;
   vector<HostTuple> sites;
@@ -45,28 +70,7 @@ TEST_F(TrainsTest, ExecuteWith4SitesAndRank0And1Train) {
 
   algoLayerRaw->execute();
 
-  // Check established connection
-  ASSERT_EQ(1, commLayerRaw->getConnectedDest().size());
-  ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getConnectedDest()[0]);
-
-  // Check nbAwaitedConnections
-  ASSERT_EQ(1, commLayerRaw->getNbAwaitedConnections());
-
-  // Check @AlgoLayer:broadcastersGroup is correct
-  ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
-  ASSERT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
-  ASSERT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
-  ASSERT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
-  ASSERT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
-
-  // Check Process is broadcasting messages
-  ASSERT_TRUE(algoLayerRaw->isBroadcastingMessages());
-
-  // Check FirstBroadcast message was broadcast and thus sent.
-  ASSERT_EQ(nbTrains, commLayerRaw->getSent().size());
-
-  // Check that this message was sent to process 1
-  ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
+  commonChecks();
 
   // Check contents of this message
   auto train{
@@ -104,28 +108,7 @@ TEST_F(TrainsTest, ExecuteWith4SitesAndRank0And4Train) {
 
   algoLayerRaw->execute();
 
-  // Check established connection
-  ASSERT_EQ(1, commLayerRaw->getConnectedDest().size());
-  ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getConnectedDest()[0]);
-
-  // Check nbAwaitedConnections
-  ASSERT_EQ(1, commLayerRaw->getNbAwaitedConnections());
-
-  // Check @AlgoLayer:broadcastersGroup is correct
-  ASSERT_EQ(nbSites, algoLayerRaw->getBroadcastersGroup().size());
-  ASSERT_EQ(0, algoLayerRaw->getBroadcastersGroup()[0]);
-  ASSERT_EQ(1, algoLayerRaw->getBroadcastersGroup()[1]);
-  ASSERT_EQ(2, algoLayerRaw->getBroadcastersGroup()[2]);
-  ASSERT_EQ(3, algoLayerRaw->getBroadcastersGroup()[3]);
-
-  // Check Process is broadcasting messages
-  ASSERT_TRUE(algoLayerRaw->isBroadcastingMessages());
-
-  // Check FirstBroadcast message was broadcast and thus sent.
-  ASSERT_EQ(nbTrains, commLayerRaw->getSent().size());
-
-  // Check that this message was sent to process 1
-  ASSERT_EQ((myRank + 1) % nbSites, commLayerRaw->getSent()[0].first);
+  commonChecks();
 
   // Check contents of the first train
   auto trainInit{
