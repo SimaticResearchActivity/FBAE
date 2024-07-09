@@ -184,14 +184,38 @@ Level of traces to be displayed is configured in `res/fbae_logger.properties` fi
 
 If you want to change the default level of traces displayed, specify `INFO` (to activate all traces), `ERROR`, `FATAL` or even `OFF` (for no traces at all) instead of `WARN` in the line of `res/fbae_logger.properties`:
 
-```yaml
-log4j.rootLogger = WARN, A1
+```properties
+log4j.rootLogger = WARN, stderr
 ```
 
-If you want to change the level of traces in one or several *FBAE* packages, specify `INFO` (to activate all traces), `ERROR`, `FATAL` or even `OFF` (for no traces at all) after the `=` sign corresponding to this package in `res/fbae_logger.properties` file. For instance, if you want `INFO` traces concerning FBAE's `algo` package, write the following line:
+If you want to generate a file in addition to displaying the traces on `stderr`, replace the line:
 
-```yaml
-log4j.logger.fbae.algo = INFO
+```properties
+log4j.rootLogger = WARN, stderr
+```
+
+by the line:
+
+```properties
+log4j.rootLogger = WARN, stderr, file
+```
+
+Note: The name and directory of the written file is specified by the line (`/tmp/traces.log` in our example):
+
+```properties
+log4j.appender.file.File = /tmp/traces.log
+```
+
+If you want to change the level of traces in one or several *FBAE* packages, specify `INFO` (to activate all traces), `ERROR`, `FATAL` or even `OFF` (for no traces at all) after the `=` sign corresponding to this package in `res/fbae_logger.properties` file. For instance, if you want `INFO` traces concerning FBAE's `AlgoLayer` package, replace the line:
+
+```properties
+log4j.logger.fbae.core.AlgoLayer =
+```
+
+by the line:
+
+```properties
+log4j.logger.fbae.core.AlgoLayer = INFO
 ```
 
 ## Current status of *FBAE*

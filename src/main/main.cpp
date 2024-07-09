@@ -10,14 +10,14 @@
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
 
 using namespace std;
-using namespace mlib;
+using namespace fbae::core;
 
-unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const& parser,
-                                        fbae::LoggerPtr logger) {
+unique_ptr<CommLayer::CommLayer> concreteCommLayer(OptParserExtended const& parser,
+                                        Logger::LoggerPtr const& logger) {
   char commId = parser.getoptStringRequired('c', logger)[0];
   switch (commId) {
     case 't':
-      return make_unique<Tcp>();
+      return make_unique<CommLayer::Tcp::Tcp>();
     default:
       LOG4CXX_FATAL_FMT(
           logger,
@@ -28,18 +28,18 @@ unique_ptr<CommLayer> concreteCommLayer(OptParserExtended const& parser,
   }
 }
 
-unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const& parser,
-                                        fbae::LoggerPtr logger) {
+unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& parser,
+                                        Logger::LoggerPtr const& logger) {
   char algoId = parser.getoptStringRequired('a', logger)[0];
   switch (algoId) {
     case 'S':
-      return make_unique<Sequencer>(concreteCommLayer(parser, logger));
+      return make_unique<AlgoLayer::Sequencer::Sequencer>(concreteCommLayer(parser, logger));
     case 'B':
-      return make_unique<BBOBB>(concreteCommLayer(parser, logger));
+      return make_unique<AlgoLayer::BBOBB::BBOBB>(concreteCommLayer(parser, logger));
     case 'L':
-      return make_unique<LCR>(concreteCommLayer(parser, logger));
+      return make_unique<AlgoLayer::LCR::LCR>(concreteCommLayer(parser, logger));
     case 'T':
-      return make_unique<Trains>(concreteCommLayer(parser, logger));
+      return make_unique<AlgoLayer::Trains::Trains>(concreteCommLayer(parser, logger));
     default:
       LOG4CXX_FATAL_FMT(logger,
                         "Argument for Broadcast Algorithm is \"{}\" which is "
@@ -50,7 +50,7 @@ unique_ptr<AlgoLayer> concreteAlgoLayer(OptParserExtended const& parser,
 }
 
 int main(int argc, char* argv[]) {
-  auto logger = fbae::getLogger("fbae");
+  auto logger = Logger::getLogger("fbae.main");
 
   //
   // Take care of program arguments
@@ -131,17 +131,17 @@ int main(int argc, char* argv[]) {
   //
   if (rank_t argRank = arguments.getRank();
       argRank != specialRankToRequestExecutionInTasks) {
-    PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
+    SessionLayer::PerfMeasures::PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
     session.execute();
   } else {
     size_t nbSites{arguments.getSites().size()};
-    vector<unique_ptr<PerfMeasures>> sessions;
+    vector<unique_ptr<SessionLayer::PerfMeasures::PerfMeasures>> sessions;
     vector<future<void>> sessionTasks;
     for (uint8_t rank = 0; rank < static_cast<uint8_t>(nbSites); ++rank) {
-      sessions.emplace_back(make_unique<PerfMeasures>(
+      sessions.emplace_back(make_unique<SessionLayer::PerfMeasures::PerfMeasures>(
           arguments, rank, concreteAlgoLayer(parser, logger)));
       sessionTasks.emplace_back(std::async(
-          std::launch::async, &PerfMeasures::execute, sessions.back().get()));
+          std::launch::async, &SessionLayer::PerfMeasures::PerfMeasures::execute, sessions.back().get()));
     }
     for (auto& t : sessionTasks) t.get();
   }

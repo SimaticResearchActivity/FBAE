@@ -94,10 +94,10 @@ FetchContent_MakeAvailable(googletest)
 # Generate FBAE targets
 #
 
-add_subdirectory(src/lib)
+add_subdirectory(src/core)
 add_subdirectory(src/main)
 
 # enable_testing() must be in the source directory root (see cmake documentation at https://cmake.org/cmake/help/latest/ command/enable_testing.html)
 # Otherwise, Visual Studio test explorer does not see unit tests (See ticket https://developercommunity.visualstudio.com/t/No-tests-discovered-for-googletest-and-C/1148799#T-ND1150621)
 enable_testing()
-add_subdirectory(tests)
+add_subdirectory(src/test)
