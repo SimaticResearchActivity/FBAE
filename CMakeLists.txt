@@ -94,7 +94,7 @@ FetchContent_MakeAvailable(googletest)
 # Generate FBAE targets
 #
 
-add_subdirectory(src/lib)
+add_subdirectory(src/core)
 add_subdirectory(src/main)
 
 # enable_testing() must be in the source directory root (see cmake documentation at https://cmake.org/cmake/help/latest/ command/enable_testing.html)
