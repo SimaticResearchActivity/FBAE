@@ -6,7 +6,7 @@
 
 #include <cassert>
 
-#include "../../src/lib/msgTemplates.h"
+#include "../core/msgTemplates.h"
 
 SessionStub::SessionStub(const Arguments &arguments, rank_t rank,
                          std::unique_ptr<AlgoLayer> algoLayer)
