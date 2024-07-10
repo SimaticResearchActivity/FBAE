@@ -4,7 +4,7 @@ Framework for Broadcast Algorithms Evaluation
 
 ## Introduction
 
-*FBAE* is a software framework, developped in C++, to evaluate performances (latency and throughput) of Total-Order Broadcast Algorithms when there are no failures. It has been tested on Linux and Windows with compilers: clang, gcc and MSVC. In July 2024, *FBAE* does not compile with Apple clang: macOS users must install gcc or standard clang to compile *FBAE*.
+*FBAE* is a software framework, developed in C++, to evaluate performances (latency and throughput) of Total-Order Broadcast Algorithms when there are no failures. It has been tested on Linux and Windows with compilers: clang, gcc and MSVC. In July 2024, *FBAE* does not compile with Apple clang: macOS users must install gcc or standard clang to compile *FBAE*.
 
 Thanks to *FBAE*, it is possible to evaluate (and thus compare) the performances of different Total-Order broadcast algorithms using different communication protocols (For the moment, only TCP is available, but other communication layers are foreseen).
 
@@ -16,7 +16,7 @@ Thanks to *FBAE*, it is possible to evaluate (and thus compare) the performances
 
 ### Linux
 
-As mentionned [here](https://logging.apache.org/log4cxx/latest_stable/build-cmake.html):
+As mentioned [here](https://logging.apache.org/log4cxx/latest_stable/build-cmake.html):
 
 ```bash
 sudo apt-get install libapr1-dev libaprutil1-dev
@@ -28,7 +28,7 @@ Then, we recommend the following command:
 sudo apt-get install liblog4cxx-dev
 ```
 
-and you are done. Otherwise, you need to apply the procedure by log4cxx developers, i.e.:
+and you should be done... unless you experience compilation problems of *FBAE* later on. If you have such problems, you must apply the procedure proposed by log4cxx developers:
 
 - Download log4cxx 1.2.0 archive from <https://logging.apache.org/log4cxx/latest_stable/download.html>
 - Then:
@@ -45,9 +45,11 @@ make
 sudo make install
 ```
 
+- Finally, recompile **entirely** *FBAE* (`rm -rf build ; mkdir build ; cd build ; cmake .. ; make`).
+
 ### macOS
 
-As mentionned [here](https://logging.apache.org/log4cxx/latest_stable/build-cmake.html), "APR and APR-Util are provided by the platform in Mac OS/X 10.5 and iODBC in 10.4. cmake can be installed by typing "brew install cmake"."
+As mentioned [here](https://logging.apache.org/log4cxx/latest_stable/build-cmake.html), "APR and APR-Util are provided by the platform in Mac OS/X 10.5 and iODBC in 10.4. cmake can be installed by typing "brew install cmake"."
 
 Then, apply linux proposed procedure, i.e. download log4cxx 1.2.0 archive from <https://logging.apache.org/log4cxx/latest_stable/download.html>, etc.
 
@@ -76,7 +78,7 @@ CMake projects should use: "-DCMAKE_TOOLCHAIN_FILE=C:/software/vcpkg/scripts/bui
 All MSBuild C++ projects can now #include any installed libraries. Linking will be handled automatically. Installing new libraries will make them instantly available.
 ```
 
-Note the directory which is suggested (`C:/software/vcpkg/scripts/buildsystems/vcpkg.cmake` in our example), as you will have to specify this directtory in top `CMakeLists.txt` of *FBAE*.
+Note the directory which is suggested (`C:/software/vcpkg/scripts/buildsystems/vcpkg.cmake` in our example), as you will have to specify this directory in top `CMakeLists.txt` of *FBAE*.
 
 - Now, you can take care of log4cxx:
 
@@ -99,7 +101,7 @@ set(CMAKE_TOOLCHAIN_FILE C:/software/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
 ### Writing JSON site file
 
-First, write a JSON site file defining the sites which will run instances of *FBAE*. To write such a file, inspire yoiurself from the following example, by replacing "localhost" (respectively 4096, 4097 and 4098) by the host names (respectively the ports) you will use for your experiments:
+First, write a JSON site file defining the sites which will run instances of *FBAE*. To write such a file, inspire yourself from the following example, by replacing "localhost" (respectively 4096, 4097 and 4098) by the host names (respectively the ports) you will use for your experiments:
 
 ```json
 {
@@ -175,7 +177,7 @@ For instance, if file `sites_8_machines.json` contains the specification of 8 ho
 python3 launchFBAE.py /absolute_path/FBAE /absolute_path/FBAE/results/ -a B -c t -n 5 -s 32 -S /absolute_path/FBAE/sites_8_machines.json
 ```
 
-launches instances of fbae on each of these 8 hosts/ports. When these instances are done, each generates a result file in `/aboslute_path/FBAE/results`, the name of the file containing the rank of the instance, in its last character. For instance, file `/absolute_path/FBAE/results/result_-a_B_-c_t_-n_5_-s_32_-S__netfs_inf_simatic_FBAE_sites_8_b313.json_--rank_0`
+launches instances of fbae on each of these 8 hosts/ports. When these instances are done, each generates a result file in `/absolute_path/FBAE/results`, the name of the file containing the rank of the instance, in its last character. For instance, file `/absolute_path/FBAE/results/result_-a_B_-c_t_-n_5_-s_32_-S__netfs_inf_simatic_FBAE_sites_8_b313.json_--rank_0`
 contains the results produced by instance ranked 0 (see `--rank_0` at the end of the name of the file.
 
 ### Configure level of traces to be displayed
@@ -272,14 +274,14 @@ The interfaces between these layers are the following:
   - *Session layer* ==> *Algorithm layer*
     - *Session layer* calls `AlgoLayer::execute()` method to launch *Algorithm layer*. Note that we stay in `execute()` method until *Algorithm layer* is done executing.
     - Then it calls `AlgoLayer::totalOrderBroadcast()` method for each total-order broadcast it has to make.
-    - Finally it calls `AlgoLayer::terminate()` method to tell the *Algorithm layer* than it can shutdwon.
+    - Finally it calls `AlgoLayer::terminate()` method to tell the *Algorithm layer* than it can shutdown.
   - *Algorithm layer* ==> *Session layer*
     - Once *Algorithm layer* considers it is fully initialized locally, it calls `SessionLayer::callbackInitDone()` method in *Session layer*.
     - Each time a message can be delivered, it calls `SessionLayer::callbackDeliver()` method.
 - *Algorithm layer* / *Communication layer*
   - *Algorithm layer* ==> *Communication layer*
     - *Algorithm layer* calls `CommLayer::openDestAndWaitIncomingMsg()` method when it wants to:
-      1. accept commpunication links (e.g. connections in the case of TCP) from other processes,
+      1. accept communication links (e.g. connections in the case of TCP) from other processes,
       2. establish communication links with other processes,
       3. wait for incoming messages until `CommLayer::terminate()` is called.
     - When *Algorithm layer* needs to send a message to another process, it can use:
@@ -287,7 +289,7 @@ The interfaces between these layers are the following:
       - `CommLayer::multicastMsg()` method to multicast a message to all processes with which the current process has established communication links.
     - *Algorithm layer* calls `CommLayer::terminate()` method when it wants to stop all of the communications with remote processes.
   - *Communication layer* ==> *Algorithm layer*
-    - When *CommunicationLayer* is fully initailized, it calls `AlgoLayer::callbackInitDone()`.
+    - When *CommunicationLayer* is fully initialized, it calls `AlgoLayer::callbackInitDone()`.
     - When *Communication layer* receives a message, it calls `AlgoLayer::callbackReceive()` method.
     - Note:
       1. *CommunicationLayer* guarantees that there is no call to `AlgoLayer::callbackReceive()` before `AlgoLayer::callbackInitDone()` is done executing.
@@ -323,13 +325,13 @@ For instance:
 - In *Sequencer* algorithm
   - Sequencer process always has *rank* 0. Sequencer process has no position, as it does not participate as a broadcaster.
   - The other processes (ranked 1, 2, 3, etc.) participate as broadcastersGroup. So, they have a position (as broadcaster) which is respectively 0, 1, 2, etc.
-- In *BBOBB* algorithm, all processes participate as braodcasters. Each of them has a position (as broadcaster) which corresponds to its rank.
+- In *BBOBB* algorithm, all processes participate as broadcasters. Each of them has a position (as broadcaster) which corresponds to its rank.
 
 Now we can present the procedure for adding another Total-Order broadcast algorithm:
 
 1. Draw several Message Sequence Charts (MSC) to illustrate the algorithm behavior. To do so, you can use a tool like [plantuml](https://plantuml.com/fr/sequence-diagram) (see examples in `doc` directory).
 2. Create a subdirectory of `src/lib/AlgoLayer` directory, named after the name of your algorithm. For instance, `src/lib/AlgoLayer/Foo` directory.
-3. Create a file for defining messages exchanged between the prcesses executing your algorithm, e.g. `src/lib/AlgoLayer/Foo/FooMsg.h`, containing:
+3. Create a file for defining messages exchanged between the processes executing your algorithm, e.g. `src/lib/AlgoLayer/Foo/FooMsg.h`, containing:
    1. A first include which **must** be `#include "../adaptCereal.h"` followed by `#include "cereal/archives/binary.hpp"`.
    2. Definition of a namespace dedicated to your algorithm.
    3. Definition of a `enum class MsgId : MsgId_t` containing the message identifiers used by your algorithm.
@@ -338,7 +340,7 @@ Now we can present the procedure for adding another Total-Order broadcast algori
    - Note: `src/lib/CMakeLists.txt` must be modified to contain `AlgoLayer/Foo/Foo.cpp` and `AlgoLayer/Foo/Foo.h` lines.
 5. Implement `Foo::toString()` method.
 6. Implement `Foo::execute()` method to handle the different messages your algorithm can receive.
-   - Build the vector containing rank of participants which will behave as braodcasters during execution. Call `setBroadcastersGroup(std::move(thisVzector))`.
+   - Build the vector containing rank of participants which will behave as broadcasters during execution. Call `setBroadcastersGroup(std::move(thisVector))`.
    - Build the vector containing rank of participants your process needs to establish a communication link with. Call `getSessionLayer()->getCommLayer()->openDestAndWaitIncomingMsg()` with this vector.
 7. Implement `Foo::totalOrderBroadcast()` method. To do so, you must decide if:
    - Your algorithm sends immediately a message to one or several processes, like *Sequencer* algorithm. In that case, you must override `AlgoLayer::totalOrderBroadcast()` method.
@@ -351,7 +353,7 @@ Now we can present the procedure for adding another Total-Order broadcast algori
 11. Implement [GoogleTest](https://google.github.io/googletest/) tests in a dedicated `.cpp` file in `tests/AlgoLayer` directory (e.g. `tests/AlgoLayer/testFoo.cpp`). Run your tests.
     - Note: To compile properly, the required `.h` and `.cpp` files must be mentioned in `tests/CMakeLists.txt`.
 12. Modify `main.cpp` to integrate your new class:
-    - In `main` function, modify `parser` variable intialization in order to specify (in the same way as letter `'S'` in string `"\n\t\t\t\t\t\tS = Sequencer based"` specifies `'S'` as the letter for *Sequencer algorithm*) the letter which will specify your added algorithm.
+    - In `main` function, modify `parser` variable initialization in order to specify (in the same way as letter `'S'` in string `"\n\t\t\t\t\t\tS = Sequencer based"` specifies `'S'` as the letter for *Sequencer algorithm*) the letter which will specify your added algorithm.
     - In `concreteAlgoLayer()` function, add a `case` with this new letter to create an instance of your class.
 13. Run integration tests.
 
@@ -365,5 +367,5 @@ If you want to add another communication protocol:
      - `getInitDoneCalled().count_down();` instruction in `Tcp::openDestAndWaitIncomingMsg()`
    - *FBAE* must guarantee that, when `AlgoLayer::callbackReceive()` method is called, it is not called concurrently by another thread of `CommLayer` on the same instance of `AlgoLayer` subclass. Thus, you must pay attention to protect the call to `getAlgoLayer()->callbackReceive()` with a mutual exclusion (see an example with line `std::scoped_lock lock(mtxCallbackHandleMessage);` in `Tcp::handleIncomingConn()`).
 2. Modify `main.cpp` to integrate your new class:
-   - In `main` function, modify `parser` variable intialization in order to specify (in the same way as letter `'e'` in string `"\n\t\t\t\t\ŧ\t\te = Enet (reliable)"` specifies `'e'` as the letter for *Enet (reliable)*) the letter which will specify your added communication protocol.
+   - In `main` function, modify `parser` variable initialization in order to specify (in the same way as letter `'e'` in string `"\n\t\t\t\t\ŧ\t\te = Enet (reliable)"` specifies `'e'` as the letter for *Enet (reliable)*) the letter which will specify your added communication protocol.
    - In `concreteCommLayer()` function, add a `case` with this new letter to create an instance of your `CommLayer` subclass.
