@@ -22,6 +22,9 @@ set (BUILD_SHARED_LIBS FALSE)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Add the Sources subfolder of the Yoctopuce C++ library.
+add_subdirectory (C:/Softwares/yoctolib_cpp/Sources compiled_yoctolib)
+
 #
 # We include Log4cxx
 #

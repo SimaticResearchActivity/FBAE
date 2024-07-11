@@ -4,7 +4,10 @@
 #include <string>
 #include <vector>
 
+#include "Logger/LoggerConfig.h"
 #include "get_cpu_time.h"
+#include "yocto_api.h"
+#include "yocto_power.h"
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
@@ -28,6 +31,12 @@ class Measures {
   std::chrono::time_point<std::chrono::system_clock> stopTime;
   unsigned long long startTimeCpu{0};
   unsigned long long stopTimeCpu{0};
+
+  YPower* wattMeter = nullptr;
+  double deliveredEnergy = -1;
+  bool wattMeterResetDone = false;
+
+  fbae::core::Logger::LoggerPtr m_logger = fbae::core::Logger::getLogger("fbae.core.SessionLayer.Measures");
 };
 
 }  // namespace fbae::core::SessionLayer::PerfMeasures

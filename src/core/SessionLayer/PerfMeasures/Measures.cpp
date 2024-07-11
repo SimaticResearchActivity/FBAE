@@ -6,7 +6,15 @@
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
-Measures::Measures(size_t nbPingMax) : pings(nbPingMax) {}
+Measures::Measures(size_t nbPingMax) : pings(nbPingMax) {
+  if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
+    LOG4CXX_ERROR_FMT(m_logger, "RegisterHub error: {}", errmsg);
+  } else {
+    if (wattMeter = YPower::FirstPower(); wattMeter == nullptr) {
+      LOG4CXX_ERROR(m_logger, "Could not find wattmeter");
+    }
+  }
+}
 
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed) {
   size_t index{nbPing++};
@@ -22,7 +30,7 @@ std::string Measures::csvHeadline() {
   return std::string{
       "nbPing,Average (in "
       "ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed "
-      "time (in sec),CPU time (in sec),Throughput (in Mbps)"};
+      "time (in sec),CPU time (in sec),Throughput (in Mbps),Energy Delivered (in Wh)"};
 }
 
 std::string Measures::asCsv() {
@@ -45,8 +53,15 @@ std::string Measures::asCsv() {
       (static_cast<double>(duration.count()) / nbMillisecondsPerSecond) /
       nbBitsPerMega;
 
+  string deliveredEnergyStr = "Non Available";
+  if (deliveredEnergy >= 0) {
+    std::ostringstream strs;
+    strs << deliveredEnergy;
+    deliveredEnergyStr = strs.str();
+  }
+
   return std::format(
-      "{},{},{},{},{},{},{},{},{},{},{},{},{}", pings.size(),
+      "{},{},{},{},{},{},{},{},{},{},{},{},{},{}", pings.size(),
       (std::reduce(pings.begin(), pings.end()) / pings.size()).count(),
       pings[0].count(), pings[pings.size() / 4].count(),
       pings[pings.size() / 2].count(), pings[pings.size() * 3 / 4].count(),
@@ -56,10 +71,17 @@ std::string Measures::asCsv() {
       pings[pings.size() - 1].count(),
       static_cast<double>(duration.count()) / nbMillisecondsPerSecond,
       static_cast<double>(stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond,
-      mbps);
+      mbps,
+      deliveredEnergyStr);
 }
 
 void Measures::setStartTime() {
+  if (wattMeter != nullptr && wattMeter->isOnline()) {
+    LOG4CXX_INFO(m_logger, "Reset wattmeter");
+    wattMeterResetDone = true;
+    wattMeter->reset();
+  }
+
   startTime = std::chrono::system_clock::now();
   startTimeCpu = get_cpu_time();
   measuresUndergoing = true;
@@ -68,6 +90,11 @@ void Measures::setStartTime() {
 void Measures::setStopTime() {
   stopTime = std::chrono::system_clock::now();
   stopTimeCpu = get_cpu_time();
+
+  if (wattMeterResetDone && wattMeter->isOnline()) {
+    deliveredEnergy = wattMeter->get_deliveredEnergyMeter();
+    LOG4CXX_INFO_FMT(m_logger, "Energy delivered: {}", deliveredEnergy);
+  }
   measuresUndergoing = true;
 }
 
