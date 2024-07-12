@@ -9,7 +9,6 @@
 
 #include "../../SessionLayer/SessionLayer.h"
 #include "../../msgTemplates.h"
-#include "../AlgoLayerMsg.h"
 #include "BBOBBMsg.h"
 
 using namespace std;
@@ -17,6 +16,8 @@ using namespace fbae::core;
 
 namespace fbae::core::AlgoLayer::BBOBB {
 
+constexpr unsigned int nbWaveValues{256};
+    
 BBOBB::BBOBB(std::unique_ptr<CommLayer::CommLayer> commLayer)
     : AlgoLayer{std::move(commLayer), "fbae.core.AlgoLayer.BBOBB"} {}
 
@@ -178,7 +179,7 @@ void BBOBB::processStepMsg(string&& algoMsgAsString) {
     if (!algoTerminated) {
       catchUpIfLateInMessageSending();
     }
-  } else if (stepMsg.wave == lastSentStepMsg.wave + 1) {
+  } else if (stepMsg.wave == (lastSentStepMsg.wave + 1) % nbWaveValues) {
     // Message is early and needs to be treated in the next wave
     nextWaveReceivedStepMsg[stepMsg.step] = stepMsg;
   } else {
