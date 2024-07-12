@@ -277,6 +277,8 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
   const auto usingNetworkLevelMulticast =
       arguments.isUsingNetworkLevelMulticast();
 
+  maxSizeForOneWrite = arguments.getIntInCommArgument("tcpMaxSizeForOneWrite", std::numeric_limits<int>::max());
+
   nbAwaitedInitializationEvents =
       nbAwaitedConnections  // nb hosts must connect to current host
       + dest.size()         // current host must connect to dest.size() hosts
@@ -327,11 +329,15 @@ void Tcp::send(rank_t r, const std::string& algoMsgAsString) {
     cereal::BinaryOutputArchive oarchive(oStream);  // Create an output archive
     oarchive(forLength);  // Write the data to the archive
   }  // archive goes out of scope, ensuring all contents are flushed
-
   auto sWithLength = oStream.str();
-  sWithLength.append(algoMsgAsString);
 
-  boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+  if (algoMsgAsString.length() < maxSizeForOneWrite) {
+    sWithLength.append(algoMsgAsString);
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+  } else {
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(algoMsgAsString));  
+  }
 }
 
 void Tcp::terminate() {
