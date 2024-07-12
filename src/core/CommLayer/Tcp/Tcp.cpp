@@ -122,22 +122,26 @@ awaitable<void> Tcp::coroutineIncomingMessageReceiver(
 
     // Read message itself
     std::vector<char> v(len);
-    auto [e2, lenRead2] =
-        co_await socket.async_read_some(boost::asio::buffer(v));
-    if (e2 == boost::asio::error::eof) {
-      LOG4CXX_FATAL(getCommLogger(),
-                    "Client disconnected between receiving message length and "
-                    "receiving message");
-      exit(1);
-    }
-    if (e2) {
-      LOG4CXX_FATAL_FMT(getCommLogger(),
-                        "Boost error '{}' not handled at: {}:{}", e2.what(),
-                        path2file(std::source_location::current().file_name()),
-                        std::source_location::current().line());
-      exit(1);
-    }
-    assert(lenRead2 == len);
+    auto buf{boost::asio::buffer(v, len)};
+    auto lenRemainingToRead{len};
+    do {
+      auto [e2, lenRead2] =
+        co_await socket.async_read_some(boost::asio::buffer(buf + (len - lenRemainingToRead), lenRemainingToRead));
+      if (e2 == boost::asio::error::eof) {
+        LOG4CXX_FATAL(getCommLogger(),
+                      "Client disconnected between receiving message length and "
+                      "receiving message");
+        exit(1);
+      }
+      if (e2) {
+        LOG4CXX_FATAL_FMT(getCommLogger(),
+                          "Boost error '{}' not handled at: {}:{}", e2.what(),
+                          path2file(std::source_location::current().file_name()),
+                          std::source_location::current().line());
+        exit(1);
+      }
+      lenRemainingToRead -= lenRead2;
+    } while (lenRemainingToRead > 0);
     callbackReceive(std::string{v.data(), v.size()});
   }
 }
