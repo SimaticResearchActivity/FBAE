@@ -166,6 +166,8 @@ awaitable<void> Tcp::coroutineServer(size_t nbAwaitedConnections) {
             std::source_location::current().line());
         exit(1);
       }
+      boost::asio::ip::tcp::no_delay option(true);
+      socket.set_option(option);
       co_spawn(executor, coroutineIncomingMessageReceiver(std::move(socket)),
                detached);
     }
@@ -220,6 +222,8 @@ awaitable<void> Tcp::coroutineClient(rank_t rankClient) {
       co_await timer.async_wait(boost::asio::use_awaitable);
     }
   } while (!connected);
+  boost::asio::ip::tcp::no_delay option(true);
+  ptrSocket->set_option(option);
   addElementInRank2sock(rankClient, std::move(ptrSocket));
   decrementNbAwaitedInitializationEvents();
 }
