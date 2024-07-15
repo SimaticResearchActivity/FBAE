@@ -1,0 +1,20 @@
+{
+    "sites": [
+        {
+            "tuple_element0": "localhost",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "localhost",
+            "tuple_element1": 4097
+        },
+        {
+            "tuple_element0": "localhost",
+            "tuple_element1": 4098
+        },
+        {
+            "tuple_element0": "localhost",
+            "tuple_element1": 4099
+        }
+    ]
+}
