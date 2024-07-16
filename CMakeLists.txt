@@ -63,11 +63,11 @@ if(result)
 endif()
 
 # Give access to yoctolib_cpp include directory
-add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources compiled_yoctolib)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources)
 
 # Set
 if(WIN32)
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources compiled_yoctolib)
 else()
     # Link with the built library    
     add_library(YoctoLib STATIC IMPORTED)
