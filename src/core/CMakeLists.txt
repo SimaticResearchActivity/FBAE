@@ -51,7 +51,13 @@ add_library(lib_fbae
         Logger/LoggerConfig.cpp)
 
 target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio Yoctolib usb-1.0 PRIVATE log4cxx )
-set_target_properties(Yoctolib PROPERTIES
-		IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
-)
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx )
+#set_target_properties(Yoctolib PROPERTIES
+#    IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
+#)
+if (!WIN32) # We are under UNIX 
+  target_link_libraries(lib_fbae usb-1.0)
+  set_target_properties(YoctoLib PROPERTIES
+    IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
+  )
+endif()

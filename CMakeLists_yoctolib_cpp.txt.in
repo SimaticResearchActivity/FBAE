@@ -14,10 +14,10 @@ cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when w
 if (WIN32)
   ExternalProject_Add(yoctolib_cpp
     URL               https://github.com/yoctopuce/yoctolib_cpp/archive/refs/tags/v2.0.59526.tar.gz
-    SOURCE_DIR        ${CMAKE_CURRENT_BINARY_DIR}\yoctolib_cpp-src
+    SOURCE_DIR        ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src
     BINARY_DIR        ""
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND     cd ${CMAKE_CURRENT_BINARY_DIR}\yoctolib_cpp-src ; .\build.bat
+    BUILD_COMMAND     ""
     INSTALL_COMMAND   ""
     TEST_COMMAND      ""
   )

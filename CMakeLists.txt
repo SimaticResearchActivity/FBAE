@@ -61,14 +61,16 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build .
 if(result)
     message(FATAL_ERROR "Build step for yoctolib_cpp failed: ${result}")
 endif()
+
 # Give access to yoctolib_cpp include directory
+add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources compiled_yoctolib)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources)
-# Link with the built library
-add_library(Yoctolib STATIC IMPORTED)
+
 # Set
 if(WIN32)
-    set(YOCTO_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/)
 else()
+    # Link with the built library    
+    add_library(YoctoLib STATIC IMPORTED)
     set(YOCTO_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Binaries/linux/x86_64/libyocto-static.a)
 endif()
 

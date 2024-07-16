@@ -2,14 +2,16 @@ add_executable(fbae
         main.cpp
 )
 
-target_link_libraries(fbae lib_fbae Yoctolib usb-1.0 log4cxx )
-set_target_properties(Yoctolib PROPERTIES
-        IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
-)
+target_link_libraries(fbae lib_fbae YoctoLib log4cxx )
+
 if (WIN32)
   target_link_libraries(fbae wsock32.lib ws2_32.lib)
 else() # We are under UNIX
+  target_link_libraries(fbae usb-1.0)
   target_link_options(fbae PUBLIC -pthread)
+  set_target_properties(YoctoLib PROPERTIES
+    IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
+  )
 endif()
 
 add_custom_target(copy-res-fbae ALL
