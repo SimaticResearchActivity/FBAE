@@ -34,7 +34,7 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
   }
 
   if (parser.hasopt('C')) {
-    algoArgument = parser.getoptStringRequired('C', logger);
+    commArgument = parser.getoptStringRequired('C', logger);
   }
 
   if (parser.hasopt('f')) {

@@ -106,6 +106,13 @@ class Tcp : public CommLayer {
   boost::asio::ip::udp::socket multicastSocket{ioContext};
 
   /**
+   * @brief Maximum size of a message to send for which the send is done with a single 
+   * call to send. Otherwise two calls to send are used. This variable is initialized
+   * with a call to arguments.getIntInCommArgument("tcpMaxSizeForOneWrite", std::numeric_limits<int>::max());
+   */
+  int maxSizeForOneWrite{-1};
+
+  /**
    * @brief Number of initialization events to wait for before calling
    * @callbackInitDone
    */

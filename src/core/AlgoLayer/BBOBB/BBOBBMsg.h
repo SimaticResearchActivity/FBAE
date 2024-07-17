@@ -23,8 +23,8 @@ enum class MsgId : MsgId_t {
 struct StepMsg {
   MsgId msgId{};
   rank_t senderPos{};
-  uint8_t wave;
-  uint8_t step;
+  uint8_t wave{};
+  uint8_t step{};
   std::vector<fbae::core::AlgoLayer::BatchSessionMsg> batchesBroadcast;
 
   // This method lets cereal know which data members to serialize
