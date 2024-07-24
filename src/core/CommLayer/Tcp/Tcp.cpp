@@ -122,22 +122,26 @@ awaitable<void> Tcp::coroutineIncomingMessageReceiver(
 
     // Read message itself
     std::vector<char> v(len);
-    auto [e2, lenRead2] =
-        co_await socket.async_read_some(boost::asio::buffer(v));
-    if (e2 == boost::asio::error::eof) {
-      LOG4CXX_FATAL(getCommLogger(),
-                    "Client disconnected between receiving message length and "
-                    "receiving message");
-      exit(1);
-    }
-    if (e2) {
-      LOG4CXX_FATAL_FMT(getCommLogger(),
-                        "Boost error '{}' not handled at: {}:{}", e2.what(),
-                        path2file(std::source_location::current().file_name()),
-                        std::source_location::current().line());
-      exit(1);
-    }
-    assert(lenRead2 == len);
+    auto buf{boost::asio::buffer(v, len)};
+    auto lenRemainingToRead{len};
+    do {
+      auto [e2, lenRead2] =
+        co_await socket.async_read_some(boost::asio::buffer(buf + (len - lenRemainingToRead), lenRemainingToRead));
+      if (e2 == boost::asio::error::eof) {
+        LOG4CXX_FATAL(getCommLogger(),
+                      "Client disconnected between receiving message length and "
+                      "receiving message");
+        exit(1);
+      }
+      if (e2) {
+        LOG4CXX_FATAL_FMT(getCommLogger(),
+                          "Boost error '{}' not handled at: {}:{}", e2.what(),
+                          path2file(std::source_location::current().file_name()),
+                          std::source_location::current().line());
+        exit(1);
+      }
+      lenRemainingToRead -= lenRead2;
+    } while (lenRemainingToRead > 0);
     callbackReceive(std::string{v.data(), v.size()});
   }
 }
@@ -162,6 +166,8 @@ awaitable<void> Tcp::coroutineServer(size_t nbAwaitedConnections) {
             std::source_location::current().line());
         exit(1);
       }
+      boost::asio::ip::tcp::no_delay option(true);
+      socket.set_option(option);
       co_spawn(executor, coroutineIncomingMessageReceiver(std::move(socket)),
                detached);
     }
@@ -216,6 +222,8 @@ awaitable<void> Tcp::coroutineClient(rank_t rankClient) {
       co_await timer.async_wait(boost::asio::use_awaitable);
     }
   } while (!connected);
+  boost::asio::ip::tcp::no_delay option(true);
+  ptrSocket->set_option(option);
   addElementInRank2sock(rankClient, std::move(ptrSocket));
   decrementNbAwaitedInitializationEvents();
 }
@@ -269,6 +277,8 @@ void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
   const auto usingNetworkLevelMulticast =
       arguments.isUsingNetworkLevelMulticast();
 
+  maxSizeForOneWrite = arguments.getIntInCommArgument("tcpMaxSizeForOneWrite", std::numeric_limits<int>::max());
+
   nbAwaitedInitializationEvents =
       nbAwaitedConnections  // nb hosts must connect to current host
       + dest.size()         // current host must connect to dest.size() hosts
@@ -319,11 +329,15 @@ void Tcp::send(rank_t r, const std::string& algoMsgAsString) {
     cereal::BinaryOutputArchive oarchive(oStream);  // Create an output archive
     oarchive(forLength);  // Write the data to the archive
   }  // archive goes out of scope, ensuring all contents are flushed
-
   auto sWithLength = oStream.str();
-  sWithLength.append(algoMsgAsString);
 
-  boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+  if (algoMsgAsString.length() < maxSizeForOneWrite) {
+    sWithLength.append(algoMsgAsString);
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+  } else {
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(sWithLength));
+    boost::asio::write(*rank2sock[r], boost::asio::buffer(algoMsgAsString));  
+  }
 }
 
 void Tcp::terminate() {

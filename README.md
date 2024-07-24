@@ -131,34 +131,40 @@ Note: `res` directory of *FBAE* repository contains samples of site files.
 Once your site file is ready, you can run `fbae` executable according to the following usage:
 
 ```txt
-fbae -a|--algo <algo_identifier> -c|--comm <communicationLayer_identifier> -f|--frequency <number> -h|--help -m|--maxBatchSize <number_of_messages> -n|--nbMsg <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -w|--warmupCooldown <number>
-Where:
+fbae -a|--algo <algo_identifier> -A|--algoArgument <string> -c|--comm <communicationLayer_identifier> -C|--commArgument <string> -f|--frequency <number> -h|--help -m|--maxBatchSize <number_of_messages> -M|--multicastAddress <IP_address> -n|--nbMsg <number> -P|--multicastPort <number> -r|--rank <rank_number> -s|--size <size_in_bytes> -S|--site <siteFile_name> -w|--warmupCooldown <number>
+ Where:
   -a|--algo <algo_identifier>                Broadcast Algorithm
                                                 B = BBOBB
-                                                S = Sequencer based
+                                                S = Sequencer base
+                                                L = LCR
+                                                T = Trains
+  -A|--algoArgument <string>                 [optional] String to specify an argument to be used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that Trains algorithm must use 2 trains in parallel)
   -c|--comm <communicationLayer_identifier>  Communication layer to be used
                                                 t = TCP
+  -C|--commArgument <string>                 [optional] String to specify an argument to be used by a specific communication layer (e.g. tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer will send a message and its length inside a single message as long as message length is below 32768 bytes)
   -f|--frequency <number>                    [optional] Number of PerfMessage sessionLayer messages which must be sent each second (By default, a PerfMessage is sent when receiving a PerfResponse)
   -h|--help                                  Show help message
-  -m|--maxBatchSize <number_of_messages>          [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
+  -m|--maxBatchSize <number_of_messages>     [optional] Maximum size of batch of messages (if specified algorithm allows batch of messages; By default, maxBatchSize is unlimited)
+  -M|--multicastAddress <IP_address>         [optional] If specified, indicates that participant must use network-level multicast and the IP address to be used (IP address can be either IPv4 e.g. 239.255.0.1 or IPv6 e.g. ff31::8000:1234)
   -n|--nbMsg <number>                        Number of messages to be sent
+  -P|--multicastPort <number>                [optional] When -M|--multicastAddress is specified, indicates port number to be used for network-level multicast (By default, port 30001 is used)
   -r|--rank <rank_number>                    Rank of process in site file (if 99, all algorithm participants are executed within threads in current process)
-  -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [22,65515])
+  -s|--size <size_in_bytes>                  Size of messages sent by a client (must be in interval [31,65515])
   -S|--site <siteFile_name>                  Name (including path) of the sites file to be used
   -w|--warmupCooldown <number>               [optional] Number in [0,99] representing percentage of PerfMessage sessionLayer messages which will be considered as part of warmup phase or cool down phase and thus will not be measured for ping (By default, percentage is 0%)
 ```
 
 For instance, you can open 3 terminals and run:
 
-- `./fbae -a S -c t -n 3 -r 0 -s 32 -S ../../../res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
-- `./fbae -a S -c t -n 20 -r 1 -s 32 -S ../../../res/sites_3_local.json` on terminal 1.
-- `./fbae -a S -c t -n 20 -r 2 -s 32 -S ../../../res/sites_3_local.json` on terminal 2.
+- `./fbae -a S -c t -n 20 -r 0 -s 32 -S res/sites_3_local.json` on terminal 0 (In this example, we first launch `fbae` executable with rank 0, because we want to invoke Sequencer total-order broadcast algorithm. And the role of the sequencer process is given to the first site specified in json file).
+- `./fbae -a S -c t -n 20 -r 1 -s 32 -S res/sites_3_local.json` on terminal 1.
+- `./fbae -a S -c t -n 20 -r 2 -s 32 -S res/sites_3_local.json` on terminal 2.
 
 After a while (depending on the number of messages to be sent you specified), `fbae` displays the statistics (structured in CSV format) observed for this process, e.g.:
 
 ```txt
-algoLayer,commLayer,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile,nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)
-Sequencer,TCP,0,2147483647,3,0%,2,1024,../../res/sites_3_local.json,3,0.410093,0.307098,0.307098,0.361872,0.561308,0.561308,0.561308,0.561308,0.561308,0.001000,0.001937,98.304000
+algoLayer,algoArgument,commLayer,commArgument,isUsingNetworkLevelMulticast,frequency,maxBatchSize,nbMsg,warmupCooldown,rank,sizeMsg,siteFile,nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps)
+Sequencer,,TCP,,false,0,2147483647,3,0%,1,32,res/sites_3_local.json,3,0.3361676666666667,0.324608,0.324608,0.340585,0.34331,0.34331,0.34331,0.34331,0.34331,0.001,0.001324,3.072
 ```
 
 Note that, for testing purpose, it is possible to launch a single instance of `fbae` which will execute all activities in different threads. To do so, give value `99` to the rank, e.g. `./fbae -a S -c t -n 20 -r 99 -s 32 -S ../../../res/sites_3_local.json`
