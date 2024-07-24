@@ -13,7 +13,7 @@ add_executable(tests
         AlgoLayer/TrainsTest.cpp
         CommLayer/TcpTest.cpp
 )
-target_link_libraries(tests GTest::gtest_main lib_fbae YoctoLib)
+target_link_libraries(tests GTest::gtest_main lib_fbae YoctoLib ${LIKWID_LIBRARY})
 if (WIN32)
   target_link_libraries(tests wsock32.lib ws2_32.lib)
 else() # We are under UNIX

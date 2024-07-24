@@ -42,6 +42,18 @@ endif()
 # Give access to log4cxx include directory
 include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
 
+#
+# Include likwid
+#
+# Find the package
+find_path(LIKWID_INCLUDE_DIR NAMES likwid.h PATHS /usr/local/include /usr/include)
+find_library(LIKWID_LIBRARY NAMES likwid PATHS /usr/local/lib /usr/lib)
+
+if(NOT LIKWID_INCLUDE_DIR OR NOT LIKWID_LIBRARY)
+    message(FATAL_ERROR "Could not find LIKWID library or include directory")
+endif()
+
+include_directories(${LIKWID_INCLUDE_DIR})
 
 #
 # Include Yoctolib_cpp

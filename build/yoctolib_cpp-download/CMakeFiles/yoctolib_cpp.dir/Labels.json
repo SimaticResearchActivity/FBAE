@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/CMakeFiles/yoctolib_cpp"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/CMakeFiles/yoctolib_cpp.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/CMakeFiles/yoctolib_cpp-complete.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-build.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-configure.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-download.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-install.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-mkdir.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-patch.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-test.rule"
+		},
+		{
+			"file" : "/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/yoctolib_cpp-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"yoctolib_cpp"
+		],
+		"name" : "yoctolib_cpp"
+	}
+}

@@ -8,6 +8,7 @@
 #include "get_cpu_time.h"
 #include "yocto_api.h"
 #include "yocto_power.h"
+#include "likwid.h"
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
@@ -34,7 +35,7 @@ class Measures {
 
   YPower* wattMeter = nullptr;
   double deliveredEnergy = -1;
-  bool wattMeterResetDone = false;
+  bool wattMeterAvailable = true;
 
   fbae::core::Logger::LoggerPtr m_logger = fbae::core::Logger::getLogger("fbae.core.SessionLayer.Measures");
 };

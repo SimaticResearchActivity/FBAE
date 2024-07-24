@@ -9,11 +9,18 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 Measures::Measures(size_t nbPingMax) : pings(nbPingMax) {
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
     LOG4CXX_ERROR_FMT(m_logger, "RegisterHub error: {}", errmsg);
+    wattMeterAvailable = false;
   } else {
     if (wattMeter = YPower::FirstPower(); wattMeter == nullptr) {
-      LOG4CXX_ERROR(m_logger, "Could not find wattmeter");
+      LOG4CXX_WARN(m_logger, "Could not find wattmeter");
+      wattMeterAvailable = false;
     }
   }
+
+  int intTest = 2;
+  int* test = &intTest;
+
+  perfmon_init(1, test);
 }
 
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed) {
@@ -54,7 +61,7 @@ std::string Measures::asCsv() {
       nbBitsPerMega;
 
   string deliveredEnergyStr = "Non Available";
-  if (deliveredEnergy >= 0) {
+  if (wattMeterAvailable) {
     std::ostringstream strs;
     strs << deliveredEnergy;
     deliveredEnergyStr = strs.str();
@@ -76,10 +83,13 @@ std::string Measures::asCsv() {
 }
 
 void Measures::setStartTime() {
-  if (wattMeter != nullptr && wattMeter->isOnline()) {
+  if (wattMeterAvailable && wattMeter->isOnline()) {
     LOG4CXX_INFO(m_logger, "Reset wattmeter");
-    wattMeterResetDone = true;
     wattMeter->reset();
+  }
+  else {
+    LOG4CXX_WARN(m_logger, "Could not do the Yoctopuce's reset");
+    wattMeterAvailable = false;
   }
 
   startTime = std::chrono::system_clock::now();
@@ -91,9 +101,13 @@ void Measures::setStopTime() {
   stopTime = std::chrono::system_clock::now();
   stopTimeCpu = get_cpu_time();
 
-  if (wattMeterResetDone && wattMeter->isOnline()) {
+  if (wattMeterAvailable && wattMeter->isOnline()) {
     deliveredEnergy = wattMeter->get_deliveredEnergyMeter();
     LOG4CXX_INFO_FMT(m_logger, "Energy delivered: {}", deliveredEnergy);
+  }
+  else {
+    LOG4CXX_WARN(m_logger, "Could not do the mesure with Yoctopuce");
+    wattMeterAvailable = false;
   }
   measuresUndergoing = true;
 }

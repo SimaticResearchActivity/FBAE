@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/home/thomas/Softwares/cmake-3.30.0-linux-x86_64/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/download-yoctolib_cpp.cmake;COMMAND;/home/thomas/Softwares/cmake-3.30.0-linux-x86_64/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/verify-yoctolib_cpp.cmake;COMMAND;/home/thomas/Softwares/cmake-3.30.0-linux-x86_64/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-download/yoctolib_cpp-prefix/src/yoctolib_cpp-stamp/extract-yoctolib_cpp.cmake
+source_dir=/home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-src
+work_dir=/home/thomas/Documents/Travail/FBAE/build
+url(s)=https://github.com/yoctopuce/yoctolib_cpp/archive/refs/tags/v2.0.59526.tar.gz
+hash=
+      no_extract=
+
