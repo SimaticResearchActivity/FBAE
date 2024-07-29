@@ -1,0 +1,34 @@
+#
+# For Yoctolib_cpp
+#
+# Contents inspired by https://github.com/google/googletest/tree/master/googletest#incorporating-into-an-existing-cmake-project
+
+# On Windows, for other CMakeLists_*.txt.in, we do not need the following cmake_minimimum_version. But we do need it
+# for CMakeLists_yocto.txt.in
+cmake_minimum_required(VERSION 3.15)
+
+project(yoctolib_cpp-download NONE)
+
+include(ExternalProject)
+cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
+if (WIN32)
+  ExternalProject_Add(yoctolib_cpp
+    URL               https://github.com/yoctopuce/yoctolib_cpp/archive/refs/tags/v2.0.59526.tar.gz
+    SOURCE_DIR        /home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-src
+    BINARY_DIR        ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ""
+    INSTALL_COMMAND   ""
+    TEST_COMMAND      ""
+  )
+else()
+  ExternalProject_Add(yoctolib_cpp
+    URL               https://github.com/yoctopuce/yoctolib_cpp/archive/refs/tags/v2.0.59526.tar.gz
+    SOURCE_DIR        /home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-src
+    BINARY_DIR        ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     cd /home/thomas/Documents/Travail/FBAE/build/yoctolib_cpp-src && ./build.sh
+    INSTALL_COMMAND   ""
+    TEST_COMMAND      ""
+  )
+endif()

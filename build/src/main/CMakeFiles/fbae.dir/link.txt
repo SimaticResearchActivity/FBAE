@@ -1,0 +1,1 @@
+/usr/bin/c++ -pthread CMakeFiles/fbae.dir/main.cpp.o -o fbae  -Wl,-rpath,/usr/local/lib ../core/liblib_fbae.a ../../yoctolib_cpp-src/Binaries/linux/x86_64/libyocto-static.a /usr/local/lib/liblog4cxx.so.15.2.0 -lusb-1.0

@@ -8,7 +8,7 @@
 #include "get_cpu_time.h"
 #include "yocto_api.h"
 #include "yocto_power.h"
-#include "likwid.h"
+#include <sys/wait.h>
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 

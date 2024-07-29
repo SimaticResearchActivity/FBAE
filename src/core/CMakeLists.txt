@@ -51,7 +51,7 @@ add_library(lib_fbae
         Logger/LoggerConfig.cpp)
 
 target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx ${LIKWID_LIBRARY})
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx nlohmann_json::nlohmann_json)
 
 if (!WIN32) # We are under UNIX 
   target_link_libraries(lib_fbae usb-1.0)

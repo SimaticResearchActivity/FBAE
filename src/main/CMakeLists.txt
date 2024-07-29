@@ -2,7 +2,7 @@ add_executable(fbae
         main.cpp
 )
 
-target_link_libraries(fbae lib_fbae YoctoLib log4cxx ${LIKWID_LIBRARY})
+target_link_libraries(fbae lib_fbae YoctoLib log4cxx nlohmann_json::nlohmann_json)
 
 if (WIN32)
   target_link_libraries(fbae wsock32.lib ws2_32.lib)
