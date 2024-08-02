@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
@@ -110,7 +112,6 @@ void Measures::setStopTime() {
       wattMeterAvailable = false;
     }
   }
-
   measuresUndergoing = true;
 }
 

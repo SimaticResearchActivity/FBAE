@@ -1,0 +1,23 @@
+{
+  "verbose": false,
+  "stream": false,
+
+  "input": {
+    "puller": {
+      "type": "csv",
+      "files": ["./sensor_output/core.csv", "./sensor_output/msr.csv", "./sensor_output/rapl.csv"]
+    }
+  },
+
+  "output": {
+    "pusher_power": {
+      "type": "csv",
+      "directory": "./power_values"
+    }
+  },
+
+  "cpu-base-freq": 1900,
+  "cpu-error-threshold": 2.0,
+  "disable-dram-formula": true,
+  "sensor-reports-frequency": 1000
+}
