@@ -25,6 +25,8 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
 		AlgoLayer/Trains/Trains.cpp
 		AlgoLayer/Trains/Trains.h
+        AlgoLayer/FBAE_MPI/FBAE_MPI.cpp
+		AlgoLayer/FBAE_MPI/FBAE_MPI.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
 		CommLayer/CommStub.cpp
@@ -50,8 +52,8 @@ add_library(lib_fbae
         Logger/LoggerConfig.h
         Logger/LoggerConfig.cpp)
 
-target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx)
+target_include_directories(lib_fbae PUBLIC ./ )
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx MPI::MPI_CXX)
 
 if (!WIN32) # We are under UNIX 
   target_link_libraries(lib_fbae usb-1.0)

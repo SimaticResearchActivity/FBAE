@@ -147,6 +147,7 @@ void BBOBB::execute() {
 
   // Prepare call to @CommLayer::openDestAndWaitIncomingMsg()
   const auto pos = getPosInBroadcastersGroup().value();
+
   vector<rank_t> dest;
   for (int power_of_2 = 1; power_of_2 < getBroadcastersGroup().size();
        power_of_2 *= 2) {
@@ -156,6 +157,7 @@ void BBOBB::execute() {
     peersPos.push_back(rankOutgoingPeer);
     ++nbStepsInWave;
   }
+
   getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
 
   LOG4CXX_INFO_FMT(getAlgoLogger(),

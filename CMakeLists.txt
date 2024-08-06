@@ -22,6 +22,9 @@ set (BUILD_SHARED_LIBS FALSE)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Inclure MPI
+find_package(MPI REQUIRED)
+
 #
 # We include Log4cxx
 #
