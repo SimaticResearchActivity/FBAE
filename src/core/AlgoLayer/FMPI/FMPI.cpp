@@ -1,4 +1,4 @@
-#include "FBAE_MPI.h"
+#include "FMPI.h"
 
 #include <algorithm>
 #include <iostream>
@@ -7,22 +7,24 @@
 
 #include "../../SessionLayer/SessionLayer.h"
 #include "../../msgTemplates.h"
+#include "../../CommLayer/CommStub.h"
+#include "MPIManager.h"
 
 #include <mpi.h>
 
 
 using namespace std;
 
-namespace fbae::core {
+namespace fbae::core::AlgoLayer::FMPI {
 
-FBAE_MPI::FBAE_MPI()
-    : AlgoLayer(make_unique<CommLayer>(this), "fbae.core.AlgoLayer.FBAE_MPI"),
-      CommLayer("fbae.core.CommLayer.FBAE_MPI") {}
+FMPI::FMPI()
+    : AlgoLayer(make_unique<CommLayer::CommStub>(),
+                "fbae.core.AlgoLayer.FMPI") {
+  MPIManager::getInstance().MPI_initialize(getAlgoLogger());
+}
 
-#pragma region AlgoLayer
-
-void FBAE_MPI::callbackReceiveBuffer(std::vector<char> buffer,
-                                       std::vector<int> message_sizes) {
+void FMPI::callbackReceiveBuffer(std::vector<char> buffer,
+                                     std::vector<int> message_sizes) {
   if (algoTerminated) {
     return;
   }
@@ -38,7 +40,7 @@ void FBAE_MPI::callbackReceiveBuffer(std::vector<char> buffer,
   }
 
   // Send batch
-  fbae::core::AlgoLayer::BatchSessionMsg batchToSend;
+  BatchSessionMsg batchToSend;
 
   if (auto batch{batchGetBatchMsgs(rank)}; batch.has_value()) {
     batchToSend.batchSessionMsg = batch->batchSessionMsg;
@@ -50,26 +52,26 @@ void FBAE_MPI::callbackReceiveBuffer(std::vector<char> buffer,
 
   if (algoTerminated) {
     const auto serialized =
-        serializeStruct<fbae::core::AlgoLayer::BatchSessionMsg>(batchToSend);
-    multicastMsg(serialized);
+        serializeStruct<BatchSessionMsg>(batchToSend);
+    sendAndReceive(serialized);
   }
 }
 
-void FBAE_MPI::callbackReceive(std::string&& batchSessionMsgAsString) {
+void FMPI::callbackReceive(std::string&& batchSessionMsgAsString) {
   auto batchSessionMsg{
-      deserializeStruct<fbae::core::AlgoLayer::BatchSessionMsg>(
+      deserializeStruct<BatchSessionMsg>(
           std::move(batchSessionMsgAsString))};
 
   LOG4CXX_INFO_FMT(getAlgoLogger(), "Sender rank #{:d}",
                    batchSessionMsg.senderPos);
 
-  for (auto sessionMessage : batchSessionMsg.batchSessionMsg) {
+  for (auto const& sessionMessage : batchSessionMsg.batchSessionMsg) {
     batchNoDeadlockCallbackDeliver(batchSessionMsg.senderPos, sessionMessage);
   }
 }
 
-void FBAE_MPI::execute() {
-  sitesCount = static_cast<int>(
+void FMPI::execute() {
+  sitesCount = static_cast<uint32_t>(
       AlgoLayer::getSessionLayer()->getArguments().getSites().size());
   rank = AlgoLayer::getSessionLayer()->getRank();
 
@@ -77,16 +79,43 @@ void FBAE_MPI::execute() {
   std::iota(broadcasters.begin(), broadcasters.end(), 0);
   setBroadcastersGroup(std::move(broadcasters));
 
-  getCommLayer()->openDestAndWaitIncomingMsg(broadcasters, 0, this);
+  // Create Comm Layer of MPI
+  auto intSitesCount = static_cast<int>(sitesCount);
+  auto intRank = static_cast<int>(rank);
+
+  MPI_Comm_size(MPI_COMM_WORLD, &intSitesCount);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &intRank);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  LOG4CXX_INFO_FMT(AlgoLayer::getAlgoLogger(),
+                   "Broadcaster #{:d}; Wait for messages", rank);
+
+  callbackInitDone();
 }
-#pragma endregion AlgoLayer
 
+void FMPI::callbackInitDone() {
+  AlgoLayer::callbackInitDone();
 
+  // Send first batch
+  BatchSessionMsg batchToSend;
 
+  if (auto batch{batchGetBatchMsgs(rank)}; batch.has_value()) {
+    batchToSend.batchSessionMsg = batch->batchSessionMsg;
+    LOG4CXX_INFO_FMT(getAlgoLogger(), "{} batch send",
+                     batchToSend.batchSessionMsg.size());
+  } else {
+    LOG4CXX_INFO(getAlgoLogger(), "No batch send");
+  }
 
+  if (algoTerminated) {
+    const auto serialized = serializeStruct<BatchSessionMsg>(batchToSend);
+    sendAndReceive(serialized);
+  }
+}
 
-#pragma region CommLayer
-void FBAE_MPI::multicastMsg(const std::string& algoMsgAsString) {
+void FMPI::sendAndReceive(const std::string_view& algoMsgAsString) {
   if (algoTerminated) {
     return;
   }
@@ -123,32 +152,9 @@ void FBAE_MPI::multicastMsg(const std::string& algoMsgAsString) {
   callbackReceiveBuffer(buffer, message_sizes);
 }
 
-void FBAE_MPI::openDestAndWaitIncomingMsg(
-    std::vector<rank_t> const& dest, size_t nbAwaitedConnections,
-    fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) {
-  setAlgoLayer(aAlgoLayer);
-
-  // Create Comm Layer of MPI
-  auto intSitesCount = static_cast<int>(sitesCount);
-  auto intRank = static_cast<int>(rank);
-
-  MPI_Comm_size(MPI_COMM_WORLD, &intSitesCount);
-  MPI_Comm_rank(MPI_COMM_WORLD, &intRank);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  LOG4CXX_INFO_FMT(AlgoLayer::getAlgoLogger(),
-                   "Broadcaster #{:d}; Wait for messages", rank);
-
-  getAlgoLayer()->callbackInitDone();
+void FMPI::terminate() {
+  algoTerminated = true; 
 }
 
-void FBAE_MPI::send(rank_t r, const std::string& algoMsgAsString) {
-  multicastMsg(algoMsgAsString);
-};
-#pragma endregion CommLayer
-
-void FBAE_MPI::terminate() { algoTerminated = true; }
-
-std::string FBAE_MPI::toString() { return "FBAE_MPI"; }
-}  // namespace fbae::core
+std::string FMPI::toString() { return "FBAE_MPI"; }
+}  // namespace fbae::core::AlgoLayer::FMPI

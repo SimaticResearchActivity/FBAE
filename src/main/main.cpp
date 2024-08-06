@@ -5,6 +5,7 @@
 #include "AlgoLayer/LCR/LCR.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "AlgoLayer/Trains/Trains.h"
+#include "AlgoLayer/FMPI/FMPI.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "OptParserExtended.h"
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
@@ -40,6 +41,8 @@ unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& pars
       return make_unique<AlgoLayer::LCR::LCR>(concreteCommLayer(parser, logger));
     case 'T':
       return make_unique<AlgoLayer::Trains::Trains>(concreteCommLayer(parser, logger));
+    case 'M':
+      return make_unique<AlgoLayer::FMPI::FMPI>();
     default:
       LOG4CXX_FATAL_FMT(logger,
                         "Argument for Broadcast Algorithm is \"{}\" which is "
@@ -58,7 +61,8 @@ int main(int argc, char* argv[]) {
   OptParserExtended parser{
       "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = "
       "BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = "
-      "LCR\n\t\t\t\t\t\tT = Trains",
+      "LCR\n\t\t\t\t\t\tT = Trains\n\t\t\t\t\t\tM = "
+      "MPI",
       "A:algoArgument string \t [optional] String to specify an argument to be "
       "used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that "
       "Trains algorithm must use 2 trains in parallel)",
