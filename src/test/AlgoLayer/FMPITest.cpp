@@ -2,7 +2,6 @@
 
 #include "AlgoLayer/Trains/Trains.h"
 #include "AlgoLayer/FMPI/FMPI.h"
-#include "AlgoLayer/FMPI/MPIManager.h"
 #include "SessionLayer/SessionStub.h"
 #include "msgTemplates.h"
 
@@ -27,7 +26,6 @@ auto constexpr payloadD{"D"};
 class FMPITest : public testing::Test {
  protected:
   void SetUp() override {
-    MPIManager::getInstance().MPI_initialize();
     algoLayer = make_unique<FMPI>();
     algoLayerRaw = algoLayer.get();
   }
