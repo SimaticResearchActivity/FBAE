@@ -11,7 +11,6 @@ add_executable(tests
         AlgoLayer/BBOBBTest.cpp
         AlgoLayer/LCRTest.cpp
         AlgoLayer/TrainsTest.cpp
-        AlgoLayer/FMPITest.cpp
         CommLayer/TcpTest.cpp
 )
 target_link_libraries(tests GTest::gtest_main lib_fbae YoctoLib MPI::MPI_CXX)

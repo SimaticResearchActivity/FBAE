@@ -14,17 +14,14 @@ struct ReceivedBuffer {
 class FMPI : public AlgoLayer {
  public:
   explicit FMPI();
-  ~FMPI() final;
   
   void execute() override;
-
-  void callbackInitDone() override;
 
   void processFMPI();
 
   std::string createBatchToSend();
 
-  ReceivedBuffer sendAndReceive(std::string_view const& algoMsgAsString) const;
+  [[nodiscard]] ReceivedBuffer sendAndReceive(std::string_view const& algoMsgAsString) const;
 
   /**
    * @brief Deliver received messages and create message to send

@@ -17,7 +17,9 @@ namespace fbae::core::AlgoLayer::FMPI {
 
 FMPI::FMPI()
     : AlgoLayer(make_unique<CommLayer::CommStub>(),
-                "fbae.core.AlgoLayer.FMPI") {
+                "fbae.core.AlgoLayer.FMPI") {}
+
+void FMPI::execute() {
   // Initialize MPI
   int required = MPI_THREAD_MULTIPLE;
   int provided;
@@ -31,14 +33,7 @@ FMPI::FMPI()
                       "MPI does not provide required threading level");
     exit(EXIT_FAILURE);
   }
-}
 
- FMPI::~FMPI() {
-  MPI_Finalize();
-}
-
-
-void FMPI::execute() {
   // MPI Information
   int MPI_sitesCount;
   int MPI_rank;
@@ -75,12 +70,10 @@ void FMPI::execute() {
   LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Wait over", rank);
 
   callbackInitDone();
-}
-
-void FMPI::callbackInitDone() {
-  AlgoLayer::callbackInitDone();
 
   processFMPI();
+
+  MPI_Finalize();
 }
 
 void FMPI::processFMPI() {
@@ -99,8 +92,7 @@ void FMPI::processFMPI() {
 string FMPI::createBatchToSend() {
   if (algoTerminated) {
     return "";
-  }  //MPI_Finalize();
-
+  }
 
   if (auto const& batch{batchGetBatchMsgs(rank)}; batch.has_value()) {
     LOG4CXX_INFO_FMT(getAlgoLogger(),
@@ -113,7 +105,7 @@ string FMPI::createBatchToSend() {
   }
 }
 
-ReceivedBuffer FMPI::sendAndReceive(std::string_view const& algoMsgAsString) const {
+[[nodiscard]] ReceivedBuffer FMPI::sendAndReceive(std::string_view const& algoMsgAsString) const {
   if (algoTerminated) {
     return ReceivedBuffer{vector<char>(), vector<int>()};
   }

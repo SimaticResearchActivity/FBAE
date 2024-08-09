@@ -12,6 +12,8 @@ Thanks to *FBAE*, it is possible to evaluate (and thus compare) the performances
 
 ### Prerequisites
 
+### log4cxx
+
 *FBAE* relies on [log4cxx](https://logging.apache.org/log4cxx/latest_stable/index.html), the library proposed by Apache foundation to do logging. To be able to compile and link a program using this library, you must apply the following installation procedure on the machine where you will compile *FBAE*.
 
 ### Linux
@@ -86,6 +88,37 @@ Note the directory which is suggested (`C:/software/vcpkg/scripts/buildsystems/v
 cd [directoryContainingVcpkgDirectory]
 .\vcpkg\vcpkg install expat apr apr-util log4cxx
 ```
+
+### MPI
+
+*FBAE* is able to test algorithms based on [OpenMPI](https://docs.open-mpi.org/en/v5.0.x/index.html). To be able to compile and link a program using this library, you must apply the following installation procedure on the machine where you will compile *FBAE*.
+
+### Linux
+
+As mentioned [here](https://rantahar.github.io/introduction-to-mpi/setup.html):
+
+```bash
+sudo apt install openmpi-bin openmpi-common openmpi-doc libopenmpi-dev
+```
+
+Check that you Open MPI is properly installed by running:
+
+```bash
+mpicc --showme:version
+```
+
+The output should be similar to this:
+
+```bash
+mpicc: Open MPI 2.1.1 (Language: C)
+```
+
+and you should be done.
+
+### Windows
+
+- You need to install MS-MPI (MPI for Windows) [[here]](https://www.microsoft.com/en-us/download/details.aspx?id=105289)
+- Download both installers and execute them
 
 ### Compilation procedure
 
