@@ -14,6 +14,7 @@ struct ReceivedBuffer {
 class FMPI : public AlgoLayer {
  public:
   explicit FMPI();
+  ~FMPI() final;
   
   void execute() override;
 
@@ -23,14 +24,14 @@ class FMPI : public AlgoLayer {
 
   std::string createBatchToSend();
 
-  ReceivedBuffer sendAndReceive(const std::string_view& algoMsgAsString);
+  ReceivedBuffer sendAndReceive(std::string_view const& algoMsgAsString) const;
 
   /**
    * @brief Deliver received messages and create message to send
    * @param buffer buffer of the messages received
    * @param message_sizes sizes of the messages received
    */
-  void readBuffer(std::vector<char> buffer, std::vector<int> message_sizes);
+  void readBuffer(std::vector<char> buffer, std::vector<int> const& message_sizes);
 
   void callbackReceive(std::string&& batchSessionMsgAsString) override;
 

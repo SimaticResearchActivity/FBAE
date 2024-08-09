@@ -1,7 +1,6 @@
 #include "FMPI.h"
 
 #include <algorithm>
-#include <iostream>
 #include <numeric>
 #include <vector>
 #include <future>
@@ -12,28 +11,13 @@
 
 #include <mpi.h>
 
-
 using namespace std;
 
 namespace fbae::core::AlgoLayer::FMPI {
 
 FMPI::FMPI()
     : AlgoLayer(make_unique<CommLayer::CommStub>(),
-                "fbae.core.AlgoLayer.FMPI") {}
-
-void FMPI::execute() {
-
-  // Init sitesCount, rank and broadcaster group
-  sitesCount = static_cast<uint32_t>(
-      AlgoLayer::getSessionLayer()->getArguments().getSites().size());
-
-  rank = AlgoLayer::getSessionLayer()->getRank();
-
-  std::vector<rank_t> broadcasters(sitesCount);
-  std::iota(broadcasters.begin(), broadcasters.end(), 0);
-  setBroadcastersGroup(std::move(broadcasters));
-
-
+                "fbae.core.AlgoLayer.FMPI") {
   // Initialize MPI
   int required = MPI_THREAD_MULTIPLE;
   int provided;
@@ -43,11 +27,18 @@ void FMPI::execute() {
   }
 
   if (provided < required) {
-    LOG4CXX_FATAL_FMT(getAlgoLogger(),
+    LOG4CXX_FATAL(getAlgoLogger(),
                       "MPI does not provide required threading level");
     exit(EXIT_FAILURE);
   }
+}
 
+ FMPI::~FMPI() {
+  MPI_Finalize();
+}
+
+
+void FMPI::execute() {
   // MPI Information
   int MPI_sitesCount;
   int MPI_rank;
@@ -64,16 +55,24 @@ void FMPI::execute() {
 
   LOG4CXX_INFO_FMT(
       getAlgoLogger(),
-      "Rank: #{:d}: MPI_rank: {}; SitesCount: {}; MPI_sitesCount: {}", rank,
-      MPI_rank, sitesCount, MPI_sitesCount);
+      "MPI_rank: {}; MPI_sitesCount: {}", MPI_rank, MPI_sitesCount);
 
   sitesCount = static_cast<uint32_t>(MPI_sitesCount);
   rank = static_cast<rank_t>(MPI_rank);
-  
+
+  getSessionLayer()->setRank(rank);
+
+  // Init broadcaster group
+  std::vector<rank_t> broadcasters(sitesCount);
+  std::iota(broadcasters.begin(), broadcasters.end(), 0);
+  setBroadcastersGroup(std::move(broadcasters));
+
+  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Waiting others", rank);
+
   // Wait until all tasks joined MPI
   MPI_Barrier(MPI_COMM_WORLD);
 
-  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: All joined", rank);
+  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Wait over", rank);
 
   callbackInitDone();
 }
@@ -85,9 +84,7 @@ void FMPI::callbackInitDone() {
 }
 
 void FMPI::processFMPI() {
-
   auto task_to_receive_msg = std::async(std::launch::async, [this] {
-
     while (!algoTerminated) {
       string batchToSendString = createBatchToSend();
 
@@ -102,24 +99,21 @@ void FMPI::processFMPI() {
 string FMPI::createBatchToSend() {
   if (algoTerminated) {
     return "";
-  }
+  }  //MPI_Finalize();
 
-  // Send batch
-  BatchSessionMsg batchToSend;
 
-  if (auto batch{batchGetBatchMsgs(rank)}; batch.has_value()) {
-    batchToSend.batchSessionMsg = batch->batchSessionMsg;
+  if (auto const& batch{batchGetBatchMsgs(rank)}; batch.has_value()) {
     LOG4CXX_INFO_FMT(getAlgoLogger(),
                      "Rank #{:d}: Batch to send with {} message", rank,
-                     batchToSend.batchSessionMsg.size());
+                     batch->batchSessionMsg.size());
+    return serializeStruct<BatchSessionMsg>(batch.value());
   } else {
     LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: No batch to send", rank);
+    return "";
   }
-
-  return serializeStruct<BatchSessionMsg>(batchToSend);  
 }
 
-ReceivedBuffer FMPI::sendAndReceive(const std::string_view& algoMsgAsString) {
+ReceivedBuffer FMPI::sendAndReceive(std::string_view const& algoMsgAsString) const {
   if (algoTerminated) {
     return ReceivedBuffer{vector<char>(), vector<int>()};
   }
@@ -131,10 +125,6 @@ ReceivedBuffer FMPI::sendAndReceive(const std::string_view& algoMsgAsString) {
 
   MPI_Allgather(&msgSize, 1, MPI_INT, message_sizes.data(), 1, MPI_INT,
                 MPI_COMM_WORLD);
-
-  LOG4CXX_INFO_FMT(getAlgoLogger(),
-                   "Rank #{:d}: Messages sizes: [ {}, {}, {} ]", rank,
-                   message_sizes[0], message_sizes[1], message_sizes[2]);
 
   // Calculate total size of all messages
   int total_message_size = 0;
@@ -158,16 +148,22 @@ ReceivedBuffer FMPI::sendAndReceive(const std::string_view& algoMsgAsString) {
                  message_sizes.data(), offsets.data(), MPI_BYTE,
                  MPI_COMM_WORLD);
 
-  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: All messages gathered", rank);
-
   return ReceivedBuffer{.buffer = buffer, .message_sizes = message_sizes};
 }
 
 void FMPI::readBuffer(std::vector<char> buffer,
-  std::vector<int> message_sizes) {
+  std::vector<int> const& message_sizes) {
   if (algoTerminated) {
     return;
   }
+
+  string dump;
+  for (auto i : message_sizes) {
+    dump += format("{}, ", i);
+  }
+
+  LOG4CXX_INFO_FMT(getAlgoLogger(),
+                   "Rank #{:d}: Messages read sizes: [ {} ]", rank, dump.erase(dump.size() - 2));
 
   int offset = 0;
   for (int i = 0; i < sitesCount; i++) {
@@ -186,7 +182,7 @@ void FMPI::callbackReceive(std::string&& batchSessionMsgAsString) {
       deserializeStruct<BatchSessionMsg>(
           std::move(batchSessionMsgAsString))};
 
-  LOG4CXX_INFO_FMT(getAlgoLogger(), "Sender rank #{:d}",
+  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d} received from rank #{:d}", rank,
                    batchSessionMsg.senderPos);
 
   for (auto const& sessionMessage : batchSessionMsg.batchSessionMsg) {
@@ -196,7 +192,6 @@ void FMPI::callbackReceive(std::string&& batchSessionMsgAsString) {
 
 void FMPI::terminate() {
   algoTerminated = true;
-  MPI_Finalize();
 }
 
 std::string FMPI::toString() { return "FMPI"; }

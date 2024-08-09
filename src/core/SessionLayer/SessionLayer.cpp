@@ -25,6 +25,10 @@ const Arguments &SessionLayer::getArguments() const { return arguments; }
 
 rank_t SessionLayer::getRank() const { return rank; }
 
+void SessionLayer::setRank(rank_t const& newRank) {
+  this->rank = newRank;
+}
+
 Logger::LoggerPtr SessionLayer::getSessionLogger() const { return m_logger; }
 
 }  // namespace fbae::core::SessionLayer

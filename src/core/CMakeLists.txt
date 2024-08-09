@@ -50,7 +50,7 @@ add_library(lib_fbae
 		AlgoLayer/LCR/LCRMessage.h
         AlgoLayer/LCR/LCRTypedefs.h
         Logger/LoggerConfig.h
-        Logger/LoggerConfig.cpp "AlgoLayer/FMPI/MPIManager.h")
+        Logger/LoggerConfig.cpp)
 
 target_include_directories(lib_fbae PUBLIC ./ )
 target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx MPI::MPI_CXX)

@@ -65,6 +65,11 @@ class SessionLayer {
    */
   [[nodiscard]] virtual rank_t getRank() const;
 
+  /**
+ * @brief Setter for @rank.
+ */
+  virtual void setRank(rank_t const& newRank);
+
  protected:
   /**
    * @brief Return the logger of the parent
@@ -74,7 +79,7 @@ class SessionLayer {
  private:
   const Arguments &arguments;
   std::unique_ptr<fbae::core::AlgoLayer::AlgoLayer> algoLayer;
-  const rank_t rank;
+  rank_t rank;
 
   /**
    * @brief Logger used to print informations
