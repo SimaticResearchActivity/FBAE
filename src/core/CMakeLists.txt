@@ -25,14 +25,16 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
 		AlgoLayer/Trains/Trains.cpp
 		AlgoLayer/Trains/Trains.h
-        AlgoLayer/FMPI/FMPI.cpp
-		AlgoLayer/FMPI/FMPI.h
+		AlgoLayer/Algo_MPI/Algo_MPI.cpp
+		AlgoLayer/Algo_MPI/Algo_MPI.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
 		CommLayer/CommStub.cpp
 		CommLayer/CommStub.h
 		CommLayer/Tcp/Tcp.cpp
 		CommLayer/Tcp/Tcp.h
+		CommLayer/Comm_MPI/Comm_MPI.cpp
+		CommLayer/Comm_MPI/Comm_MPI.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp

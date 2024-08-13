@@ -1,23 +1,21 @@
 #pragma once
 
-#include "../../adaptCereal.h"
 #include "../AlgoLayer.h"
-#include "../../CommLayer/CommLayer.h"
 
-namespace fbae::core::AlgoLayer::FMPI {
+namespace fbae::core::AlgoLayer::Algo_MPI {
 
 struct ReceivedBuffer {
   std::vector<char> buffer;
   std::vector<int> message_sizes;
 };
 
-class FMPI : public AlgoLayer {
+class Algo_MPI : public AlgoLayer {
  public:
-  explicit FMPI();
+  explicit Algo_MPI();
   
   void execute() override;
 
-  void processFMPI();
+  void process_Algo_MPI();
 
   std::string createBatchToSend();
 
@@ -50,4 +48,4 @@ class FMPI : public AlgoLayer {
    uint32_t sitesCount = 0;
 };
 
-}  // namespace fbae::core::AlgoLayer::FMPI
+}  // namespace fbae::core::AlgoLayer::Algo_MPI

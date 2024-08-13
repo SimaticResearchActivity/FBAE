@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include "AlgoLayer/AlgoLayer.h"
+#include "SessionLayer/SessionLayer.h"
 
 namespace fbae::core::CommLayer {
 
@@ -28,9 +29,13 @@ void CommStub::multicastMsg(const std::string &algoMsgAsString) {
   }
 }
 
+size_t CommStub::initCommLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) {
+  setAlgoLayer(aAlgoLayer);
+  return getAlgoLayer()->getSessionLayer()->getArguments().getSites().size();
+}
+
 void CommStub::openDestAndWaitIncomingMsg(const std::vector<rank_t> &dest,
-                                          size_t aNbAwaitedConnections,
-                                          fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) {
+                                          size_t aNbAwaitedConnections) {
   connectedDest = dest;
   nbAwaitedConnections = aNbAwaitedConnections;
   getAlgoLayer()->callbackInitDone();

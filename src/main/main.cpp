@@ -1,11 +1,12 @@
 #include <future>
 #include <iostream>
 
+#include "AlgoLayer/Algo_MPI/Algo_MPI.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
 #include "AlgoLayer/LCR/LCR.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "AlgoLayer/Trains/Trains.h"
-#include "AlgoLayer/FMPI/FMPI.h"
+#include "CommLayer/Comm_MPI/Comm_MPI.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "OptParserExtended.h"
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
@@ -19,6 +20,8 @@ unique_ptr<CommLayer::CommLayer> concreteCommLayer(OptParserExtended const& pars
   switch (commId) {
     case 't':
       return make_unique<CommLayer::Tcp::Tcp>();
+    case 'm':
+      return make_unique<CommLayer::Comm_MPI::Comm_MPI>();
     default:
       LOG4CXX_FATAL_FMT(
           logger,
@@ -42,7 +45,7 @@ unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& pars
     case 'T':
       return make_unique<AlgoLayer::Trains::Trains>(concreteCommLayer(parser, logger));
     case 'M':
-      return make_unique<AlgoLayer::FMPI::FMPI>();
+      return make_unique<AlgoLayer::Algo_MPI::Algo_MPI>();
     default:
       LOG4CXX_FATAL_FMT(logger,
                         "Argument for Broadcast Algorithm is \"{}\" which is "
@@ -69,7 +72,7 @@ int main(int argc, char* argv[]) {
       "used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that "
       "Trains algorithm must use 2 trains in parallel)",
       "c:comm communicationLayer_identifier \t Communication layer to be "
-      "used\n\t\t\t\t\t\tt = TCP",
+      "used\n\t\t\t\t\t\tt = TCP\n\t\t\t\t\t\tm = MPI",
       "C:commArgument string \t [optional] String to specify an argument to be "
       "used by a specific communication layer (e.g. "
       "tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer "

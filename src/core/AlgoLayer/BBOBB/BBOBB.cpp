@@ -59,7 +59,7 @@ void BBOBB::beginWave() {
   // Send it
   LOG4CXX_INFO_FMT(getAlgoLogger(),
                    "Broadcaster #{:d} : Send Step Message (wave : {:d} / step "
-                   ": 0) to Broadcaster #",
+                   ": 0) to Broadcaster #{:d}",
                    getPosInBroadcastersGroup().value(), lastSentStepMsg.wave,
                    peersPos[lastSentStepMsg.step]);
 
@@ -81,8 +81,8 @@ void BBOBB::catchUpIfLateInMessageSending() {
         currentWaveReceivedStepMsg[step].batchesBroadcast.end());
     // Send it
     LOG4CXX_INFO_FMT(getAlgoLogger(),
-                     "Broadcaster #{:d} : Send Step Message (wave : {:d} / "
-                     "step : 0) to Broadcaster #",
+                     "Broadcaster #{:d} : Send Late Step Message (wave : {:d} / "
+                     "step : 0) to Broadcaster #{:d}",
                      getPosInBroadcastersGroup().value(), lastSentStepMsg.wave,
                      lastSentStepMsg.step, peersPos[lastSentStepMsg.step]);
 
@@ -137,11 +137,10 @@ void BBOBB::deliverBatchSessionMsg() {
 }
 
 void BBOBB::execute() {
+  size_t const sitesCount = getCommLayer()->initCommLayer(this);
+
   // Compute vector of broadcasters pos
-  vector<rank_t> v(getSessionLayer()
-                       ->getArguments()
-                       .getSites()
-                       .size());  // All participants are broadcasting.
+  vector<rank_t> v(sitesCount);  // All participants are broadcasting.
   std::iota(v.begin(), v.end(), 0);
   setBroadcastersGroup(std::move(v));
 
@@ -158,7 +157,7 @@ void BBOBB::execute() {
     ++nbStepsInWave;
   }
 
-  getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave, this);
+  getCommLayer()->openDestAndWaitIncomingMsg(dest, nbStepsInWave);
 
   LOG4CXX_INFO_FMT(getAlgoLogger(),
                    "Broadcaster #{:d} Finished waiting for messages ==> Giving "

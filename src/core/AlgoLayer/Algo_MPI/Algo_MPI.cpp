@@ -1,27 +1,26 @@
-#include "FMPI.h"
+#include <mpi.h>
 
 #include <algorithm>
+#include <future>
 #include <numeric>
 #include <vector>
-#include <future>
 
+#include "../../CommLayer/CommStub.h"
 #include "../../SessionLayer/SessionLayer.h"
 #include "../../msgTemplates.h"
-#include "../../CommLayer/CommStub.h"
-
-#include <mpi.h>
+#include "Algo_MPI.h"
 
 using namespace std;
 
-namespace fbae::core::AlgoLayer::FMPI {
+namespace fbae::core::AlgoLayer::Algo_MPI {
 
-FMPI::FMPI()
+Algo_MPI::Algo_MPI()
     : AlgoLayer(make_unique<CommLayer::CommStub>(),
-                "fbae.core.AlgoLayer.FMPI") {}
+                "fbae.core.AlgoLayer.Algo_MPIAlgo_MPI") {}
 
-void FMPI::execute() {
+void Algo_MPI::execute() {
   // Initialize MPI
-  int required = MPI_THREAD_MULTIPLE;
+  int constexpr required = MPI_THREAD_MULTIPLE;
   int provided;
   if (MPI_Init_thread(nullptr, nullptr, required, &provided) != MPI_SUCCESS) {
     LOG4CXX_FATAL(getAlgoLogger(), "Failed to initialize MPI");
@@ -71,12 +70,12 @@ void FMPI::execute() {
 
   callbackInitDone();
 
-  processFMPI();
+  process_Algo_MPI();
 
   MPI_Finalize();
 }
 
-void FMPI::processFMPI() {
+void Algo_MPI::process_Algo_MPI() {
   auto task_to_receive_msg = std::async(std::launch::async, [this] {
     while (!algoTerminated) {
       string batchToSendString = createBatchToSend();
@@ -89,7 +88,7 @@ void FMPI::processFMPI() {
   task_to_receive_msg.get();
 }
 
-string FMPI::createBatchToSend() {
+string Algo_MPI::createBatchToSend() {
   if (algoTerminated) {
     return "";
   }
@@ -105,7 +104,7 @@ string FMPI::createBatchToSend() {
   }
 }
 
-[[nodiscard]] ReceivedBuffer FMPI::sendAndReceive(std::string_view const& algoMsgAsString) const {
+[[nodiscard]] ReceivedBuffer Algo_MPI::sendAndReceive(std::string_view const& algoMsgAsString) const {
   if (algoTerminated) {
     return ReceivedBuffer{vector<char>(), vector<int>()};
   }
@@ -143,7 +142,7 @@ string FMPI::createBatchToSend() {
   return ReceivedBuffer{.buffer = buffer, .message_sizes = message_sizes};
 }
 
-void FMPI::readBuffer(std::vector<char> buffer,
+void Algo_MPI::readBuffer(std::vector<char> buffer,
   std::vector<int> const& message_sizes) {
   if (algoTerminated) {
     return;
@@ -169,7 +168,7 @@ void FMPI::readBuffer(std::vector<char> buffer,
   }
 }
 
-void FMPI::callbackReceive(std::string&& batchSessionMsgAsString) {
+void Algo_MPI::callbackReceive(std::string&& batchSessionMsgAsString) {
   auto batchSessionMsg{
       deserializeStruct<BatchSessionMsg>(
           std::move(batchSessionMsgAsString))};
@@ -182,9 +181,9 @@ void FMPI::callbackReceive(std::string&& batchSessionMsgAsString) {
   }
 }
 
-void FMPI::terminate() {
+void Algo_MPI::terminate() {
   algoTerminated = true;
 }
 
-std::string FMPI::toString() { return "FMPI"; }
-}  // namespace fbae::core::AlgoLayer::FMPI
+std::string Algo_MPI::toString() { return "Algo_MPI"; }
+}  // namespace fbae::core::AlgoLayer::Algo_MPI

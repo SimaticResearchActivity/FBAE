@@ -15,9 +15,9 @@ class CommStub : public CommLayer {
   [[nodiscard]] size_t getNbAwaitedConnections() const;
   [[nodiscard]] std::vector<std::pair<rank_t, std::string>> &getSent();
   void multicastMsg(const std::string &algoMsgAsString) override;
+  size_t initCommLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) override;
   void openDestAndWaitIncomingMsg(std::vector<rank_t> const &dest,
-                                  size_t aNbAwaitedConnections,
-                                  fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) override;
+                                  size_t aNbAwaitedConnections) override;
   void send(rank_t r, const std::string &algoMsgAsString) override;
   void terminate() override;
   std::string toString() override;
