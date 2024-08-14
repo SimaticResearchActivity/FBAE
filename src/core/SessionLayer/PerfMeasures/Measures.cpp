@@ -6,7 +6,12 @@
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
-Measures::Measures(size_t const nbPingMax) : pings(nbPingMax) {
+Measures::Measures(size_t const nbPingMax, std::string const& externalMeasureLabel,
+  std::string const& externalMeasureUnit)
+: pings(nbPingMax)
+, externalMeasureLabel{externalMeasureLabel}
+, externalMeasureUnit{externalMeasureUnit}
+{
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
     LOG4CXX_ERROR_FMT(m_logger, "RegisterHub error: {}", errmsg);
     wattMeterAvailable = false;
@@ -30,10 +35,12 @@ void Measures::addNbBytesDelivered(const int nb) {
 }
 
 std::string Measures::csvHeadline() {
-  return std::string{
-      "nbPing,Average (in "
-      "ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,Elapsed "
-      "time (in sec),CPU time (in sec),Throughput (in Mbps),Energy Delivered (in Wh)"};
+  return std::string{"nbPing,Average (in ms),Min,Q(0.25),Q(0.5),Q(0.75),Q(0.99),Q(0.999),Q(0.9999),Max,"
+  "Elapsed time (in sec),CPU time (in sec),Throughput (in Mbps),Energy Delivered (in Wh),External Measure, External Measure Value, External Measure Unit"};
+}
+
+std::string Measures::csvCaliberHeadline() {
+  return std::string{"Calibration Elapsed time (in sec),Calibration CPU time (in sec),Calibration Throughput (in Mbps),Calibration Energy Delivered (in Wh),Calibration External Measure,Calibration External Measure Value, Calibration External Measure Unit"};
 }
 
 std::string Measures::asCsv() {
@@ -63,8 +70,18 @@ std::string Measures::asCsv() {
     deliveredEnergyStr = strs.str();
   }
 
+  string externalMeasureLabelStr = "No External Measure";
+  string externalMeasureValueStr = "No External Measure";
+  string externalMeasureUnitStr = "No External Measure";
+  if (!externalMeasureLabel.empty()) {
+    externalMeasureLabelStr = externalMeasureLabel;
+    externalMeasureValueStr = deliveredEnergyStr;
+    externalMeasureUnitStr = externalMeasureUnit;
+    deliveredEnergyStr = "External Measure";
+  }
+
   return std::format(
-      "{},{},{},{},{},{},{},{},{},{},{},{},{},{}", pings.size(),
+      "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}", pings.size(),
       (std::reduce(pings.begin(), pings.end()) / pings.size()).count(),
       pings[0].count(), pings[pings.size() / 4].count(),
       pings[pings.size() / 2].count(), pings[pings.size() * 3 / 4].count(),
@@ -75,7 +92,52 @@ std::string Measures::asCsv() {
       static_cast<double>(duration.count()) / nbMillisecondsPerSecond,
       static_cast<double>(stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond,
       mbps,
-      deliveredEnergyStr);
+      deliveredEnergyStr,
+      externalMeasureLabelStr,
+      externalMeasureValueStr,
+      externalMeasureUnitStr);
+}
+
+std::string Measures::asCsvCaliber() const {
+  using namespace std::chrono;
+  const auto duration = duration_cast<milliseconds>(stopTime - startTime);
+
+  constexpr int nbBitsPerByte{8};
+  constexpr int nbBitsPerMega{1'000'000};
+  constexpr double nbMillisecondsPerSecond{1'000.0};
+  constexpr double nbMicrosecondsPerSecond{1'000'000.0};
+
+  auto mbps =
+      static_cast<double>(nbBytesDelivered * nbBitsPerByte) /
+      (static_cast<double>(duration.count()) / nbMillisecondsPerSecond) /
+      nbBitsPerMega;
+
+  string deliveredEnergyStr = "Non Available";
+  if (wattMeterAvailable) {
+    std::ostringstream strs;
+    strs << deliveredEnergy;
+    deliveredEnergyStr = strs.str();
+  }
+
+  string externalMeasureLabelStr = "No External Measure";
+  string externalMeasureValueStr = "No External Measure";
+  string externalMeasureUnitStr = "No External Measure";
+  if (!externalMeasureLabel.empty()) {
+    externalMeasureLabelStr = externalMeasureLabel;
+    externalMeasureValueStr = deliveredEnergyStr;
+    externalMeasureUnitStr = externalMeasureUnit;
+    deliveredEnergyStr = "External Measure";
+  }
+
+  return std::format(
+      "{},{},{},{},{},{},{}",
+      static_cast<double>(duration.count()) / nbMillisecondsPerSecond,
+      static_cast<double>(stopTimeCpu - startTimeCpu) / nbMicrosecondsPerSecond,
+      mbps,
+      deliveredEnergyStr,
+      externalMeasureLabelStr,
+      externalMeasureValueStr,
+      externalMeasureUnitStr);
 }
 
 void Measures::setStartTime() {

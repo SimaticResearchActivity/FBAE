@@ -117,6 +117,37 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
                       rank, sites.size(), siteFile, parser.synopsis());
     exit(EXIT_FAILURE);
   }
+
+  // Caliber Measures
+  if (parser.hasopt("e")) {
+    calibrationDuration = parser.getoptIntRequired('e', logger);
+    if (calibrationDuration < 0) {
+      LOG4CXX_FATAL_FMT(logger,
+                        "Argument for calibrationDuration must be positive \n {}",
+                        parser.synopsis());
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // External measure
+  if (parser.hasopt("E")) {
+    std::string externalMeasureFile = parser.getoptStringRequired('E', logger);
+
+    std::ifstream ifem(externalMeasureFile);
+    if (ifem.fail()) {
+      LOG4CXX_FATAL_FMT(logger, "JSON file \"{}\" does not exist\n {}", externalMeasureFile,
+                        parser.synopsis());
+      exit(EXIT_FAILURE);
+    }
+
+    cereal::JSONInputArchive iarchiveEM(ifem);  // Create an input archive
+    iarchiveEM(externalMeasureLabel);
+    iarchiveEM(externalMeasureUnit);
+
+    std::string emDump = std::format("External Measures: {} (in {})", externalMeasureLabel, externalMeasureUnit);
+
+    LOG4CXX_INFO_FMT(logger, "Contents of {}\n{}", externalMeasureFile, emDump);
+  }
 }
 
 [[nodiscard]] std::string Arguments::asCsv(std::string const& algoStr,
@@ -209,6 +240,17 @@ int Arguments::getWarmupCooldown() const { return warmupCooldown; }
 
 bool Arguments::isUsingNetworkLevelMulticast() const {
   return usingNetworkLevelMulticast;
+}
+
+int Arguments::getCalibrationDuration() const {
+  return calibrationDuration;
+}
+
+std::string Arguments::getExternalMeasureLabel() const {
+  return externalMeasureLabel;
+}
+std::string Arguments::getExternalMeasureUnit() const {
+  return externalMeasureUnit;
 }
 
 }  // namespace fbae::core

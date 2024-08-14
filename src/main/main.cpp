@@ -78,6 +78,10 @@ int main(int argc, char* argv[]) {
       "tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer "
       "will send a message and its length inside a single message as long as "
       "message length is below 32768 bytes)",
+      "e:enableCalibration duration \t [optional] Duration (in second) of the caliber phase"
+      "(By default 0, no calibration)",
+      "E:externalMeasures file \t [optional] Name (including path) of the file describing"
+      "an external mesure",
       "f:frequency number \t [optional] Number of PerfMessage sessionLayer "
       "messages which must be sent each second (By default, a PerfMessage is "
       "sent when receiving a PerfResponse)",
@@ -143,12 +147,16 @@ int main(int argc, char* argv[]) {
     SessionLayer::PerfMeasures::PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
     session.execute();
   } else {
+
     size_t nbSites{arguments.getSites().size()};
+
     vector<unique_ptr<SessionLayer::PerfMeasures::PerfMeasures>> sessions;
     vector<future<void>> sessionTasks;
+
     for (uint8_t rank = 0; rank < static_cast<uint8_t>(nbSites); ++rank) {
       sessions.emplace_back(make_unique<SessionLayer::PerfMeasures::PerfMeasures>(
           arguments, rank, concreteAlgoLayer(parser, logger)));
+
       sessionTasks.emplace_back(std::async(
           std::launch::async, &SessionLayer::PerfMeasures::PerfMeasures::execute, sessions.back().get()));
     }

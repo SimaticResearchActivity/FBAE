@@ -13,11 +13,14 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 
 class Measures {
  public:
-  explicit Measures(size_t nbPingMax);
+  explicit Measures(size_t nbPingMax, std::string const& externalMeasureLabel = "",
+  std::string const& externalMeasureUnit = "");
   void add(std::chrono::duration<double, std::milli> const &elapsed);
   void addNbBytesDelivered(int nb);
   std::string asCsv();
+  [[nodiscard]] std::string asCsvCaliber() const;
   static std::string csvHeadline();
+  static std::string csvCaliberHeadline();
   void setStartTime();
   void setStopTime();
 
@@ -35,6 +38,9 @@ class Measures {
   YPower* wattMeter = nullptr;
   double deliveredEnergy = -1;
   bool wattMeterAvailable = true;
+
+  std::string externalMeasureLabel;
+  std::string externalMeasureUnit;
 
   fbae::core::Logger::LoggerPtr m_logger = fbae::core::Logger::getLogger("fbae.core.SessionLayer.Measures");
 };
