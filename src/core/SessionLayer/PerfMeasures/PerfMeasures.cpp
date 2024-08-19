@@ -7,6 +7,11 @@
 #include <future>
 #include <mutex>
 #include <syncstream>
+#ifdef _WIN32
+  #include <windows.h>  // For Windows
+#else
+  #include <unistd.h>  // For Unix
+#endif
 
 using namespace std;
 using namespace fbae::core;
@@ -303,7 +308,11 @@ void PerfMeasures::doCalibrationMeasures(int const duration) {
 
   caliberMeasures.setStartTime();
 
-  sleep(duration);
+  #ifdef _WIN32
+    Sleep(duration * 1000);  // Sleep on Windows uses milliseconds
+  #else
+    sleep(seconds);  // sleep on Unix uses seconds
+  #endif
 
   caliberMeasures.setStopTime();
 
