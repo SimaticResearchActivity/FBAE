@@ -3,20 +3,21 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
+#include <utility>
 
 namespace fbae::core::SessionLayer::PerfMeasures {
 
-Measures::Measures(size_t const nbPingMax, std::string const& externalMeasureLabel)
+Measures::Measures(size_t const nbPingMax, std::string externalMeasureLabel)
 : pings(nbPingMax)
-, externalMeasureLabel{externalMeasureLabel}
+, externalMeasureLabel{std::move(externalMeasureLabel)}
 {
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
-    LOG4CXX_ERROR_FMT(m_logger, "RegisterHub error: {}", errmsg);
+    LOG4CXX_WARN_FMT(m_logger, "RegisterHub error: {}", errmsg);
     wattMeterAvailable = false;
   }
   else {
     if (wattMeter = YPower::FirstPower(); wattMeter == nullptr) {
-      LOG4CXX_WARN(m_logger, "Could not find wattmeter");
+      LOG4CXX_WARN(m_logger, "Could not find watt meter");
       wattMeterAvailable = false;
     }
   }
@@ -78,7 +79,7 @@ std::string Measures::asCsvCaliber() const {
   string externalMeasureLabelStr;
   string externalMeasureValueStr;
 
-  yoctometerMeasuresAsCsv(deliveredEnergyStr, externalMeasureLabelStr,
+  yoctoMeterMeasuresAsCsv(deliveredEnergyStr, externalMeasureLabelStr,
     externalMeasureValueStr);
 
   return std::format(
@@ -91,7 +92,7 @@ std::string Measures::asCsvCaliber() const {
       externalMeasureValueStr);
 }
 
-void Measures::yoctometerMeasuresAsCsv(
+void Measures::yoctoMeterMeasuresAsCsv(
     std::string &deliveredEnergyStr,
   std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr) const {
   deliveredEnergyStr = "Non Available";
@@ -99,9 +100,9 @@ void Measures::yoctometerMeasuresAsCsv(
   externalMeasureValueStr = "-";
 
   if (wattMeterAvailable) {
-    std::ostringstream strs;
-    strs << deliveredEnergy;
-    deliveredEnergyStr = strs.str();
+    std::ostringstream strStream;
+    strStream << deliveredEnergy;
+    deliveredEnergyStr = strStream.str();
   }
 
   if (!externalMeasureLabel.empty()) {
@@ -112,14 +113,14 @@ void Measures::yoctometerMeasuresAsCsv(
 }
 
 void Measures::setStartTime() {
-  // Measures with yoctometer
+  // Measures with yocto meter
   if (wattMeterAvailable) {
     if (wattMeter->isOnline()) {
-      LOG4CXX_INFO(m_logger, "Reset wattmeter");
+      LOG4CXX_INFO(m_logger, "Reset watt meter");
       wattMeter->reset();
     }
     else {
-      LOG4CXX_WARN(m_logger, "Could not do the Yoctometer's reset");
+      LOG4CXX_WARN(m_logger, "Could not do the Yocto meter's reset");
       wattMeterAvailable = false;
     }
   }
@@ -139,7 +140,7 @@ void Measures::setStopTime() {
       LOG4CXX_INFO_FMT(m_logger, "Energy delivered: {}", deliveredEnergy);
     }
     else {
-      LOG4CXX_WARN(m_logger, "Could not do the mesure with yoctometer");
+      LOG4CXX_WARN(m_logger, "Could not do the measure with yocto meter");
       wattMeterAvailable = false;
     }
   }

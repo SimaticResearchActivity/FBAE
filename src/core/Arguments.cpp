@@ -142,9 +142,8 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
 
     cereal::JSONInputArchive iarchiveEM(ifem);  // Create an input archive
     iarchiveEM(externalMeasureLabel);
-    iarchiveEM(externalMeasureUnit);
 
-    std::string emDump = std::format("External Measures: {} (in {})", externalMeasureLabel, externalMeasureUnit);
+    std::string emDump = std::format("External Measures: {}", externalMeasureLabel);
 
     LOG4CXX_INFO_FMT(logger, "Contents of {}\n{}", externalMeasureFile, emDump);
   }
@@ -248,9 +247,6 @@ int Arguments::getCalibrationDuration() const {
 
 std::string Arguments::getExternalMeasureLabel() const {
   return externalMeasureLabel;
-}
-std::string Arguments::getExternalMeasureUnit() const {
-  return externalMeasureUnit;
 }
 
 }  // namespace fbae::core

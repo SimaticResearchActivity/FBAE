@@ -13,12 +13,12 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 
 class Measures {
  public:
-  explicit Measures(size_t nbPingMax, std::string const& externalMeasureLabel = "");
+  explicit Measures(size_t nbPingMax, std::string  externalMeasureLabel = "");
   void add(std::chrono::duration<double, std::milli> const &elapsed);
   void addNbBytesDelivered(int nb);
   std::string asCsv();
   [[nodiscard]] std::string asCsvCaliber() const;
-  void yoctometerMeasuresAsCsv(std::string &deliveredEnergyStr,
+  void yoctoMeterMeasuresAsCsv(std::string &deliveredEnergyStr,
     std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr) const;
   static std::string csvHeadline();
   static std::string csvCaliberHeadline();

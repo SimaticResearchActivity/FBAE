@@ -48,7 +48,6 @@ class Arguments {
   int warmupCooldown{0};
 
   std::string externalMeasureLabel;
-  std::string externalMeasureUnit;
 
   int calibrationDuration = 0;
 
@@ -112,7 +111,6 @@ class Arguments {
   [[nodiscard]] bool isUsingNetworkLevelMulticast() const;
   [[nodiscard]] int getCalibrationDuration() const;
   [[nodiscard]] std::string getExternalMeasureLabel() const;
-  [[nodiscard]] std::string getExternalMeasureUnit() const;
 };
 
 }  // namespace fbae::core

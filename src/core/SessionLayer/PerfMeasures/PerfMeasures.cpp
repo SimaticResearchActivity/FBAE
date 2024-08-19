@@ -311,7 +311,7 @@ void PerfMeasures::doCalibrationMeasures(int const duration) {
   #ifdef _WIN32
     Sleep(duration * 1000);  // Sleep on Windows uses milliseconds
   #else
-    sleep(seconds);  // sleep on Unix uses seconds
+    sleep(duration);  // sleep on Unix uses seconds
   #endif
 
   caliberMeasures.setStopTime();
