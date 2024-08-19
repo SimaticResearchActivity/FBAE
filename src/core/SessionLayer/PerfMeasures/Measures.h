@@ -13,15 +13,13 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 
 class Measures {
  public:
-  explicit Measures(size_t nbPingMax, std::string const& externalMeasureLabel = "",
-  std::string const& externalMeasureUnit = "");
+  explicit Measures(size_t nbPingMax, std::string const& externalMeasureLabel = "");
   void add(std::chrono::duration<double, std::milli> const &elapsed);
   void addNbBytesDelivered(int nb);
   std::string asCsv();
   [[nodiscard]] std::string asCsvCaliber() const;
-  void yoctoMeasuresAsCsv(std::string &deliveredEnergyStr,
-    std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr,
-    std::string &externalMeasureUnitStr) const;
+  void yoctometerMeasuresAsCsv(std::string &deliveredEnergyStr,
+    std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr) const;
   static std::string csvHeadline();
   static std::string csvCaliberHeadline();
   void setStartTime();
@@ -43,7 +41,6 @@ class Measures {
   bool wattMeterAvailable = true;
 
   std::string externalMeasureLabel;
-  std::string externalMeasureUnit;
 
   fbae::core::Logger::LoggerPtr m_logger = fbae::core::Logger::getLogger("fbae.core.SessionLayer.Measures");
 };

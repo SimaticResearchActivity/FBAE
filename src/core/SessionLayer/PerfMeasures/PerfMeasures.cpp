@@ -24,10 +24,10 @@ PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
                    "fbae.core.SessionLayer.PerfMeasures"},
       measures{static_cast<size_t>(arguments.getNbMsg() *
                              (100 - arguments.getWarmupCooldown()) /
-                             100) + 1, getArguments().getExternalMeasureLabel(), getArguments().getExternalMeasureUnit()},
+                             100) + 1, getArguments().getExternalMeasureLabel()},
       caliberMeasures{static_cast<size_t>(arguments.getNbMsg() *
                        (100 - arguments.getWarmupCooldown()) /
-                       100) + 1, getArguments().getExternalMeasureLabel(), getArguments().getExternalMeasureUnit()}
+                       100) + 1, getArguments().getExternalMeasureLabel()}
 // We add +1 to avoid not allocating enough size because of rounding by default
 {}
 
