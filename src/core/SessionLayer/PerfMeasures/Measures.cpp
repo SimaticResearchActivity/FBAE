@@ -63,22 +63,13 @@ std::string Measures::asCsv() {
       (static_cast<double>(duration.count()) / nbMillisecondsPerSecond) /
       nbBitsPerMega;
 
-  string deliveredEnergyStr = "Non Available";
-  if (wattMeterAvailable) {
-    std::ostringstream strs;
-    strs << deliveredEnergy;
-    deliveredEnergyStr = strs.str();
-  }
+  string deliveredEnergyStr;
+  string externalMeasureLabelStr;
+  string externalMeasureValueStr;
+  string externalMeasureUnitStr;
 
-  string externalMeasureLabelStr = "No External Measure";
-  string externalMeasureValueStr = "No External Measure";
-  string externalMeasureUnitStr = "No External Measure";
-  if (!externalMeasureLabel.empty()) {
-    externalMeasureLabelStr = externalMeasureLabel;
-    externalMeasureValueStr = deliveredEnergyStr;
-    externalMeasureUnitStr = externalMeasureUnit;
-    deliveredEnergyStr = "External Measure";
-  }
+  yoctoMeasuresAsCsv(deliveredEnergyStr, externalMeasureLabelStr,
+    externalMeasureValueStr, externalMeasureUnitStr);
 
   return std::format(
       "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}", pings.size(),
@@ -112,22 +103,13 @@ std::string Measures::asCsvCaliber() const {
       (static_cast<double>(duration.count()) / nbMillisecondsPerSecond) /
       nbBitsPerMega;
 
-  string deliveredEnergyStr = "Non Available";
-  if (wattMeterAvailable) {
-    std::ostringstream strs;
-    strs << deliveredEnergy;
-    deliveredEnergyStr = strs.str();
-  }
+  string deliveredEnergyStr;
+  string externalMeasureLabelStr;
+  string externalMeasureValueStr;
+  string externalMeasureUnitStr;
 
-  string externalMeasureLabelStr = "No External Measure";
-  string externalMeasureValueStr = "No External Measure";
-  string externalMeasureUnitStr = "No External Measure";
-  if (!externalMeasureLabel.empty()) {
-    externalMeasureLabelStr = externalMeasureLabel;
-    externalMeasureValueStr = deliveredEnergyStr;
-    externalMeasureUnitStr = externalMeasureUnit;
-    deliveredEnergyStr = "External Measure";
-  }
+  yoctoMeasuresAsCsv(deliveredEnergyStr, externalMeasureLabelStr,
+    externalMeasureValueStr, externalMeasureUnitStr);
 
   return std::format(
       "{},{},{},{},{},{},{}",
@@ -138,6 +120,28 @@ std::string Measures::asCsvCaliber() const {
       externalMeasureLabelStr,
       externalMeasureValueStr,
       externalMeasureUnitStr);
+}
+
+void Measures::yoctoMeasuresAsCsv(std::string &deliveredEnergyStr,
+  std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr,
+  std::string &externalMeasureUnitStr) const {
+  deliveredEnergyStr = "Non Available";
+  externalMeasureLabelStr = "-";
+  externalMeasureValueStr = "-";
+  externalMeasureUnitStr = "-";
+
+  if (wattMeterAvailable) {
+    std::ostringstream strs;
+    strs << deliveredEnergy;
+    deliveredEnergyStr = strs.str();
+  }
+
+  if (!externalMeasureLabel.empty()) {
+    externalMeasureLabelStr = externalMeasureLabel;
+    externalMeasureValueStr = deliveredEnergyStr;
+    externalMeasureUnitStr = externalMeasureUnit;
+    deliveredEnergyStr = "-";
+  }
 }
 
 void Measures::setStartTime() {

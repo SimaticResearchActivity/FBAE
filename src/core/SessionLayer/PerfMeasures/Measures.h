@@ -19,6 +19,9 @@ class Measures {
   void addNbBytesDelivered(int nb);
   std::string asCsv();
   [[nodiscard]] std::string asCsvCaliber() const;
+  void yoctoMeasuresAsCsv(std::string &deliveredEnergyStr,
+    std::string &externalMeasureLabelStr, std::string &externalMeasureValueStr,
+    std::string &externalMeasureUnitStr) const;
   static std::string csvHeadline();
   static std::string csvCaliberHeadline();
   void setStartTime();
