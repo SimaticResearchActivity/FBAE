@@ -7,11 +7,6 @@
 #include <future>
 #include <mutex>
 #include <syncstream>
-#ifdef _WIN32
-  #include <windows.h>  // For Windows
-#else
-  #include <unistd.h>  // For Unix
-#endif
 
 using namespace std;
 using namespace fbae::core;
@@ -90,8 +85,8 @@ void PerfMeasures::callbackInitDone() {
 }
 
 void PerfMeasures::execute() {
-  if (int const caliberDuration = getArguments().getCalibrationDuration(); caliberDuration > 0) {
-    doCalibrationMeasures(caliberDuration);
+  if (int const calibrationDuration = getArguments().getCalibrationDuration(); calibrationDuration > 0) {
+    doCalibrationMeasures(calibrationDuration);
   }
 
   LOG4CXX_INFO_FMT(getSessionLogger(),
@@ -301,18 +296,15 @@ void PerfMeasures::sendPeriodicPerfMessage() {
   }
 }
 
-void PerfMeasures::doCalibrationMeasures(int const duration) {
+void PerfMeasures::doCalibrationMeasures(int const calibrationDuration) {
   LOG4CXX_INFO_FMT(getSessionLogger(),
                    "Calibration Measures #{:d} : Start calibration for {}s",
-                   getRank(), duration);
+                   getRank(), calibrationDuration);
+  std::chrono::duration<double> const calibrationSleep{calibrationDuration};
 
   caliberMeasures.setStartTime();
 
-  #ifdef _WIN32
-    Sleep(duration * 1000);  // Sleep on Windows uses milliseconds
-  #else
-    sleep(duration);  // sleep on Unix uses seconds
-  #endif
+  std::this_thread::sleep_for(calibrationSleep);
 
   caliberMeasures.setStopTime();
 

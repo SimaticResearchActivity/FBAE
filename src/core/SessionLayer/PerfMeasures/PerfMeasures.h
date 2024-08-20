@@ -74,7 +74,7 @@ class PerfMeasures : public SessionLayer {
   /**
  * @brief Do the calibration measures when enable in arguments
  */
-  void doCalibrationMeasures(int duration);
+  void doCalibrationMeasures(int calibrationDuration);
 };
 
 }  // namespace fbae::core::SessionLayer::PerfMeasures
