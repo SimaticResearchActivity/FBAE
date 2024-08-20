@@ -120,6 +120,18 @@ and you should be done.
 - You need to install MS-MPI (MPI for Windows) [[here]](https://www.microsoft.com/en-us/download/details.aspx?id=105289)
 - Download both installers and execute them
 
+### Yoctopuce
+
+*FBAE* is able to measure the power consumption using the watt meter [Yoctopuce](https://www.yoctopuce.com/EN/). To be able to compile and link a program using this library, you must apply the following installation procedure on the machine where you will compile *FBAE*.
+
+### Linux
+
+Install the `libusb` library :
+
+```bash
+sudo apt-get install libusb-1.0-0-dev
+```
+
 ### Compilation procedure
 
 Once prerequisite are done (see previous section), clone *FBAE* repository and apply *cmake* procedure of [this document](http://www-inf.telecom-sudparis.eu/COURS/JIN/sir/new_site/Supports/Documents/ToolsTeachingUnit/toolsTeachingUnit.html).
