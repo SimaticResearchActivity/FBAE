@@ -4,6 +4,7 @@
 
 #include "PerfMeasures.h"
 
+#include <boost/asio/ip/host_name.hpp>
 #include <future>
 #include <mutex>
 #include <syncstream>
@@ -85,6 +86,10 @@ void PerfMeasures::callbackInitDone() {
 }
 
 void PerfMeasures::execute() {
+  LOG4CXX_INFO_FMT(getSessionLogger(),
+                 "Rank #{:d}: hostname: {}",
+                 getRank(), boost::asio::ip::host_name());
+
   if (int const calibrationDuration = getArguments().getCalibrationDuration(); calibrationDuration > 0) {
     doCalibrationMeasures(calibrationDuration);
   }
