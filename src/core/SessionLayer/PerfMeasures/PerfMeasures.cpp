@@ -21,15 +21,19 @@ PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
     measures{static_cast<size_t>(arguments.getNbMsg() *
                    (100 - arguments.getWarmupCooldown()) /
                    100) + 1,
-          boost::asio::ip::host_name() == getArguments().getExternalMeasureLabel()
+          boost::asio::ip::host_name() == getArguments().getExternalMeasureSite()
           ? getArguments().getExternalMeasureLabel() : ""},
     caliberMeasures{static_cast<size_t>(arguments.getNbMsg() *
                 (100 - arguments.getWarmupCooldown()) /
                 100) + 1,
-            boost::asio::ip::host_name() == getArguments().getExternalMeasureLabel()
+            boost::asio::ip::host_name() == getArguments().getExternalMeasureSite()
             ? getArguments().getExternalMeasureLabel() : ""}
 // We add +1 to avoid not allocating enough size because of rounding by default
-{}
+{
+  LOG4CXX_INFO_FMT(getSessionLogger(),
+                   "Rank #{:d} : Hostname {}, do external measure {}",
+                   rank, boost::asio::ip::host_name(), getArguments().getExternalMeasureSite() == boost::asio::ip::host_name());
+}
 
 void PerfMeasures::broadcastPerfMeasure() {
   LOG4CXX_INFO_FMT(getSessionLogger(),
