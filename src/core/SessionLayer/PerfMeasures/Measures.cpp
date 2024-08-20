@@ -12,10 +12,15 @@ Measures::Measures(size_t const nbPingMax, std::string externalMeasureLabel)
 , externalMeasureLabel{std::move(externalMeasureLabel)}
 {
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
-    LOG4CXX_WARN_FMT(m_logger, "RegisterHub error: {}", errmsg);
-    wattMeterAvailable = false;
+    LOG4CXX_WARN_FMT(m_logger, "RegisterHub error: {}; Trying by VirtualHub", errmsg);
+
+    if (YAPI::RegisterHub("localhost:4444", errmsg) != YAPI::SUCCESS) {
+      LOG4CXX_WARN_FMT(m_logger, "VirtualHub RegisterHub error: {};", errmsg);
+      wattMeterAvailable = false;
+    }
   }
-  else {
+
+  if (wattMeterAvailable) {
     if (wattMeter = YPower::FirstPower(); wattMeter == nullptr) {
       LOG4CXX_WARN(m_logger, "Could not find watt meter");
       wattMeterAvailable = false;
@@ -24,7 +29,7 @@ Measures::Measures(size_t const nbPingMax, std::string externalMeasureLabel)
 }
 
 void Measures::add(std::chrono::duration<double, std::milli> const& elapsed) {
-  size_t index{nbPing++};
+  size_t const index{nbPing++};
   assert(index < pings.size());
   pings[index] = elapsed;
 }
