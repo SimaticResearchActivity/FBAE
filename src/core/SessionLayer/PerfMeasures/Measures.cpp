@@ -11,8 +11,6 @@ Measures::Measures(size_t const nbPingMax, std::string externalMeasureLabel)
 : pings(nbPingMax)
 , externalMeasureLabel{std::move(externalMeasureLabel)}
 {
-  LOG4CXX_INFO_FMT(m_logger, "External Measure Label: {}", externalMeasureLabel);
-
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
     LOG4CXX_WARN_FMT(m_logger, "RegisterHub error: {}", errmsg);
     wattMeterAvailable = false;
