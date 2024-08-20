@@ -1,0 +1,52 @@
+{
+    "sites": [
+        {
+            "tuple_element0": "b313-01.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-02.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-03.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-04.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-05.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-06.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-07.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-08.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-09.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-10.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-11.int-evry.fr",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-12.int-evry.fr",
+            "tuple_element1": 4096
+        }
+    ]
+}

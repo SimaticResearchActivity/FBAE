@@ -47,7 +47,8 @@ class Arguments {
   bool usingNetworkLevelMulticast{false};
   int warmupCooldown{0};
 
-  std::string externalMeasureLabel;
+  std::string external_measure_site;
+  std::string external_measure_label;
 
   int calibrationDuration = 0;
 
@@ -110,6 +111,7 @@ class Arguments {
   [[nodiscard]] int getWarmupCooldown() const;
   [[nodiscard]] bool isUsingNetworkLevelMulticast() const;
   [[nodiscard]] int getCalibrationDuration() const;
+  [[nodiscard]] std::string getExternalMeasureSite() const;
   [[nodiscard]] std::string getExternalMeasureLabel() const;
 };
 

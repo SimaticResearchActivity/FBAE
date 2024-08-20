@@ -1,3 +1,4 @@
 {
-  "externalMeasureLabel": ""
+  "external_measure_site": "hostname",
+  "external_measure_label": "Switch consumption"
 }

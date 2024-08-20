@@ -18,12 +18,16 @@ PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
                            std::unique_ptr<AlgoLayer::AlgoLayer> algoLayer)
     : SessionLayer{arguments, rank, std::move(algoLayer),
                    "fbae.core.SessionLayer.PerfMeasures"},
-      measures{static_cast<size_t>(arguments.getNbMsg() *
-                             (100 - arguments.getWarmupCooldown()) /
-                             100) + 1, getArguments().getExternalMeasureLabel()},
-      caliberMeasures{static_cast<size_t>(arguments.getNbMsg() *
-                       (100 - arguments.getWarmupCooldown()) /
-                       100) + 1, getArguments().getExternalMeasureLabel()}
+    measures{static_cast<size_t>(arguments.getNbMsg() *
+                   (100 - arguments.getWarmupCooldown()) /
+                   100) + 1,
+          boost::asio::ip::host_name() == getArguments().getExternalMeasureLabel()
+          ? getArguments().getExternalMeasureLabel() : ""},
+    caliberMeasures{static_cast<size_t>(arguments.getNbMsg() *
+                (100 - arguments.getWarmupCooldown()) /
+                100) + 1,
+            boost::asio::ip::host_name() == getArguments().getExternalMeasureLabel()
+            ? getArguments().getExternalMeasureLabel() : ""}
 // We add +1 to avoid not allocating enough size because of rounding by default
 {}
 
@@ -86,10 +90,6 @@ void PerfMeasures::callbackInitDone() {
 }
 
 void PerfMeasures::execute() {
-  LOG4CXX_INFO_FMT(getSessionLogger(),
-                 "Rank #{:d}: hostname: {}",
-                 getRank(), boost::asio::ip::host_name());
-
   if (int const calibrationDuration = getArguments().getCalibrationDuration(); calibrationDuration > 0) {
     doCalibrationMeasures(calibrationDuration);
   }
