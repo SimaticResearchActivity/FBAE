@@ -8,12 +8,17 @@ namespace fbae::core::SessionLayer::PerfMeasures {
 
 Measures::Measures(size_t const nbPingMax) : pings(nbPingMax) {
   if (string errmsg; YAPI::RegisterHub("usb", errmsg) != YAPI::SUCCESS) {
-    LOG4CXX_ERROR_FMT(m_logger, "RegisterHub error: {}", errmsg);
-    wattMeterAvailable = false;
+    LOG4CXX_WARN_FMT(m_logger, "RegisterHub error: {}; Trying by VirtualHub", errmsg);
+
+    if (YAPI::RegisterHub("localhost:4444", errmsg) != YAPI::SUCCESS) {
+      LOG4CXX_WARN_FMT(m_logger, "VirtualHub RegisterHub error: {};", errmsg);
+      wattMeterAvailable = false;
+    }
   }
-  else {
+
+  if (wattMeterAvailable) {
     if (wattMeter = YPower::FirstPower(); wattMeter == nullptr) {
-      LOG4CXX_WARN(m_logger, "Could not find wattmeter");
+      LOG4CXX_WARN(m_logger, "Could not find watt meter");
       wattMeterAvailable = false;
     }
   }
