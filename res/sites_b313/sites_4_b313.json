@@ -1,19 +1,19 @@
 {
     "sites": [
         {
-            "tuple_element0": "b313-09.int-evry.fr",
+            "tuple_element0": "b313-09",
             "tuple_element1": 4096
         },
         {
-            "tuple_element0": "b313-01.int-evry.fr",
+            "tuple_element0": "b313-01",
             "tuple_element1": 4096
         },
         {
-            "tuple_element0": "b313-02.int-evry.fr",
+            "tuple_element0": "b313-02",
             "tuple_element1": 4096
         },
         {
-            "tuple_element0": "b313-03.int-evry.fr",
+            "tuple_element0": "b313-03",
             "tuple_element1": 4096
         }
     ]
