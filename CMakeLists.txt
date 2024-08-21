@@ -43,11 +43,6 @@ endif()
 include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
 
 #
-# Include nlohmann_json
-#
-find_package(nlohmann_json CONFIG REQUIRED)
-
-#
 # Include Yoctolib_cpp
 #
 
