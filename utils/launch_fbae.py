@@ -65,7 +65,7 @@ rank = 0
 for site in contentsSiteFile['sites']:
     commandArgs = commonArgsWithSpace + " --rank " + str(rank)
     commandArgsWithUnderscore = commonArgsWithUnderscore + "_--rank_" + str(rank)
-    cmd = "ssh -i " + sys.argv[1] + site['tuple_element0'] + " \"nohup bash -c 'cd " + sys.argv[2] + " && ./fbae " + commandArgs + " > " + sys.argv[3] + "/result_" + commandArgsWithUnderscore + "'\""
+    cmd = "ssh -i " + sys.argv[1] + " " + site['tuple_element0'] + " \"nohup bash -c 'cd " + sys.argv[2] + " && ./fbae " + commandArgs + " > " + sys.argv[3] + "/result_" + commandArgsWithUnderscore + "'\" &"
     print(cmd)
     subprocess.run(cmd, shell=True)
     rank += 1
