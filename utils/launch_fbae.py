@@ -2,12 +2,12 @@
 # a site_file
 #
 # Usage
-#   python3 launch_fbae.py path_to_fbae_executable path_to_result_directory all_fbae_arguments_except_-r_or_--rank
+#   python3 launch_fbae.py path_to_fbae_executable path_to_result_directory private_ssh_key all_fbae_arguments_except_-r_or_--rank
 #
 # Example
 #   If sites_8_machines.json contains the specification of 8 hosts/ports,
 #   command
-#      python3 launchFBAE.py /absolute_path/FBAE /aboslute_path/FBAE/results/ -a B -c t -n 5 -s 32 -S /absolute_path/FBAE/sites_8_machines.json
+#      python3 launchFBAE.py /absolute_path/FBAE /aboslute_path/FBAE/results/ /path/to/ssh/key -a B -c t -n 5 -s 32 -S /absolute_path/FBAE/sites_8_machines.json
 #   launches instances of fbae on each of these 8 hosts/ports. When these
 #   instances are done, each generates a result file in
 #   /aboslute_path/FBAE/results, the name of the file containing the
@@ -22,7 +22,7 @@ import subprocess
 
 # Check there are enough arguments
 if len(sys.argv) < 13:
-    print(f"USAGE: {sys.argv[0]} path_to_fbae_executable path_to_result_directory all_fbae_arguments_except_-r_or_--rank")
+    print(f"USAGE: {sys.argv[0]} path_to_fbae_executable path_to_result_directory private_ssh_key all_fbae_arguments_except_-r_or_--rank")
     exit(1)
 
 # Check that rank of process is not defined in argument list (with -r or --rank)
@@ -59,13 +59,13 @@ with open(siteFile) as f:
 contentsSiteFile = json.loads(s)
 
 # Launch fbae on the different hosts mentionned in contentsSiteFile
-commonArgsWithSpace = " ".join(sys.argv[3:])
+commonArgsWithSpace = " ".join(sys.argv[4:])
 commonArgsWithUnderscore = ("_".join(sys.argv[3:])).replace('/','_')
 rank = 0
 for site in contentsSiteFile['sites']:
     commandArgs = commonArgsWithSpace + " --rank " + str(rank)
     commandArgsWithUnderscore = commonArgsWithUnderscore + "_--rank_" + str(rank)
-    cmd = "ssh " + site['tuple_element0'] + " 'nohup " + sys.argv[1] +"/fbae " + commandArgs + " &> " + sys.argv[2] + "/result_" + commandArgsWithUnderscore + "' &"
+    cmd = "ssh -i " + sys.argv[3] + site['tuple_element0'] + " 'nohup " + sys.argv[1] +"/fbae " + commandArgs + " &> " + sys.argv[2] + "/result_" + commandArgsWithUnderscore + "' &"
     print(cmd)
     subprocess.run(cmd, shell=True)
     rank += 1
