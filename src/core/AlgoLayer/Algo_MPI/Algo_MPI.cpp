@@ -16,7 +16,7 @@ namespace fbae::core::AlgoLayer::Algo_MPI {
 
 Algo_MPI::Algo_MPI()
     : AlgoLayer(make_unique<CommLayer::CommStub>(),
-                "fbae.core.AlgoLayer.Algo_MPIAlgo_MPI") {}
+                "fbae.core.AlgoLayer.Algo_MPI") {}
 
 void Algo_MPI::execute() {
   // Initialize MPI
@@ -131,23 +131,15 @@ string Algo_MPI::createBatchToSend() {
     offsets[i] = offsets[i - 1] + message_sizes[i - 1];
   }
 
-  std::vector<char> buffer;
-  const size_t max_chunk_size = buffer.max_size();
+  std::vector<char> buffer(total_message_size);
 
-  // Allocate buffer for receiving messages
-  for (size_t chunk_start = 0; chunk_start < total_message_size;
-       chunk_start += max_chunk_size) {
-    size_t chunk_size =
-        std::min(max_chunk_size, total_message_size - chunk_start);
+  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Total size = {}; Max size : {}", rank, total_message_size, buffer.max_size());
 
-    std::vector<char> chunk_buffer(chunk_size);
+  MPI_Allgatherv(algoMsgAsString.data(), msgSize, MPI_BYTE,
+               buffer.data(), message_sizes.data(), offsets.data(),
+               MPI_BYTE, MPI_COMM_WORLD);
 
-    MPI_Allgatherv(algoMsgAsString.data() + chunk_start, msgSize, MPI_BYTE,
-                   chunk_buffer.data(), message_sizes.data(), offsets.data(),
-                   MPI_BYTE, MPI_COMM_WORLD);
-
-    buffer.insert(buffer.end(), chunk_buffer.begin(), chunk_buffer.end());
-  }
+  LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}: Data gathered", rank);
 
   return ReceivedBuffer{.buffer = buffer, .message_sizes = message_sizes};
 }
