@@ -134,7 +134,7 @@ void PerfMeasures::execute() {
   }
   if (getArguments().getFrequency() && getAlgoLayer()->isBroadcastingMessages())
     taskSendPeriodicPerfMessage.get();
-  LOG4CXX_INFO_FMT(getSessionLogger(),
+  LOG4CXX_WARN_FMT(getSessionLogger(),
                    "PerfMeasures (Warning: this may not be PerfMeasures pos!) "
                    "#{:d} : End of execution",
                    getRank());
@@ -287,22 +287,27 @@ void PerfMeasures::processPerfResponseMsg(
 }
 
 void PerfMeasures::sendPeriodicPerfMessage() {
+
   getAlgoLayer()->batchRegisterThreadForFullBatchCtrl();
   constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
   constexpr double nbMillisecondsPerSecond{1'000.0};
   const auto freq{getArguments().getFrequency()};
   auto startSending{std::chrono::system_clock::now()};
+
   while (true) {
     auto elapsedPeriod{duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now() - startSending)};
     // Broadcast PerfMeasure messages until we reach the desired frequency
+
     while (numPerfMeasure < freq * static_cast<double>(elapsedPeriod.count()) /
                                 nbMillisecondsPerSecond) {
       broadcastPerfMeasure();
       if (numPerfMeasure >= getArguments().getNbMsg()) return;
     }
+
     std::this_thread::sleep_for(sleepDuration);
   }
+
 }
 
 void PerfMeasures::doCalibrationMeasures(int const calibrationDuration) {
