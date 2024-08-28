@@ -16,7 +16,7 @@ namespace fbae::core::AlgoLayer::Algo_MPI {
 
 Algo_MPI::Algo_MPI()
     : AlgoLayer(make_unique<CommLayer::CommStub>(),
-                "fbae.core.AlgoLayer.Algo_MPIAlgo_MPI") {}
+                "fbae.core.AlgoLayer.Algo_MPI") {}
 
 void Algo_MPI::execute() {
   // Initialize MPI
