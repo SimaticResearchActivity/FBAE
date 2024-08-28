@@ -118,13 +118,10 @@ string Algo_MPI::createBatchToSend() {
                 MPI_COMM_WORLD);
 
   // Calculate total size of all messages
-  int total_message_size = 0;
+  long total_message_size = 0;
   for (int i = 0; i < sitesCount; ++i) {
     total_message_size += message_sizes[i];
   }
-
-  // Allocate buffer for receiving messages
-  std::vector<char> buffer(total_message_size);
 
   // Calculate the offset of each messages based on their size
   std::vector<int> offsets(sitesCount);
@@ -134,10 +131,23 @@ string Algo_MPI::createBatchToSend() {
     offsets[i] = offsets[i - 1] + message_sizes[i - 1];
   }
 
-  // Gather the messages
-  MPI_Allgatherv(algoMsgAsString.data(), msgSize, MPI_BYTE, buffer.data(),
-                 message_sizes.data(), offsets.data(), MPI_BYTE,
-                 MPI_COMM_WORLD);
+  std::vector<char> buffer;
+  const size_t max_chunk_size = buffer.max_size();
+
+  // Allocate buffer for receiving messages
+  for (size_t chunk_start = 0; chunk_start < total_message_size;
+       chunk_start += max_chunk_size) {
+    size_t chunk_size =
+        std::min(max_chunk_size, total_message_size - chunk_start);
+
+    std::vector<char> chunk_buffer(chunk_size);
+
+    MPI_Allgatherv(algoMsgAsString.data() + chunk_start, msgSize, MPI_BYTE,
+                   chunk_buffer.data(), message_sizes.data(), offsets.data(),
+                   MPI_BYTE, MPI_COMM_WORLD);
+
+    buffer.insert(buffer.end(), chunk_buffer.begin(), chunk_buffer.end());
+  }
 
   return ReceivedBuffer{.buffer = buffer, .message_sizes = message_sizes};
 }
