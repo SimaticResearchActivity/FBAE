@@ -325,6 +325,8 @@ struct ForLength {
 };
 
 void Tcp::send(rank_t const r, const std::string& algoMsgAsString) {
+  LOG4CXX_INFO_FMT(getCommLogger(), "Sending to {:d} with size {}", r, algoMsgAsString.size());
+
   assert(rank2sock.contains(r));
   ForLength forLength{algoMsgAsString.length()};
   std::stringstream oStream;
