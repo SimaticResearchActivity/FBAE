@@ -83,6 +83,8 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
     }
   }
 
+  LOG4CXX_INFO(logger, "Coucou");
+
   if (sizeMsg < minSizeClientMessageToBroadcast || sizeMsg > maxLength) {
     LOG4CXX_FATAL_FMT(logger,
                       "Argument for size of messages is {} which is not in "
@@ -128,6 +130,8 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
       exit(EXIT_FAILURE);
     }
   }
+
+  LOG4CXX_INFO(logger, "Start ext");
 
   // External measure
   if (parser.hasopt("E")) {

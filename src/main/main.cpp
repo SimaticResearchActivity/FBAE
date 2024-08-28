@@ -58,8 +58,6 @@ unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& pars
 int main(int argc, char* argv[]) {
   auto logger = Logger::getLogger("fbae.main");
 
-  LOG4CXX_INFO(logger, "Start FBAE");
-
   //
   // Take care of program arguments
   //
@@ -121,6 +119,7 @@ int main(int argc, char* argv[]) {
                         argv[nonopt]);
     exit(1);
   }
+
   if (nonopt < argc) {
     LOG4CXX_FATAL_FMT(
         logger,
@@ -142,6 +141,7 @@ int main(int argc, char* argv[]) {
   //
   // Launch the application
   //
+  LOG4CXX_INFO(logger, "Start FBAE");
   if (rank_t argRank = arguments.getRank();
       argRank != specialRankToRequestExecutionInTasks) {
     SessionLayer::PerfMeasures::PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
