@@ -66,6 +66,21 @@ class LCR : public AlgoLayer {
    * @brief The pending list of messages of the site.
    */
   std::vector<MessagePacket> pending;
+
+  /**
+ * @brief Number of machines
+ */
+  uint32_t sitesCount = 0;
+
+  /**
+ * @brief Rank of machine
+ */
+  rank_t currentSiteRank = 0;
+
+  /**
+ * @brief Rank of next machine in loop
+ */
+  rank_t nextSiteRank = 0;
 };
 
 }  // namespace fbae::core::AlgoLayer::LCR

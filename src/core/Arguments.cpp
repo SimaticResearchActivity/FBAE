@@ -83,6 +83,8 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
     }
   }
 
+  LOG4CXX_INFO(logger, "Coucou");
+
   if (sizeMsg < minSizeClientMessageToBroadcast || sizeMsg > maxLength) {
     LOG4CXX_FATAL_FMT(logger,
                       "Argument for size of messages is {} which is not in "
@@ -116,6 +118,37 @@ Arguments::Arguments(fbae::core::OptParserExtended const& parser)
                       "specified in JSON file \"{}\"\n{}",
                       rank, sites.size(), siteFile, parser.synopsis());
     exit(EXIT_FAILURE);
+  }
+
+  // Caliber Measures
+  if (parser.hasopt("e")) {
+    calibrationDuration = parser.getoptIntRequired('e', logger);
+    if (calibrationDuration < 0) {
+      LOG4CXX_FATAL_FMT(logger,
+                        "Argument for calibrationDuration must be positive \n {}",
+                        parser.synopsis());
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  LOG4CXX_INFO(logger, "Start ext");
+
+  // External measure
+  if (parser.hasopt("E")) {
+    std::string externalMeasureFile = parser.getoptStringRequired('E', logger);
+
+    std::ifstream ifem(externalMeasureFile);
+    if (ifem.fail()) {
+      LOG4CXX_FATAL_FMT(logger, "JSON file \"{}\" does not exist\n {}", externalMeasureFile,
+                        parser.synopsis());
+      exit(EXIT_FAILURE);
+    }
+
+    cereal::JSONInputArchive iarchiveEM(ifem);  // Create an input archive
+    iarchiveEM(external_measure_site);
+    iarchiveEM(external_measure_label);
+
+    LOG4CXX_INFO_FMT(logger, "Contents of {}\nExternal Measures: site: {}, label: {}", externalMeasureFile, external_measure_site, external_measure_label);
   }
 }
 
@@ -209,6 +242,18 @@ int Arguments::getWarmupCooldown() const { return warmupCooldown; }
 
 bool Arguments::isUsingNetworkLevelMulticast() const {
   return usingNetworkLevelMulticast;
+}
+
+int Arguments::getCalibrationDuration() const {
+  return calibrationDuration;
+}
+
+std::string Arguments::getExternalMeasureSite() const {
+  return external_measure_site;
+}
+
+std::string Arguments::getExternalMeasureLabel() const {
+  return external_measure_label;
 }
 
 }  // namespace fbae::core

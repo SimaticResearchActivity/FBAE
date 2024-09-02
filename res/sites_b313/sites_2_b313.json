@@ -1,0 +1,12 @@
+{
+    "sites": [
+        {
+            "tuple_element0": "b313-09",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-01",
+            "tuple_element1": 4096
+        }
+    ]
+}

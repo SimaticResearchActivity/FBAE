@@ -26,6 +26,7 @@ class PerfMeasures : public SessionLayer {
 
  private:
   Measures measures;
+  Measures caliberMeasures;
   int32_t numPerfMeasure{0};
   int32_t nbReceivedPerfResponseForSelf{0};
   size_t nbReceivedFirstBroadcast{0};
@@ -69,6 +70,11 @@ class PerfMeasures : public SessionLayer {
    * @brief Thread to send PerfMessage at @Param::frequency per second.
    */
   void sendPeriodicPerfMessage();
+
+  /**
+ * @brief Do the calibration measures when enable in arguments
+ */
+  void doCalibrationMeasures(int calibrationDuration);
 };
 
 }  // namespace fbae::core::SessionLayer::PerfMeasures

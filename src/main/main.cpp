@@ -1,10 +1,12 @@
 #include <future>
 #include <iostream>
 
+#include "AlgoLayer/Algo_MPI/Algo_MPI.h"
 #include "AlgoLayer/BBOBB/BBOBB.h"
 #include "AlgoLayer/LCR/LCR.h"
 #include "AlgoLayer/Sequencer/Sequencer.h"
 #include "AlgoLayer/Trains/Trains.h"
+#include "CommLayer/Comm_MPI/Comm_MPI.h"
 #include "CommLayer/Tcp/Tcp.h"
 #include "OptParserExtended.h"
 #include "SessionLayer/PerfMeasures/PerfMeasures.h"
@@ -18,6 +20,8 @@ unique_ptr<CommLayer::CommLayer> concreteCommLayer(OptParserExtended const& pars
   switch (commId) {
     case 't':
       return make_unique<CommLayer::Tcp::Tcp>();
+    case 'm':
+      return make_unique<CommLayer::Comm_MPI::Comm_MPI>();
     default:
       LOG4CXX_FATAL_FMT(
           logger,
@@ -40,6 +44,8 @@ unique_ptr<AlgoLayer::AlgoLayer> concreteAlgoLayer(OptParserExtended const& pars
       return make_unique<AlgoLayer::LCR::LCR>(concreteCommLayer(parser, logger));
     case 'T':
       return make_unique<AlgoLayer::Trains::Trains>(concreteCommLayer(parser, logger));
+    case 'M':
+      return make_unique<AlgoLayer::Algo_MPI::Algo_MPI>();
     default:
       LOG4CXX_FATAL_FMT(logger,
                         "Argument for Broadcast Algorithm is \"{}\" which is "
@@ -58,17 +64,22 @@ int main(int argc, char* argv[]) {
   OptParserExtended parser{
       "a:algo algo_identifier \t Broadcast Algorithm\n\t\t\t\t\t\tB = "
       "BBOBB\n\t\t\t\t\t\tS = Sequencer base\n\t\t\t\t\t\tL = "
-      "LCR\n\t\t\t\t\t\tT = Trains",
+      "LCR\n\t\t\t\t\t\tT = Trains\n\t\t\t\t\t\tM = "
+      "MPI",
       "A:algoArgument string \t [optional] String to specify an argument to be "
       "used by a specific broadcast algorithm (e.g. trainsNb=2 to specify that "
       "Trains algorithm must use 2 trains in parallel)",
       "c:comm communicationLayer_identifier \t Communication layer to be "
-      "used\n\t\t\t\t\t\tt = TCP",
+      "used\n\t\t\t\t\t\tt = TCP\n\t\t\t\t\t\tm = MPI",
       "C:commArgument string \t [optional] String to specify an argument to be "
       "used by a specific communication layer (e.g. "
       "tcpMaxSizeForOneWrite=32768 to specify that Tcp communication layer "
       "will send a message and its length inside a single message as long as "
       "message length is below 32768 bytes)",
+      "e:enableCalibration duration \t [optional] Duration (in second) of the caliber phase"
+      "(By default 0, no calibration)",
+      "E:externalMeasures file \t [optional] Name (including path) of the file describing"
+      "an external mesure",
       "f:frequency number \t [optional] Number of PerfMessage sessionLayer "
       "messages which must be sent each second (By default, a PerfMessage is "
       "sent when receiving a PerfResponse)",
@@ -108,6 +119,7 @@ int main(int argc, char* argv[]) {
                         argv[nonopt]);
     exit(1);
   }
+
   if (nonopt < argc) {
     LOG4CXX_FATAL_FMT(
         logger,
@@ -129,17 +141,22 @@ int main(int argc, char* argv[]) {
   //
   // Launch the application
   //
+  LOG4CXX_INFO(logger, "Start FBAE");
   if (rank_t argRank = arguments.getRank();
       argRank != specialRankToRequestExecutionInTasks) {
     SessionLayer::PerfMeasures::PerfMeasures session{arguments, argRank, concreteAlgoLayer(parser, logger)};
     session.execute();
   } else {
+
     size_t nbSites{arguments.getSites().size()};
+
     vector<unique_ptr<SessionLayer::PerfMeasures::PerfMeasures>> sessions;
     vector<future<void>> sessionTasks;
+
     for (uint8_t rank = 0; rank < static_cast<uint8_t>(nbSites); ++rank) {
       sessions.emplace_back(make_unique<SessionLayer::PerfMeasures::PerfMeasures>(
           arguments, rank, concreteAlgoLayer(parser, logger)));
+
       sessionTasks.emplace_back(std::async(
           std::launch::async, &SessionLayer::PerfMeasures::PerfMeasures::execute, sessions.back().get()));
     }

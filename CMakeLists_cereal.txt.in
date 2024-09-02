@@ -13,7 +13,7 @@ include(ExternalProject)
 cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
 ExternalProject_Add(cereal
   URL               https://github.com/USCiLab/cereal/archive/refs/tags/v1.3.2.tar.gz
-  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/cereal-src"
+  SOURCE_DIR        ${CMAKE_CURRENT_BINARY_DIR}/cereal-src
   BINARY_DIR        ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND     ""

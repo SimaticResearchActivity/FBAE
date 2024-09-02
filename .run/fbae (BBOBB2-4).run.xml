@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="fbae (BBOBB2-4)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-a B -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_4_local.json -v" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="FBAE" TARGET_NAME="fbae" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="FBAE" RUN_TARGET_NAME="fbae">
+  <configuration default="false" name="fbae (BBOBB2-4)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-a B -c t -n 20 -r 2 -s 32 -S ../../Resources/sites_4_local.json" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="FBAE" TARGET_NAME="fbae" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="FBAE" RUN_TARGET_NAME="fbae">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

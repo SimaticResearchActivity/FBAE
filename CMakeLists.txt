@@ -22,6 +22,9 @@ set (BUILD_SHARED_LIBS FALSE)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Include MPI
+find_package(MPI REQUIRED)
+
 #
 # We include Log4cxx
 #
@@ -43,19 +46,36 @@ endif()
 include_directories(PRIVATE $<TARGET_PROPERTY:log4cxx,INTERFACE_INCLUDE_DIRECTORIES>)
 
 #
-# Include the subset of Boost which FBAE uses
+# Include Yoctolib_cpp
 #
-cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
-FetchContent_Declare(
-    boost_subset_for_asio
-    URL https://github.com/SimaticResearchActivity/boost_subset_for_asio/archive/refs/tags/v1.84.0.tar.gz
-)
-FetchContent_MakeAvailable(boost_subset_for_asio)
-if(WIN32)
-    # Compilation of some of the boost sources requires the following definition
-    # (which is appropriate for Windows 7 target)
-    add_compile_definitions(_WIN32_WINNT=0x0601)
+
+# Download and unpack Yoctolib_cpp at configure time
+configure_file(CMakeLists_yoctolib_cpp.txt.in yoctolib_cpp-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-download )
+if(result)
+    message(FATAL_ERROR "CMake step for yoctolib_cpp failed: ${result}")
 endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-download )
+if(result)
+    message(FATAL_ERROR "Build step for yoctolib_cpp failed: ${result}")
+endif()
+
+# Give access to yoctolib_cpp include directory
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources)
+
+# Set
+if(WIN32)
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Sources compiled_yoctolib)
+else()
+    # Link with the built library    
+    add_library(YoctoLib STATIC IMPORTED)
+    set(YOCTO_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/yoctolib_cpp-src/Binaries/linux/x86_64/libyocto-static.a)
+endif()
+
 
 #
 # Include Cereal (A simple FetchContent does not work ==> We have to download it manually)
@@ -76,7 +96,24 @@ if(result)
     message(FATAL_ERROR "Build step for cereal failed: ${result}")
 endif()
 # Give access to cereal include directory
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include")
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/cereal-src/include)
+
+
+#
+# Include the subset of Boost which FBAE uses
+#
+cmake_policy(SET CMP0135 NEW) # This cmake_policy avoids warning by cmake when we fetch contents based on URL
+FetchContent_Declare(
+    boost_subset_for_asio
+    URL https://github.com/SimaticResearchActivity/boost_subset_for_asio/archive/refs/tags/v1.84.0.tar.gz
+)
+FetchContent_MakeAvailable(boost_subset_for_asio)
+if(WIN32)
+    # Compilation of some of the boost sources requires the following definition
+    # (which is appropriate for Windows 7 target)
+    add_compile_definitions(_WIN32_WINNT=0x0601)
+endif()
+
 
 #
 # Include GoogleTest

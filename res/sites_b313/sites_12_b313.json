@@ -1,0 +1,52 @@
+{
+    "sites": [
+        {
+            "tuple_element0": "b313-09",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-01",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-02",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-03",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-04",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-05",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-06",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-07",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-08",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-10",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-11",
+            "tuple_element1": 4096
+        },
+        {
+            "tuple_element0": "b313-12",
+            "tuple_element1": 4096
+        }
+    ]
+}

@@ -267,11 +267,14 @@ void Tcp::multicastMsg(const std::string& algoMsgAsString) {
   }
 }
 
-void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
-                                     size_t nbAwaitedConnections,
-                                     AlgoLayer::AlgoLayer* aAlgoLayer) {
+size_t Tcp::initCommLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) {
   setAlgoLayer(aAlgoLayer);
 
+  return getAlgoLayer()->getSessionLayer()->getArguments().getSites().size();
+}
+
+void Tcp::openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
+                                     size_t nbAwaitedConnections) {
   const auto arguments = getAlgoLayer()->getSessionLayer()->getArguments();
   const auto sites = arguments.getSites();
   const auto usingNetworkLevelMulticast =
@@ -321,7 +324,9 @@ struct ForLength {
   }
 };
 
-void Tcp::send(rank_t r, const std::string& algoMsgAsString) {
+void Tcp::send(rank_t const r, const std::string& algoMsgAsString) {
+  LOG4CXX_INFO_FMT(getCommLogger(), "Sending to {:d} with size {}", r, algoMsgAsString.size());
+
   assert(rank2sock.contains(r));
   ForLength forLength{algoMsgAsString.length()};
   std::stringstream oStream;

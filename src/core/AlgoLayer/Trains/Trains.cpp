@@ -97,9 +97,8 @@ void Trains::processTrain(string&& serializedMessagePacket) {
 }
 
 void Trains::execute() {
+  sitesCount = static_cast<uint32_t>(getCommLayer()->initCommLayer(this));
   rank = getSessionLayer()->getRank();
-  sitesCount = static_cast<uint32_t>(
-      getSessionLayer()->getArguments().getSites().size());
   nextRank = (rank + 1) % sitesCount;
 
   nbTrains = getSessionLayer()->getArguments().getIntInAlgoArgument("trainsNb",
@@ -122,7 +121,7 @@ void Trains::execute() {
   LOG4CXX_INFO_FMT(getAlgoLogger(), "Rank #{:d}; Next rank #{:d}", rank,
                    nextRank);
 
-  getCommLayer()->openDestAndWaitIncomingMsg({nextRank}, 1, this);
+  getCommLayer()->openDestAndWaitIncomingMsg({nextRank}, 1);
 }
 
 int Trains::getClock(int trainId) const { return trainsClock[trainId]; }

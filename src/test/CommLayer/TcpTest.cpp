@@ -42,8 +42,9 @@ class Host {
         sessionStub{arguments, rank, std::move(algo)},
         async{std::async(std::launch::async,
                          [dest, nbAwaitedConnections, this]() {
+                           commRaw->initCommLayer(algoRaw);
                            commRaw->openDestAndWaitIncomingMsg(
-                               dest, nbAwaitedConnections, algoRaw);
+                               dest, nbAwaitedConnections);
                          })} {}
 
   AlgoStub *getAlgoRaw() { return algoRaw; }

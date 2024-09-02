@@ -4,6 +4,7 @@
 
 #include "PerfMeasures.h"
 
+#include <boost/asio/ip/host_name.hpp>
 #include <future>
 #include <mutex>
 #include <syncstream>
@@ -17,12 +18,22 @@ PerfMeasures::PerfMeasures(const Arguments &arguments, rank_t rank,
                            std::unique_ptr<AlgoLayer::AlgoLayer> algoLayer)
     : SessionLayer{arguments, rank, std::move(algoLayer),
                    "fbae.core.SessionLayer.PerfMeasures"},
-      measures{static_cast<size_t>(arguments.getNbMsg() *
-                                   (100 - arguments.getWarmupCooldown()) /
-                                   100) +
-               1}
+    measures{static_cast<size_t>(arguments.getNbMsg() *
+                   (100 - arguments.getWarmupCooldown()) /
+                   100) + 1,
+          boost::asio::ip::host_name() == getArguments().getExternalMeasureSite()
+          ? getArguments().getExternalMeasureLabel() : ""},
+    caliberMeasures{static_cast<size_t>(arguments.getNbMsg() *
+                (100 - arguments.getWarmupCooldown()) /
+                100) + 1,
+            boost::asio::ip::host_name() == getArguments().getExternalMeasureSite()
+            ? getArguments().getExternalMeasureLabel() : ""}
 // We add +1 to avoid not allocating enough size because of rounding by default
-{}
+{
+  LOG4CXX_INFO_FMT(getSessionLogger(),
+                   "Rank #{:d} : Hostname {}, do external measure {}",
+                   rank, boost::asio::ip::host_name(), getArguments().getExternalMeasureSite() == boost::asio::ip::host_name());
+}
 
 void PerfMeasures::broadcastPerfMeasure() {
   LOG4CXX_INFO_FMT(getSessionLogger(),
@@ -45,8 +56,8 @@ void PerfMeasures::broadcastPerfMeasure() {
   ++numPerfMeasure;
 }
 
-void PerfMeasures::callbackDeliver(rank_t senderPos,
-                                   SessionMsg msg) {
+void PerfMeasures::callbackDeliver(rank_t const senderPos,
+                                   SessionMsg const msg) {
   switch (msg->msgId) {
     using enum SessionMsgId;
     case FinishedPerfMeasures:
@@ -83,6 +94,10 @@ void PerfMeasures::callbackInitDone() {
 }
 
 void PerfMeasures::execute() {
+  if (int const calibrationDuration = getArguments().getCalibrationDuration(); calibrationDuration > 0) {
+    doCalibrationMeasures(calibrationDuration);
+  }
+
   LOG4CXX_INFO_FMT(getSessionLogger(),
                    "PerfMeasures (Warning: this may not be PerfMeasures pos!) "
                    "#{:d} : Start execution",
@@ -95,18 +110,31 @@ void PerfMeasures::execute() {
     scoped_lock lock{mtx};
 
     std::osyncstream synced_out(std::cout);
-    synced_out << Arguments::csvHeadline() << "," << Measures::csvHeadline()
-               << endl;
+    if (getArguments().getCalibrationDuration() > 0) {
+      synced_out << Arguments::csvHeadline() << "," << Measures::csvCaliberHeadline() << "," << Measures::csvHeadline()
+           << endl;
 
-    synced_out << getArguments().asCsv(
-                      getAlgoLayer()->toString(),
-                      getAlgoLayer()->getCommLayer()->toString(),
-                      to_string(getRank()))
-               << "," << measures.asCsv() << endl;
+      synced_out << getArguments().asCsv(
+                        getAlgoLayer()->toString(),
+                        getAlgoLayer()->getCommLayer()->toString(),
+                        to_string(getRank()))
+                 << "," << caliberMeasures.asCsvCaliber()
+                 << "," << measures.asCsv() << endl;
+    }
+    else {
+      synced_out << Arguments::csvHeadline() << "," << Measures::csvHeadline()
+           << endl;
+
+      synced_out << getArguments().asCsv(
+                        getAlgoLayer()->toString(),
+                        getAlgoLayer()->getCommLayer()->toString(),
+                        to_string(getRank()))
+                 << "," << measures.asCsv() << endl;
+    }
   }
   if (getArguments().getFrequency() && getAlgoLayer()->isBroadcastingMessages())
     taskSendPeriodicPerfMessage.get();
-  LOG4CXX_INFO_FMT(getSessionLogger(),
+  LOG4CXX_WARN_FMT(getSessionLogger(),
                    "PerfMeasures (Warning: this may not be PerfMeasures pos!) "
                    "#{:d} : End of execution",
                    getRank());
@@ -259,22 +287,44 @@ void PerfMeasures::processPerfResponseMsg(
 }
 
 void PerfMeasures::sendPeriodicPerfMessage() {
+
   getAlgoLayer()->batchRegisterThreadForFullBatchCtrl();
   constexpr std::chrono::duration<double, std::milli> sleepDuration{5ms};
   constexpr double nbMillisecondsPerSecond{1'000.0};
   const auto freq{getArguments().getFrequency()};
   auto startSending{std::chrono::system_clock::now()};
+
   while (true) {
     auto elapsedPeriod{duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now() - startSending)};
     // Broadcast PerfMeasure messages until we reach the desired frequency
+
     while (numPerfMeasure < freq * static_cast<double>(elapsedPeriod.count()) /
                                 nbMillisecondsPerSecond) {
       broadcastPerfMeasure();
       if (numPerfMeasure >= getArguments().getNbMsg()) return;
     }
+
     std::this_thread::sleep_for(sleepDuration);
   }
+
+}
+
+void PerfMeasures::doCalibrationMeasures(int const calibrationDuration) {
+  LOG4CXX_INFO_FMT(getSessionLogger(),
+                   "Calibration Measures #{:d} : Start calibration for {}s",
+                   getRank(), calibrationDuration);
+  std::chrono::duration<double> const calibrationSleep{calibrationDuration};
+
+  caliberMeasures.setStartTime();
+
+  std::this_thread::sleep_for(calibrationSleep);
+
+  caliberMeasures.setStopTime();
+
+  LOG4CXX_INFO_FMT(getSessionLogger(),
+                 "Calibration Measures #{:d} : End",
+                 getRank());
 }
 
 }  // namespace fbae::core::SessionLayer::PerfMeasures

@@ -25,12 +25,16 @@ add_library(lib_fbae
         AlgoLayer/Sequencer/SequencerMsg.h
 		AlgoLayer/Trains/Trains.cpp
 		AlgoLayer/Trains/Trains.h
+		AlgoLayer/Algo_MPI/Algo_MPI.cpp
+		AlgoLayer/Algo_MPI/Algo_MPI.h
         CommLayer/CommLayer.cpp
         CommLayer/CommLayer.h
 		CommLayer/CommStub.cpp
 		CommLayer/CommStub.h
 		CommLayer/Tcp/Tcp.cpp
 		CommLayer/Tcp/Tcp.h
+		CommLayer/Comm_MPI/Comm_MPI.cpp
+		CommLayer/Comm_MPI/Comm_MPI.h
         SessionLayer/SessionLayer.cpp
         SessionLayer/SessionLayer.h
 		SessionLayer/SessionLayerMsg.cpp
@@ -50,5 +54,12 @@ add_library(lib_fbae
         Logger/LoggerConfig.h
         Logger/LoggerConfig.cpp)
 
-target_include_directories(lib_fbae PUBLIC ./)
-target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio PRIVATE log4cxx )
+target_include_directories(lib_fbae PUBLIC ./ )
+target_link_libraries(lib_fbae PUBLIC boost_subset_for_asio YoctoLib PRIVATE log4cxx MPI::MPI_CXX)
+
+if (!WIN32) # We are under UNIX 
+  target_link_libraries(lib_fbae usb-1.0)
+  set_target_properties(YoctoLib PROPERTIES
+    IMPORTED_LOCATION ${YOCTO_LIBRARY_PATH}
+  )
+endif()

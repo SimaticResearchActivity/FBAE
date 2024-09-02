@@ -46,6 +46,12 @@ class Arguments {
   std::vector<HostTuple> sites;
   bool usingNetworkLevelMulticast{false};
   int warmupCooldown{0};
+
+  std::string external_measure_site;
+  std::string external_measure_label;
+
+  int calibrationDuration = 0;
+
   fbae::core::Logger::LoggerPtr logger{fbae::core::Logger::getLogger("fbae.core.arg")};
 
   /**
@@ -104,6 +110,9 @@ class Arguments {
   [[nodiscard]] int getSizeMsg() const;
   [[nodiscard]] int getWarmupCooldown() const;
   [[nodiscard]] bool isUsingNetworkLevelMulticast() const;
+  [[nodiscard]] int getCalibrationDuration() const;
+  [[nodiscard]] std::string getExternalMeasureSite() const;
+  [[nodiscard]] std::string getExternalMeasureLabel() const;
 };
 
 }  // namespace fbae::core

@@ -19,9 +19,9 @@ class Tcp : public CommLayer {
  public:
   explicit Tcp();
   void multicastMsg(const std::string &algoMsgAsString) override;
+  size_t initCommLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) override;
   void openDestAndWaitIncomingMsg(std::vector<rank_t> const &dest,
-                                  size_t nbAwaitedConnections,
-                                  fbae::core::AlgoLayer::AlgoLayer *aAlgoLayer) override;
+                                  size_t nbAwaitedConnections) override;
   void send(rank_t r, const std::string &algoMsgAsString) override;
   void terminate() override;
   std::string toString() override;

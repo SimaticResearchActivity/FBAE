@@ -41,6 +41,13 @@ class CommLayer {
   virtual void multicastMsg(const std::string& algoMsgAsString) = 0;
 
   /**
+   * @brief initialize
+   * @param aAlgoLayer @AlgoLayer using this @CommLayer.
+   * @return Number of sites of the application
+   */
+  virtual size_t initCommLayer(fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) = 0;
+
+  /**
    * @brief Open connection to peers (named outgoing peers) which rank is listed
    * in @dest, accepts
    * @nbAwaitedConnections connections from remote peers (named incoming peers),
@@ -49,11 +56,9 @@ class CommLayer {
    * @param dest Ranks of outgoing peer we must connect to.
    * @param nbAwaitedConnections Number of incoming peers which must connect to
    * us.
-   * @param aAlgoLayer @AlgoLayer using this @CommLayer.
    */
   virtual void openDestAndWaitIncomingMsg(std::vector<rank_t> const& dest,
-                                          size_t nbAwaitedConnections,
-                                          fbae::core::AlgoLayer::AlgoLayer* aAlgoLayer) = 0;
+                                          size_t nbAwaitedConnections) = 0;
 
   /**
    * @brief Setter for @algoLayer.

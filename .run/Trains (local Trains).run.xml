@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Trains (local Trains)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-a T -c t -n 3 -r 99 -s 1024 -S ../../../res/sites_3_local.json -v" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="FBAE" TARGET_NAME="fbae" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="FBAE" RUN_TARGET_NAME="fbae">
+  <configuration default="false" name="Trains (local Trains)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-a T -c t -n 3 -r 99 -s 1024 -S ../../../res/sites_3_local.json" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="FBAE" TARGET_NAME="fbae" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="FBAE" RUN_TARGET_NAME="fbae">
+    <envs>
+      <env name="PATH" value="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/apache-maven-3.9.6/bin:/snap/bin:$USER_HOME$/Softwares/scaphandre/target/release" />
+    </envs>
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

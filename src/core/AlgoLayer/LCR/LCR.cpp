@@ -4,7 +4,6 @@
 
 #include "../../SessionLayer/SessionLayer.h"
 #include "../../msgTemplates.h"
-#include "LCR.h"
 
 using namespace fbae::core;
 using namespace fbae::core::AlgoLayer::LCR;
@@ -18,9 +17,6 @@ LCR::LCR(std::unique_ptr<CommLayer::CommLayer> commLayer) noexcept
 }
 
 inline void LCR::initializeVectorClock() noexcept {
-  const auto sitesCount = static_cast<uint32_t>(
-      getSessionLayer()->getArguments().getSites().size());
-
   vectorClock.reserve(sitesCount);
   for (LCRClock_t i = 0; i < sitesCount; i++) vectorClock.push_back(0);
 }
@@ -35,12 +31,6 @@ void LCR::tryDeliver() noexcept {
 
 inline std::optional<MessagePacket> LCR::handleMessageReceive(
     MessagePacket message) noexcept {
-  const auto sitesCount = static_cast<uint32_t>(
-      getSessionLayer()->getArguments().getSites().size());
-
-  const rank_t currentSiteRank = getSessionLayer()->getRank();
-  const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
-
   vectorClock[message.senderRank] += 1;
 
   const bool isCycleFinished = nextSiteRank == message.senderRank;
@@ -56,12 +46,6 @@ inline std::optional<MessagePacket> LCR::handleMessageReceive(
 
 inline std::optional<MessagePacket> LCR::handleAcknowledgmentReceive(
     MessagePacket message) noexcept {
-  const auto sitesCount = static_cast<uint32_t>(
-      getSessionLayer()->getArguments().getSites().size());
-
-  const rank_t currentSiteRank = getSessionLayer()->getRank();
-  const rank_t nextSiteRank = (currentSiteRank + 1) % sitesCount;
-
   if (nextSiteRank == message.senderRank) return {};
 
   for (auto &pendingMessage : pending) {
@@ -103,20 +87,21 @@ void LCR::callbackReceive(std::string &&serializedMessagePacket) noexcept {
 }
 
 void LCR::execute() noexcept {
+  sitesCount = static_cast<uint32_t>(getCommLayer()->initCommLayer(this));
+  currentSiteRank = getSessionLayer()->getRank();
+  nextSiteRank = static_cast<rank_t>((currentSiteRank + 1) % sitesCount);
+
+
   // This initialization is done now because at this point in time
   // we have access to the session layer.
   initializeVectorClock();
-
-  const rank_t rank = getSessionLayer()->getRank();
-  const auto sitesCount = static_cast<uint32_t>(
-      getSessionLayer()->getArguments().getSites().size());
 
   std::vector<rank_t> broadcasters(sitesCount);
   std::iota(broadcasters.begin(), broadcasters.end(), 0);
   setBroadcastersGroup(std::move(broadcasters));
 
   getCommLayer()->openDestAndWaitIncomingMsg(
-      {static_cast<rank_t>((rank + 1) % sitesCount)}, 1, this);
+      {nextSiteRank}, 1);
 }
 
 void LCR::terminate() noexcept { getCommLayer()->terminate(); }
@@ -125,13 +110,12 @@ std::string LCR::toString() noexcept { return "LCR"; }
 
 void LCR::totalOrderBroadcast(
     const fbae::core::SessionLayer::SessionMsg &sessionMessage) noexcept {
-  const rank_t currentRank = getSessionLayer()->getRank();
-  vectorClock[currentRank] += 1;
+  vectorClock[currentSiteRank] += 1;
 
   const MessagePacket message = {
       .messageId = MessageId::Message,
-      .senderRank = currentRank,
-      .clock = vectorClock[currentRank],
+      .senderRank = currentSiteRank,
+      .clock = vectorClock[currentSiteRank],
       .sessionMessage = sessionMessage,
       .isStable = false,
   };

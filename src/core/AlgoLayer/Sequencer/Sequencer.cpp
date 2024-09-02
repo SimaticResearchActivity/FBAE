@@ -51,9 +51,11 @@ void Sequencer::callbackReceive(std::string &&algoMsgAsString) {
 }
 
 void Sequencer::execute() {
+
+  size_t const sitesCount = getCommLayer()->initCommLayer(this);
+
   // Compute vector of broadcasters rank
-  vector<rank_t> v(getSessionLayer()->getArguments().getSites().size() -
-                   1);  // -1 because sequencer is not broadcasting.
+  vector<rank_t> v(sitesCount - 1);  // -1 because sequencer is not broadcasting.
   std::iota(v.begin(), v.end(), 1);  // @broadcasters must start at 1, because
                                      // sequencer always has rank 0.
   setBroadcastersGroup(std::move(v));
@@ -62,7 +64,7 @@ void Sequencer::execute() {
   if (getSessionLayer()->getRank() == sequencerRank) {
     // Process is sequencer
     getCommLayer()->openDestAndWaitIncomingMsg(
-        getBroadcastersGroup(), getBroadcastersGroup().size(), this);
+        getBroadcastersGroup(), getBroadcastersGroup().size());
     if (!isBroadcastingMessages()) {
       // As the Sequencer is not broadcasting messages, it does not call
       // getCommLayer()->terminate() in a natural manner ==> We have to call it.
@@ -74,7 +76,7 @@ void Sequencer::execute() {
   } else {
     // Process is a broadcaster
     vector<rank_t> dest{sequencerRank};
-    getCommLayer()->openDestAndWaitIncomingMsg(dest, 1, this);
+    getCommLayer()->openDestAndWaitIncomingMsg(dest, 1);
 
     LOG4CXX_INFO_FMT(getAlgoLogger(),
                      "Broadcaster with rank #{:d} : Finished waiting for "
